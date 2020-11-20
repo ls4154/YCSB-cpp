@@ -37,5 +37,11 @@
 *.data
 *.output
 
-redis/sample
 ycsbc
+
+# vim and clangd
+.vimrc
+tags
+compile_commands.json
+.clangd/
+.cache/
