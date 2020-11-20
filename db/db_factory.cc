@@ -13,17 +13,19 @@
 #include "db/lock_stl_db.h"
 #include "db/leveldb_db.h"
 
-using namespace std;
-using ycsbc::DB;
-using ycsbc::DBFactory;
+namespace ycsbc {
 
 DB* DBFactory::CreateDB(utils::Properties &props) {
-  if (props["dbname"] == "basic") {
+  std::string prop_dbname = props.GetProperty("dbname", "basic");
+  if (prop_dbname == "basic") {
     return new BasicDB;
-  } else if (props["dbname"] == "lock_stl") {
+  } else if (prop_dbname == "lock_stl") {
     return new LockStlDB;
-  } else if (props["dbname"] == "leveldb") {
+  } else if (prop_dbname == "leveldb") {
     return new LeveldbDB(props);
-  } else return NULL;
+  } else {
+    return nullptr;
+  }
 }
 
+} // ycsbc
