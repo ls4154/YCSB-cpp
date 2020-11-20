@@ -13,23 +13,25 @@
 namespace ycsbc {
 
 LeveldbDB::LeveldbDB(const utils::Properties &props) {
-  const std::string &db_path = props["ldb_path"];
+  const std::string &db_path = props.GetProperty("ldb_path", "");
+  if (db_path == "") {
+    throw utils::Exception("LevelDB db path is missing");
+  }
 
   leveldb::Options opt;
   opt.create_if_missing = true;
   GetOptions(props, &opt);
 
   leveldb::Status s;
-  s = leveldb::DestroyDB(db_path, opt);
-  if (!s.ok()) {
-    throw utils::Exception(std::string("LevelDB DestoryDB: ") + s.ToString());
+
+  if (props.GetProperty("ldb_destroy", "false") == "true") {
   }
   s = leveldb::DB::Open(opt, db_path, &db_);
   if (!s.ok()) {
     throw utils::Exception(std::string("LevelDB Open: ") + s.ToString());
   }
 
-  const std::string &format = props["ldb_format"];
+  const std::string &format = props.GetProperty("ldb_format", "single");
   if (format == "single") {
     format_ = kSingleEntry;
     method_read_ = &LeveldbDB::ReadSingleEntry;
