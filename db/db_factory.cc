@@ -11,6 +11,7 @@
 #include <string>
 #include "db/basic_db.h"
 #include "db/lock_stl_db.h"
+#include "db/leveldb_db.h"
 
 using namespace std;
 using ycsbc::DB;
@@ -21,6 +22,8 @@ DB* DBFactory::CreateDB(utils::Properties &props) {
     return new BasicDB;
   } else if (props["dbname"] == "lock_stl") {
     return new LockStlDB;
+  } else if (props["dbname"] == "leveldb") {
+    return new LeveldbDB(props);
   } else return NULL;
 }
 
