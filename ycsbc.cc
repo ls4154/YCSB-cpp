@@ -126,7 +126,7 @@ void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
     if (strcmp(argv[argindex], "-load") == 0) {
       props.SetProperty("doload", "true");
       argindex++;
-    } else if (strcmp(argv[argindex], "-run") == 0) {
+    } else if (strcmp(argv[argindex], "-run") == 0 || strcmp(argv[argindex], "-t") == 0) {
       props.SetProperty("dotransaction", "true");
       argindex++;
     } else if (strcmp(argv[argindex], "-threads") == 0) {
@@ -178,7 +178,7 @@ void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
                      "(e.g., -p operationcount=99999)" << std::endl;
         exit(0);
       }
-      props.SetProperty(prop.substr(0, eq), prop.substr(eq + 1));
+      props.SetProperty(utils::Trim(prop.substr(0, eq)), utils::Trim(prop.substr(eq + 1)));
       argindex++;
     } else {
       std::cerr << "Unknown option '" << argv[argindex] << "'" << std::endl;
@@ -197,7 +197,8 @@ void UsageMessage(const char *command) {
       "Usage: " << command << " [options]\n"
       "Options:\n"
       "  -load: run the loading phase of the workload\n"
-      "  -run: run the transactions phase of the workload\n"
+      "  -t: run the transactions phase of the workload\n"
+      "  -run: same as -t\n"
       "  -threads n: execute using n threads (default: 1)\n"
       "  -db dbname: specify the name of the DB to use (default: basic)\n"
       "  -P propertyfile: load properties from the given file. Multiple files can\n"
