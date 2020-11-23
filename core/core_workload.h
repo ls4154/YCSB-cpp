@@ -25,8 +25,12 @@ enum Operation {
   READ,
   UPDATE,
   SCAN,
-  READMODIFYWRITE
+  READMODIFYWRITE,
+  DELETE,
+  MAXOPTYPE
 };
+
+extern const char *kOperationString[MAXOPTYPE];
 
 class CoreWorkload {
  public:

@@ -18,6 +18,15 @@
 using ycsbc::CoreWorkload;
 using std::string;
 
+const char *ycsbc::kOperationString[ycsbc::MAXOPTYPE] = {
+  "INSERT",
+  "READ",
+  "UPDATE",
+  "SCAN",
+  "READMODIFYWRITE",
+  "DELETE"
+};
+
 const string CoreWorkload::TABLENAME_PROPERTY = "table";
 const string CoreWorkload::TABLENAME_DEFAULT = "usertable";
 

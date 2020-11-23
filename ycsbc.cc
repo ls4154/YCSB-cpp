@@ -7,23 +7,65 @@
 //
 
 #include <cstring>
+#include <ctime>
+
 #include <string>
 #include <iostream>
 #include <vector>
+#include <thread>
 #include <future>
+#include <chrono>
+#include <iomanip>
 
 #include "core/utils.h"
 #include "core/timer.h"
 #include "core/client.h"
+#include "core/measurements.h"
+#include "core/db_wrapper.h"
 #include "core/core_workload.h"
 #include "db/db_factory.h"
+#include "lib/countdown_latch.h"
 
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], utils::Properties &props);
 
-int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
-    bool is_loading) {
+void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  bool done = false;
+  while (1) {
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::chrono::duration<double> elapsed_time = now - start;
+
+    std::cout << std::put_time(std::localtime(&now_c), "%F %T") << ' '
+              << static_cast<long long>(elapsed_time.count()) << " sec: ";
+
+    int cnt_op[ycsbc::MAXOPTYPE];
+    int cnt_total = 0;
+    for (int i = 0; i < ycsbc::MAXOPTYPE; i++) {
+      cnt_op[i] = measurements->GetCount(static_cast<ycsbc::Operation>(i));
+      cnt_total += cnt_op[i];
+    }
+
+    std::cout << cnt_total << " operations;";
+    for (int i = 0; i < ycsbc::MAXOPTYPE; i++) {
+      if (cnt_op[i] > 0) {
+        std::cout << " " << ycsbc::kOperationString[i] << ": ";
+        std::cout << "Count="<< cnt_op[i];
+      }
+    }
+    std::cout << std::endl;
+
+    if (done) {
+      break;
+    }
+    done = latch->AwaitFor(interval);
+  };
+}
+
+int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
+                 CountDownLatch *latch) {
   db->Init();
   ycsbc::Client client(*db, *wl);
   int oks = 0;
@@ -35,6 +77,7 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
     }
   }
   db->Close();
+  latch->CountDown();
   return oks;
 }
 
@@ -55,69 +98,97 @@ int main(const int argc, const char *argv[]) {
     exit(1);
   }
 
+  ycsbc::Measurements measurements;
+  ycsbc::DBWrapper *dbwrapper = new ycsbc::DBWrapper(db, &measurements);
+
   ycsbc::CoreWorkload wl;
   wl.Init(props);
 
   const int num_threads = stoi(props.GetProperty("threadcount", "1"));
+  const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
 
-
-  std::vector<std::future<int>> actual_ops;
-  utils::Timer<double> timer;
+  const bool show_status = (props.GetProperty("status", "false") == "true");
+  const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
 
   // load phase
   if (do_load) {
-    int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
+    CountDownLatch latch(num_threads);
+    utils::Timer<double> timer;
+
     timer.Start();
+    std::future<void> status_future;
+    if (show_status) {
+      status_future = std::async(std::launch::async, StatusThread, &measurements, &latch,
+                                 status_interval);
+    }
+    std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
       int thread_ops = total_ops / num_threads;
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      actual_ops.emplace_back(std::async(std::launch::async,
-                              DelegateClient, db, &wl, thread_ops, true));
+      client_threads.emplace_back(std::async(std::launch::async,
+                                  ClientThread, dbwrapper, &wl, thread_ops, true, &latch));
     }
-    assert((int)actual_ops.size() == num_threads);
+    assert((int)client_threads.size() == num_threads);
 
     int sum = 0;
-    for (auto &n : actual_ops) {
+    for (auto &n : client_threads) {
       assert(n.valid());
       sum += n.get();
     }
     double runtime = timer.End();
+
+    if (show_status) {
+      status_future.wait();
+    }
 
     std::cout << "Load runtime(sec): " << runtime << std::endl;
     std::cout << "Load operations(ops): " << sum << std::endl;
     std::cout << "Load throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
+  std::this_thread::sleep_for(std::chrono::seconds(stoi(props.GetProperty("sleepafterload", "0"))));
+
   // transaction phase
   if (do_transaction) {
-    actual_ops.clear();
-    int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
+    CountDownLatch latch(num_threads);
+    utils::Timer<double> timer;
+
     timer.Start();
+    std::future<void> status_future;
+    if (show_status) {
+      status_future = std::async(std::launch::async, StatusThread, &measurements, &latch,
+                                 status_interval);
+    }
+    std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
       int thread_ops = total_ops / num_threads;
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      actual_ops.emplace_back(std::async(std::launch::async,
-                              DelegateClient, db, &wl, thread_ops, false));
+      client_threads.emplace_back(std::async(std::launch::async,
+                                  ClientThread, dbwrapper, &wl, thread_ops, false, &latch));
     }
-    assert((int)actual_ops.size() == num_threads);
+    assert((int)client_threads.size() == num_threads);
 
     int sum = 0;
-    for (auto &n : actual_ops) {
+    for (auto &n : client_threads) {
       assert(n.valid());
       sum += n.get();
     }
     double runtime = timer.End();
+
+    if (show_status) {
+      status_future.wait();
+    }
 
     std::cout << "Run runtime(sec): " << runtime << std::endl;
     std::cout << "Run operations(ops): " << sum << std::endl;
     std::cout << "Run throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
-  delete db;
+  delete dbwrapper;
 }
 
 void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
@@ -180,7 +251,11 @@ void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
       }
       props.SetProperty(utils::Trim(prop.substr(0, eq)), utils::Trim(prop.substr(eq + 1)));
       argindex++;
+    } else if (strcmp(argv[argindex], "-s") == 0) {
+      props.SetProperty("status", "true");
+      argindex++;
     } else {
+      UsageMessage(argv[0]);
       std::cerr << "Unknown option '" << argv[argindex] << "'" << std::endl;
       exit(0);
     }
@@ -205,7 +280,8 @@ void UsageMessage(const char *command) {
       "                   be specified, and will be processed in the order specified\n"
       "  -p name=value: specify a property to be passed to the DB and workloads\n"
       "                 multiple properties can be specified, and override any\n"
-      "                 values in the propertyfile"
+      "                 values in the propertyfile\n"
+      "  -s: print status every 10 seconds (use status.interval prop to override)"
       << std::endl;
 }
 
