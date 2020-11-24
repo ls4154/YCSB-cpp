@@ -105,13 +105,14 @@ int main(const int argc, const char *argv[]) {
   wl.Init(props);
 
   const int num_threads = stoi(props.GetProperty("threadcount", "1"));
-  const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
 
   const bool show_status = (props.GetProperty("status", "false") == "true");
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
 
   // load phase
   if (do_load) {
+    const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
+
     CountDownLatch latch(num_threads);
     utils::Timer<double> timer;
 
@@ -152,6 +153,8 @@ int main(const int argc, const char *argv[]) {
 
   // transaction phase
   if (do_transaction) {
+    const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
+
     CountDownLatch latch(num_threads);
     utils::Timer<double> timer;
 
