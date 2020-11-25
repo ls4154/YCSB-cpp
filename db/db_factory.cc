@@ -11,7 +11,10 @@
 #include "db/db_factory.h"
 #include "db/basic_db.h"
 #include "db/lock_stl_db.h"
+
+#ifdef BIND_LEVELDB
 #include "db/leveldb/leveldb_db.h"
+#endif
 
 namespace ycsbc {
 
@@ -22,7 +25,11 @@ DB* DBFactory::CreateDB(utils::Properties &props) {
   } else if (prop_dbname == "lock_stl") {
     return new LockStlDB;
   } else if (prop_dbname == "leveldb") {
+#ifdef BIND_LEVELDB
     return new LeveldbDB(props);
+#else
+    return nullptr;
+#endif
   } else {
     return nullptr;
   }

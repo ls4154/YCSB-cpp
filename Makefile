@@ -13,19 +13,21 @@ DEBUG_BUILD = 0
 EXTRA_CXXFLAGS =
 EXTRA_LDFLAGS =
 
-LEVELDB_BINDING = 1
+BIND_LEVELDB = 1
 
 #----------------------------------------------------------
 
 ifeq ($(DEBUG_BUILD), 1)
 	CXXFLAGS += -g
 else
-	CXXFLAGS += -O2 -DNDEBUG
+	CXXFLAGS += -O2
+	CPPFLAGS += -DNDEBUG
 endif
 
-ifeq ($(LEVELDB_BINDING), 1)
+ifeq ($(BIND_LEVELDB), 1)
 	LDFLAGS += -lleveldb
 	SOURCES += $(wildcard db/leveldb/*.cc)
+	CPPFLAGS += -DBIND_LEVELDB
 endif
 
 CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
@@ -40,7 +42,7 @@ $(EXEC): $(wildcard *.cc) $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 .cc.o:
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	find . -name "*.o" -delete
