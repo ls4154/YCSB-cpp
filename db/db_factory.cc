@@ -6,12 +6,12 @@
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
-#include "db/db_factory.h"
-
 #include <string>
+
+#include "db/db_factory.h"
 #include "db/basic_db.h"
 #include "db/lock_stl_db.h"
-#include "db/leveldb_db.h"
+#include "db/leveldb/leveldb_db.h"
 
 namespace ycsbc {
 

@@ -1,24 +1,49 @@
-CC=g++
-CFLAGS=-std=c++11 -g -Wall -pthread -I./
-LDFLAGS=-lpthread -lleveldb
-SUBDIRS=core db
-SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc)
-OBJECTS=$(SUBSRCS:.cc=.o)
-EXEC=ycsbc
+#
+#  Makefile
+#  YCSB-cpp
+#
+#  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
+#  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+#
 
-all: $(SUBDIRS) $(EXEC)
 
-$(SUBDIRS):
-	$(MAKE) -C $@
+#---------------------build config-------------------------
+
+DEBUG_BUILD = 0
+EXTRA_CXXFLAGS =
+EXTRA_LDFLAGS =
+
+LEVELDB_BINDING = 1
+
+#----------------------------------------------------------
+
+ifeq ($(DEBUG_BUILD), 1)
+	CXXFLAGS += -g
+else
+	CXXFLAGS += -O2 -DNDEBUG
+endif
+
+ifeq ($(LEVELDB_BINDING), 1)
+	LDFLAGS += -lleveldb
+	SOURCES += $(wildcard db/leveldb/*.cc)
+endif
+
+CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
+LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
+SOURCES += $(wildcard core/*.cc) $(wildcard db/*.cc)
+OBJECTS += $(SOURCES:.cc=.o)
+EXEC = ycsbc
+
+all: $(EXEC)
 
 $(EXEC): $(wildcard *.cc) $(OBJECTS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+.cc.o:
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir $@; \
-	done
+	find . -name "*.o" -delete
 	$(RM) $(EXEC)
 
-.PHONY: $(SUBDIRS) $(EXEC)
-
+.PHONY: clean

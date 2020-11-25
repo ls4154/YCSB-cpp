@@ -1,8 +1,8 @@
 //
 //  leveldb_db.cc
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by YJ Lee.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //
 
 #include "leveldb_db.h"
