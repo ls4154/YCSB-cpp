@@ -1,8 +1,8 @@
 //
 //  db_wrapper.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //
 
 #ifndef YCSB_C_DB_WRAPPER_H_
