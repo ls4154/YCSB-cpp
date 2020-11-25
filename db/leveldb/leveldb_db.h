@@ -9,25 +9,30 @@
 #define YCSB_C_LEVELDB_DB_H_
 
 #include <iostream>
-#include <leveldb/options.h>
-#include <leveldb/status.h>
 #include <string>
+#include <mutex>
 
 #include "core/db.h"
 #include "core/properties.h"
 
-#include "leveldb/db.h"
-#include "leveldb/cache.h"
-#include "leveldb/filter_policy.h"
+#include <leveldb/db.h>
+#include <leveldb/options.h>
+#include <leveldb/status.h>
+#include <leveldb/cache.h>
+#include <leveldb/filter_policy.h>
 
 namespace ycsbc {
 
 // TODO table handling (ycsb core use only single table)
 class LeveldbDB : public DB {
  public:
-  LeveldbDB(const utils::Properties &props);
+  LeveldbDB() : db_(nullptr), init_done_(false) {}
 
   ~LeveldbDB();
+
+  void Init();
+
+  void Cleanup();
 
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
@@ -108,7 +113,12 @@ class LeveldbDB : public DB {
                                    std::vector<KVPair> &);
   int (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
   int fieldcount_;
+
+  bool init_done_;
+  std::mutex mu_;
 };
+
+DB *NewLeveldbDB();
 
 } // ycsbc
 

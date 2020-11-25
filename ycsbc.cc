@@ -21,7 +21,6 @@
 #include "core/timer.h"
 #include "core/client.h"
 #include "core/measurements.h"
-#include "core/db_wrapper.h"
 #include "core/core_workload.h"
 #include "db/db_factory.h"
 #include "lib/countdown_latch.h"
@@ -76,7 +75,7 @@ int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool
       oks += client.DoTransaction();
     }
   }
-  db->Close();
+  db->Cleanup();
   latch->CountDown();
   return oks;
 }
@@ -92,14 +91,12 @@ int main(const int argc, const char *argv[]) {
     exit(1);
   }
 
-  ycsbc::DB *db = ycsbc::DBFactory::CreateDB(props);
+  ycsbc::Measurements measurements;
+  ycsbc::DB *db = ycsbc::DBFactory::CreateDB(&props, &measurements);
   if (db == nullptr) {
     std::cerr << "Unknown database name " << props["dbname"] << std::endl;
     exit(1);
   }
-
-  ycsbc::Measurements measurements;
-  ycsbc::DBWrapper *dbwrapper = new ycsbc::DBWrapper(db, &measurements);
 
   ycsbc::CoreWorkload wl;
   wl.Init(props);
@@ -129,7 +126,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async,
-                                  ClientThread, dbwrapper, &wl, thread_ops, true, &latch));
+                                  ClientThread, db, &wl, thread_ops, true, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -171,7 +168,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async,
-                                  ClientThread, dbwrapper, &wl, thread_ops, false, &latch));
+                                  ClientThread, db, &wl, thread_ops, false, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -191,7 +188,7 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Run throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
-  delete dbwrapper;
+  delete db;
 }
 
 void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {

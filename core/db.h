@@ -1,14 +1,15 @@
 //
 //  db.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by Jinglei Ren on 12/10/14.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
 #ifndef YCSB_C_DB_H_
 #define YCSB_C_DB_H_
 
+#include "core/properties.h"
 #include <vector>
 #include <string>
 
@@ -29,7 +30,7 @@ class DB {
   /// Clears any state for accessing this DB.
   /// Called once per DB client (thread); there is a single DB instance globally.
   ///
-  virtual void Close() { }
+  virtual void Cleanup() { }
   ///
   /// Reads a record from the database.
   /// Field/value pairs from the result are stored in a vector.
@@ -89,8 +90,14 @@ class DB {
   /// @return Zero on success, a non-zero error code on error.
   ///
   virtual int Delete(const std::string &table, const std::string &key) = 0;
-  
+
   virtual ~DB() { }
+
+  void SetProps(utils::Properties *props) {
+    props_ = props;
+  }
+ protected:
+  utils::Properties *props_;
 };
 
 } // ycsbc

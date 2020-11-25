@@ -7,9 +7,11 @@
 //
 
 #include <string>
+#include <map>
 
 #include "db/db_factory.h"
 #include "db/basic_db.h"
+#include "core/db_wrapper.h"
 #include "db/lock_stl_db.h"
 
 #ifdef BIND_LEVELDB
@@ -18,21 +20,23 @@
 
 namespace ycsbc {
 
-DB* DBFactory::CreateDB(utils::Properties &props) {
-  std::string prop_dbname = props.GetProperty("dbname", "basic");
-  if (prop_dbname == "basic") {
-    return new BasicDB;
-  } else if (prop_dbname == "lock_stl") {
-    return new LockStlDB;
-  } else if (prop_dbname == "leveldb") {
+static std::map<std::string, DB *(*)()> db_list = {
 #ifdef BIND_LEVELDB
-    return new LeveldbDB(props);
-#else
-    return nullptr;
+  { "leveldb", NewLeveldbDB },
 #endif
-  } else {
-    return nullptr;
+  { "lock_stl", NewLockStlDB },
+  { "basic", NewBasicDB }
+};
+
+DB *DBFactory::CreateDB(utils::Properties *props, Measurements *measurements) {
+  std::string prop_dbname = props->GetProperty("dbname", "basic");
+  DB *db = nullptr;
+  if (db_list.find(prop_dbname) != db_list.end()) {
+    DB *new_db = (*db_list[prop_dbname])();
+    new_db->SetProps(props);
+    db = new DBWrapper(new_db, measurements);
   }
+  return db;
 }
 
 } // ycsbc

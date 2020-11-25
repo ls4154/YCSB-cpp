@@ -16,83 +16,33 @@
 #include <mutex>
 #include "core/properties.h"
 
-using std::cout;
-using std::endl;
-
 namespace ycsbc {
 
 class BasicDB : public DB {
  public:
-  void Init() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "A new thread begins working." << endl;
-  }
+  void Init();
 
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
-           std::vector<KVPair> &result) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "READ " << table << ' ' << key;
-    if (fields) {
-      cout << " [ ";
-      for (auto f : *fields) {
-        cout << f << ' ';
-      }
-      cout << ']' << endl;
-    } else {
-      cout  << " < all fields >" << endl;
-    }
-    return 0;
-  }
+           std::vector<KVPair> &result);
 
   int Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<KVPair>> &result) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "SCAN " << table << ' ' << key << " " << len;
-    if (fields) {
-      cout << " [ ";
-      for (auto f : *fields) {
-        cout << f << ' ';
-      }
-      cout << ']' << endl;
-    } else {
-      cout  << " < all fields >" << endl;
-    }
-    return 0;
-  }
+           std::vector<std::vector<KVPair>> &result);
 
   int Update(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "UPDATE " << table << ' ' << key << " [ ";
-    for (auto v : values) {
-      cout << v.first << '=' << v.second << ' ';
-    }
-    cout << ']' << endl;
-    return 0;
-  }
+             std::vector<KVPair> &values);
 
   int Insert(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "INSERT " << table << ' ' << key << " [ ";
-    for (auto v : values) {
-      cout << v.first << '=' << v.second << ' ';
-    }
-    cout << ']' << endl;
-    return 0;
-  }
+             std::vector<KVPair> &values);
 
-  int Delete(const std::string &table, const std::string &key) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cout << "DELETE " << table << ' ' << key << endl;
-    return 0; 
-  }
+  int Delete(const std::string &table, const std::string &key);
 
  private:
   std::mutex mutex_;
 };
+
+DB *NewBasicDB();
 
 } // ycsbc
 

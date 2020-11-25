@@ -6,6 +6,7 @@
 //
 
 #include "leveldb_db.h"
+#include "core/properties.h"
 #include "core/utils.h"
 
 #include "leveldb/options.h"
@@ -13,7 +14,18 @@
 
 namespace ycsbc {
 
-LeveldbDB::LeveldbDB(const utils::Properties &props) {
+LeveldbDB::~LeveldbDB() {
+  delete db_;
+}
+
+void LeveldbDB::Init() {
+  const std::lock_guard<std::mutex> lock(mu_);
+  if (init_done_) {
+    return;
+  }
+  init_done_ = true;
+
+  const utils::Properties &props = *props_;
   const std::string &db_path = props.GetProperty("ldb_path", "");
   if (db_path == "") {
     throw utils::Exception("LevelDB db path is missing");
@@ -66,8 +78,7 @@ LeveldbDB::LeveldbDB(const utils::Properties &props) {
   // TODO fieldcount_ = std::stoi(props["fieldcount"]);
 }
 
-LeveldbDB::~LeveldbDB() {
-  delete db_;
+void LeveldbDB::Cleanup() {
 }
 
 void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt) {
@@ -396,6 +407,10 @@ int LeveldbDB::DeleteCompKey(const std::string &table, const std::string &key) {
     throw utils::Exception(std::string("LevelDB Write: ") + s.ToString());
   }
   return kOK;
+}
+
+DB *NewLeveldbDB() {
+  return new LeveldbDB;
 }
 
 } // ycsbc

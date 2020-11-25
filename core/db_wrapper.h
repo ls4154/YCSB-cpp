@@ -26,8 +26,8 @@ class DBWrapper : public DB {
   void Init() {
     db_->Init();
   }
-  void Close() {
-    db_->Close();
+  void Cleanup() {
+    db_->Cleanup();
   }
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
