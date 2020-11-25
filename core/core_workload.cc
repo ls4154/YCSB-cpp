@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
+#include "utils.h"
 #include "uniform_generator.h"
 #include "zipfian_generator.h"
 #include "scrambled_zipfian_generator.h"
@@ -195,7 +196,8 @@ void CoreWorkload::BuildValues(std::vector<ycsbc::DB::KVPair> &values) {
   for (int i = 0; i < field_count_; ++i) {
     ycsbc::DB::KVPair pair;
     pair.first.append("field").append(std::to_string(i));
-    pair.second.append(field_len_generator_->Next(), utils::RandomPrintChar());
+    pair.second.resize(field_len_generator_->Next());
+    std::generate(pair.second.begin(), pair.second.end(), utils::RandomPrintChar);
     values.push_back(pair);
   }
 }
@@ -203,7 +205,8 @@ void CoreWorkload::BuildValues(std::vector<ycsbc::DB::KVPair> &values) {
 void CoreWorkload::BuildUpdate(std::vector<ycsbc::DB::KVPair> &update) {
   ycsbc::DB::KVPair pair;
   pair.first.append(NextFieldName());
-  pair.second.append(field_len_generator_->Next(), utils::RandomPrintChar());
+  pair.second.resize(field_len_generator_->Next());
+  std::generate(pair.second.begin(), pair.second.end(), utils::RandomPrintChar);
   update.push_back(pair);
 }
 
