@@ -25,6 +25,8 @@
 #include "db/db_factory.h"
 #include "lib/countdown_latch.h"
 
+using namespace ycsbc;
+
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], utils::Properties &props);
