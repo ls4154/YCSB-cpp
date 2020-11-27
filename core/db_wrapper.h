@@ -8,12 +8,13 @@
 #ifndef YCSB_C_DB_WRAPPER_H_
 #define YCSB_C_DB_WRAPPER_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "db.h"
-#include "timer.h"
 #include "measurements.h"
+#include "timer.h"
+#include "utils.h"
 
 namespace ycsbc {
 

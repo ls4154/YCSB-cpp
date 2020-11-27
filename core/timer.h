@@ -1,8 +1,8 @@
 //
 //  timer.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by Jinglei Ren on 12/19/14.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
@@ -10,6 +10,8 @@
 #define YCSB_C_TIMER_H_
 
 #include <chrono>
+
+namespace ycsbc {
 
 namespace utils {
 
@@ -35,6 +37,8 @@ class Timer {
 };
 
 } // utils
+
+} // ycsbc
 
 #endif // YCSB_C_TIMER_H_
 

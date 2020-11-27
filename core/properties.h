@@ -13,7 +13,10 @@
 #include <map>
 #include <fstream>
 #include <cassert>
+
 #include "utils.h"
+
+namespace ycsbc {
 
 namespace utils {
 
@@ -67,5 +70,7 @@ inline void Properties::Load(std::ifstream &input) {
 }
 
 } // utils
+
+} // ycsbc
 
 #endif // YCSB_C_PROPERTIES_H_
