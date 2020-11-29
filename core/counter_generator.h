@@ -1,8 +1,8 @@
 //
 //  counter_generator.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by Jinglei Ren on 12/9/14.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
@@ -11,7 +11,6 @@
 
 #include "generator.h"
 
-#include <cstdint>
 #include <atomic>
 
 namespace ycsbc {
@@ -21,7 +20,6 @@ class CounterGenerator : public Generator<uint64_t> {
   CounterGenerator(uint64_t start) : counter_(start) { }
   uint64_t Next() { return counter_.fetch_add(1); }
   uint64_t Last() { return counter_.load() - 1; }
-  void Set(uint64_t start) { counter_.store(start); }
  private:
   std::atomic<uint64_t> counter_;
 };

@@ -38,10 +38,11 @@ class Client {
 };
 
 inline bool Client::DoInsert() {
-  std::string key = workload_.NextSequenceKey();
+  const std::string table = workload_.NextTable();
+  const std::string key = workload_.NextSequenceKey();
   std::vector<DB::KVPair> pairs;
   workload_.BuildValues(pairs);
-  return (db_.Insert(workload_.NextTable(), key, pairs) == DB::kOK);
+  return (db_.Insert(table, key, pairs) == DB::kOK);
 }
 
 inline bool Client::DoTransaction() {
@@ -132,10 +133,13 @@ inline int Client::TransactionUpdate() {
 
 inline int Client::TransactionInsert() {
   const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextSequenceKey();
+  uint64_t key_num;
+  const std::string key = workload_.NextTransactionSequenceKey(&key_num);
   std::vector<DB::KVPair> values;
   workload_.BuildValues(values);
-  return db_.Insert(table, key, values);
+  int s = db_.Insert(table, key, values);
+  workload_.AcknowledgeTransactionSequenceKey(key_num);
+  return s;
 }
 
 } // ycsbc

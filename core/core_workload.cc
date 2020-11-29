@@ -118,7 +118,6 @@ void CoreWorkload::Init(const utils::Properties &p) {
     ordered_inserts_ = true;
   }
 
-  key_generator_ = new CounterGenerator(insert_start);
 
   if (read_proportion > 0) {
     op_chooser_.AddValue(READ, read_proportion);
@@ -136,7 +135,8 @@ void CoreWorkload::Init(const utils::Properties &p) {
     op_chooser_.AddValue(READMODIFYWRITE, readmodifywrite_proportion);
   }
 
-  insert_key_sequence_.Set(record_count_);
+  insert_key_sequence_ = new CounterGenerator(insert_start);
+  transaction_insert_key_sequence_ = new AcknowledgedCounterGenerator(record_count_);
 
   if (request_dist == "uniform") {
     key_chooser_ = new UniformGenerator(0, record_count_ - 1);
@@ -152,7 +152,7 @@ void CoreWorkload::Init(const utils::Properties &p) {
     key_chooser_ = new ScrambledZipfianGenerator(record_count_ + new_keys);
 
   } else if (request_dist == "latest") {
-    key_chooser_ = new SkewedLatestGenerator(insert_key_sequence_);
+    key_chooser_ = new SkewedLatestGenerator(*transaction_insert_key_sequence_);
 
   } else {
     throw utils::Exception("Unknown request distribution: " + request_dist);
