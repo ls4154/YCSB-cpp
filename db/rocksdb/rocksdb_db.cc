@@ -71,6 +71,13 @@ void RocksdbDB::Cleanup() {
 void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt) {
   opt->compression = rocksdb::kNoCompression;
   opt->max_open_files = 1000;
+
+  if (props.GetProperty("rocks_increase_parallelism", "false") == "true") {
+    opt->IncreaseParallelism();
+  }
+  if (props.GetProperty("rocks_optimize_level_style_compaction", "false") == "true") {
+    opt->OptimizeLevelStyleCompaction();
+  }
 }
 
 void RocksdbDB::SerializeRow(const std::vector<KVPair> &values, std::string *data) {
