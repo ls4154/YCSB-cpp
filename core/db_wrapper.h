@@ -33,28 +33,48 @@ class DBWrapper : public DB {
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
            std::vector<KVPair> &result) {
-    measurements_->Report(READ);
-    return db_->Read(table, key, fields, result);
+    utils::Timer<double> timer;
+    timer.Start();
+    int s = db_->Read(table, key, fields, result);
+    double elapsed = timer.End();
+    measurements_->Report(READ, elapsed);
+    return s;
   }
   int Scan(const std::string &table, const std::string &key,
            int record_count, const std::vector<std::string> *fields,
            std::vector<std::vector<KVPair>> &result) {
-    measurements_->Report(SCAN);
-    return db_->Scan(table, key, record_count, fields, result);
+    utils::Timer<double> timer;
+    timer.Start();
+    int s = db_->Scan(table, key, record_count, fields, result);
+    double elapsed = timer.End();
+    measurements_->Report(SCAN, elapsed);
+    return s;
   }
   int Update(const std::string &table, const std::string &key,
              std::vector<KVPair> &values) {
-    measurements_->Report(UPDATE);
-    return db_->Update(table, key, values);
+    utils::Timer<double> timer;
+    timer.Start();
+    double elapsed = timer.End();
+    int s = db_->Update(table, key, values);
+    measurements_->Report(UPDATE, elapsed);
+    return s;
   }
   int Insert(const std::string &table, const std::string &key,
              std::vector<KVPair> &values) {
-    measurements_->Report(INSERT);
-    return db_->Insert(table, key, values);
+    utils::Timer<double> timer;
+    timer.Start();
+    int s = db_->Insert(table, key, values);
+    double elapsed = timer.End();
+    measurements_->Report(INSERT, elapsed);
+    return s;
   }
   int Delete(const std::string &table, const std::string &key) {
-    measurements_->Report(DELETE);
-    return db_->Delete(table, key);
+    utils::Timer<double> timer;
+    timer.Start();
+    int s = db_->Delete(table, key);
+    double elapsed = timer.End();
+    measurements_->Report(DELETE, elapsed);
+    return s;
   }
  private:
   DB *db_;

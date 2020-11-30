@@ -13,10 +13,11 @@
 
 namespace ycsbc {
 
+//TODO latency
 class Measurements {
  public:
   Measurements() : count_{} {}
-  void Report(Operation op) {
+  void Report(Operation op, double latency) {
     count_[op].fetch_add(1, std::memory_order_relaxed);
   }
   int GetCount(Operation op) {
