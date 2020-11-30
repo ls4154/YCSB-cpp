@@ -18,11 +18,18 @@
 #include "db/leveldb/leveldb_db.h"
 #endif
 
+#ifdef BIND_ROCKSDB
+#include "db/rocksdb/rocksdb_db.h"
+#endif
+
 namespace ycsbc {
 
 static std::map<std::string, DB *(*)()> db_list = {
 #ifdef BIND_LEVELDB
   { "leveldb", NewLeveldbDB },
+#endif
+#ifdef BIND_ROCKSDB
+  { "rocksdb", NewRocksdbDB },
 #endif
   { "lock_stl", NewLockStlDB },
   { "basic", NewBasicDB }

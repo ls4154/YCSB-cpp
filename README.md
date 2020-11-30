@@ -1,31 +1,27 @@
-# YCSB-C
+# YCSB-cpp
 
-Yahoo! Cloud Serving Benchmark in C++, a C++ version of YCSB (https://github.com/brianfrankcooper/YCSB/wiki)
+Yahoo! Cloud Serving Benchmark([YCSB](https://github.com/brianfrankcooper/YCSB/wiki)) written in C++.
+This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C).
 
-## Quick Start
+Currently LevelDB and RocksDB are supported.
 
-To build YCSB-C on Ubuntu, for example:
+## Building
 
+Simply use `make` to build.
+
+To bind only LevelDB:
 ```
-$ sudo apt-get install libtbb-dev
-$ make
-```
-
-As the driver for Redis is linked by default, change the runtime library path
-to include the hiredis library by:
-```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+make BIND_LEVELDB=1 BIND_ROCKSDB=0
 ```
 
-Run Workload A with a [TBB](https://www.threadingbuildingblocks.org)-based
-implementation of the database, for example:
+To build with additional libraries and include directories:
 ```
-./ycsbc -db tbb_rand -threads 4 -P workloads/workloada.spec
+make EXTRA_CXXFLAGS=-I/example/leveldb/include EXTRA_LDFLAGS=-L/example/leveldb/build
 ```
-Also reference run.sh and run\_redis.sh for the command line. See help by
-invoking `./ycsbc` without any arguments.
 
-Note that we do not have load and run commands as the original YCSB. Specify
-how many records to load by the recordcount property. Reference properties
-files in the workloads dir.
+## Running
 
+Run YCSB with leveldb:
+```
+./ycsbc -load -run -db leveldb -P workloads/workloada -P workloads/leveldb.properties -s
+```

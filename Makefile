@@ -9,11 +9,12 @@
 
 #---------------------build config-------------------------
 
-DEBUG_BUILD = 0
-EXTRA_CXXFLAGS =
-EXTRA_LDFLAGS =
+DEBUG_BUILD ?= 0
+EXTRA_CXXFLAGS ?=
+EXTRA_LDFLAGS ?=
 
-BIND_LEVELDB = 1
+BIND_LEVELDB ?= 1
+BIND_ROCKSDB ?= 1
 
 #----------------------------------------------------------
 
@@ -28,6 +29,12 @@ ifeq ($(BIND_LEVELDB), 1)
 	LDFLAGS += -lleveldb
 	SOURCES += $(wildcard db/leveldb/*.cc)
 	CPPFLAGS += -DBIND_LEVELDB
+endif
+
+ifeq ($(BIND_ROCKSDB), 1)
+	LDFLAGS += -lrocksdb
+	SOURCES += $(wildcard db/rocksdb/*.cc)
+	CPPFLAGS += -DBIND_ROCKSDB
 endif
 
 CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
