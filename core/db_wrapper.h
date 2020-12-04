@@ -54,8 +54,8 @@ class DBWrapper : public DB {
              std::vector<KVPair> &values) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    uint64_t elapsed = timer.End();
     int s = db_->Update(table, key, values);
+    uint64_t elapsed = timer.End();
     measurements_->Report(UPDATE, elapsed);
     return s;
   }
