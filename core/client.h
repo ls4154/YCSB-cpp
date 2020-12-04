@@ -100,7 +100,7 @@ inline int Client::TransactionReadModifyWrite() {
   if (workload_.write_all_fields()) {
     workload_.BuildValues(values);
   } else {
-    workload_.BuildUpdate(values);
+    workload_.BuildSingleValue(values);
   }
   return db_.Update(table, key, values);
 }
@@ -126,7 +126,7 @@ inline int Client::TransactionUpdate() {
   if (workload_.write_all_fields()) {
     workload_.BuildValues(values);
   } else {
-    workload_.BuildUpdate(values);
+    workload_.BuildSingleValue(values);
   }
   return db_.Update(table, key, values);
 }

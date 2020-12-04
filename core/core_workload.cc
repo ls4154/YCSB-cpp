@@ -13,7 +13,10 @@
 #include "skewed_latest_generator.h"
 #include "const_generator.h"
 #include "core_workload.h"
+#include "random_byte_generator.h"
 
+#include <algorithm>
+#include <random>
 #include <string>
 
 using ycsbc::CoreWorkload;
@@ -190,19 +193,23 @@ ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
 
 void CoreWorkload::BuildValues(std::vector<ycsbc::DB::KVPair> &values) {
   for (int i = 0; i < field_count_; ++i) {
-    ycsbc::DB::KVPair pair;
+    values.push_back(DB::KVPair());
+    ycsbc::DB::KVPair &pair = values.back();
     pair.first.append("field").append(std::to_string(i));
-    pair.second.resize(field_len_generator_->Next());
-    std::generate(pair.second.begin(), pair.second.end(), utils::RandomPrintChar);
-    values.push_back(pair);
+    uint64_t len = field_len_generator_->Next();
+    pair.second.reserve(len);
+    RandomByteGenerator byte_generator;
+    std::generate_n(std::back_inserter(pair.second), len, [&]() { return byte_generator.Next(); } );
   }
 }
 
-void CoreWorkload::BuildUpdate(std::vector<ycsbc::DB::KVPair> &update) {
-  ycsbc::DB::KVPair pair;
+void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::KVPair> &values) {
+  values.push_back(DB::KVPair());
+  ycsbc::DB::KVPair &pair = values.back();
   pair.first.append(NextFieldName());
-  pair.second.resize(field_len_generator_->Next());
-  std::generate(pair.second.begin(), pair.second.end(), utils::RandomPrintChar);
-  update.push_back(pair);
+  uint64_t len = field_len_generator_->Next();
+  pair.second.reserve(len);
+  RandomByteGenerator byte_generator;
+  std::generate_n(std::back_inserter(pair.second), len, [&]() { return byte_generator.Next(); } );
 }
 

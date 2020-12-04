@@ -36,6 +36,11 @@ inline uint64_t FNVHash64(uint64_t val) {
 
 inline uint64_t Hash(uint64_t val) { return FNVHash64(val); }
 
+inline uint32_t ThreadLocalRandomInt() {
+  static thread_local std::minstd_rand rn;
+  return rn();
+}
+
 inline double RandomDouble(double min = 0.0, double max = 1.0) {
   static std::default_random_engine generator;
   static std::uniform_real_distribution<double> uniform(min, max);
