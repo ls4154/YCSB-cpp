@@ -69,8 +69,6 @@ void RocksdbDB::Cleanup() {
 }
 
 void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt) {
-  opt->compression = rocksdb::kNoCompression;
-  opt->max_open_files = 1000;
 
   if (props.GetProperty("rocks_increase_parallelism", "false") == "true") {
     opt->IncreaseParallelism();
