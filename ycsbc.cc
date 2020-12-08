@@ -22,8 +22,8 @@
 #include "core/client.h"
 #include "core/measurements.h"
 #include "core/core_workload.h"
+#include "core/countdown_latch.h"
 #include "db/db_factory.h"
-#include "lib/countdown_latch.h"
 
 using namespace ycsbc;
 

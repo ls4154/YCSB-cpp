@@ -12,7 +12,6 @@
 #include "db/db_factory.h"
 #include "db/basic_db.h"
 #include "core/db_wrapper.h"
-#include "db/lock_stl_db.h"
 
 #ifdef BIND_LEVELDB
 #include "db/leveldb/leveldb_db.h"
@@ -31,7 +30,6 @@ static std::map<std::string, DB *(*)()> db_list = {
 #ifdef BIND_ROCKSDB
   { "rocksdb", NewRocksdbDB },
 #endif
-  { "lock_stl", NewLockStlDB },
   { "basic", NewBasicDB }
 };
 
