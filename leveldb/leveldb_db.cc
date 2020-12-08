@@ -8,6 +8,7 @@
 #include "leveldb_db.h"
 #include "core/properties.h"
 #include "core/utils.h"
+#include "core/core_workload.h"
 
 #include <leveldb/options.h>
 #include <leveldb/write_batch.h>
@@ -74,8 +75,10 @@ void LeveldbDB::Init() {
     throw utils::Exception("unknown format");
   }
 
-  fieldcount_ = 10;
-  // TODO fieldcount_ = std::stoi(props["fieldcount"]);
+  fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
+                                            CoreWorkload::FIELD_COUNT_DEFAULT));
+  field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
+                                    CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
 }
 
 void LeveldbDB::Cleanup() {
@@ -290,7 +293,7 @@ int LeveldbDB::ReadCompKeyRM(const std::string &table, const std::string &key,
       std::string cur_key = KeyFromCompKey(comp_key);
       std::string cur_field = FieldFromCompKey(comp_key);
       assert(cur_key == key);
-      assert(cur_field == std::string("field") + std::to_string(i));
+      assert(cur_field == field_prefix_ + std::to_string(i));
 
       if (cur_field == *filter_iter) {
         result.push_back({cur_field, cur_val});
@@ -306,7 +309,7 @@ int LeveldbDB::ReadCompKeyRM(const std::string &table, const std::string &key,
       std::string cur_key = KeyFromCompKey(comp_key);
       std::string cur_field = FieldFromCompKey(comp_key);
       assert(cur_key == key);
-      assert(cur_field == std::string("field") + std::to_string(i));
+      assert(cur_field == field_prefix_ + std::to_string(i));
 
       result.push_back({cur_field, cur_val});
       db_iter->Next();
@@ -333,7 +336,7 @@ int LeveldbDB::ScanCompKeyRM(const std::string &table, const std::string &key,
         std::string cur_val = db_iter->value().ToString();
         std::string cur_key = KeyFromCompKey(comp_key);
         std::string cur_field = FieldFromCompKey(comp_key);
-        assert(cur_field == std::string("field") + std::to_string(j));
+        assert(cur_field == field_prefix_ + std::to_string(j));
 
         if (cur_field == *filter_iter) {
           values.push_back({cur_field, cur_val});
@@ -348,7 +351,7 @@ int LeveldbDB::ScanCompKeyRM(const std::string &table, const std::string &key,
         std::string cur_val = db_iter->value().ToString();
         std::string cur_key = KeyFromCompKey(comp_key);
         std::string cur_field = FieldFromCompKey(comp_key);
-        assert(cur_field == std::string("field") + std::to_string(j));
+        assert(cur_field == field_prefix_ + std::to_string(j));
 
         values.push_back({cur_field, cur_val});
         db_iter->Next();
@@ -398,7 +401,7 @@ int LeveldbDB::DeleteCompKey(const std::string &table, const std::string &key) {
 
   std::string comp_key;
   for (int i = 0; i < fieldcount_; i++) {
-    comp_key = BuildCompKey(key, std::string("field") + std::to_string(i));
+    comp_key = BuildCompKey(key, field_prefix_ + std::to_string(i));
     batch.Delete(comp_key);
   }
 

@@ -139,6 +139,12 @@ class CoreWorkload {
   static const std::string OPERATION_COUNT_PROPERTY;
 
   ///
+  /// Field name prefix.
+  ///
+  static const std::string FIELD_NAME_PREFIX;
+  static const std::string FIELD_NAME_PREFIX_DEFAULT;
+
+  ///
   /// Initialize the scenario.
   /// Called once, in the main client thread, before any operations are started.
   ///
@@ -181,6 +187,7 @@ class CoreWorkload {
 
   std::string table_name_;
   int field_count_;
+  std::string field_prefix_;
   bool read_all_fields_;
   bool write_all_fields_;
   Generator<uint64_t> *field_len_generator_;
@@ -224,7 +231,7 @@ inline std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
 }
 
 inline std::string CoreWorkload::NextFieldName() {
-  return std::string("field").append(std::to_string(field_chooser_->Next()));
+  return std::string(field_prefix_).append(std::to_string(field_chooser_->Next()));
 }
 
 } // ycsbc

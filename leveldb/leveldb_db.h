@@ -113,6 +113,7 @@ class LeveldbDB : public DB {
                                    std::vector<Field> &);
   int (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
   int fieldcount_;
+  std::string field_prefix_;
 
   bool init_done_;
   std::mutex mu_;

@@ -8,6 +8,7 @@
 #include "rocksdb_db.h"
 #include "core/properties.h"
 #include "core/utils.h"
+#include "core/core_workload.h"
 
 #include <rocksdb/status.h>
 #include <rocksdb/cache.h>
@@ -61,8 +62,8 @@ void RocksdbDB::Init() {
     throw utils::Exception("unknown format");
   }
 
-  fieldcount_ = 10;
-  // TODO fieldcount_ = std::stoi(props["fieldcount"]);
+  fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
+                                            CoreWorkload::FIELD_COUNT_DEFAULT));
 }
 
 void RocksdbDB::Cleanup() {

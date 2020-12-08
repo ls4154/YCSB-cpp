@@ -82,11 +82,14 @@ const string CoreWorkload::INSERT_START_DEFAULT = "0";
 const string CoreWorkload::RECORD_COUNT_PROPERTY = "recordcount";
 const string CoreWorkload::OPERATION_COUNT_PROPERTY = "operationcount";
 
+const std::string CoreWorkload::FIELD_NAME_PREFIX = "fieldnameprefix";
+const std::string CoreWorkload::FIELD_NAME_PREFIX_DEFAULT = "field";
+
 void CoreWorkload::Init(const utils::Properties &p) {
   table_name_ = p.GetProperty(TABLENAME_PROPERTY,TABLENAME_DEFAULT);
 
-  field_count_ = std::stoi(p.GetProperty(FIELD_COUNT_PROPERTY,
-                                         FIELD_COUNT_DEFAULT));
+  field_count_ = std::stoi(p.GetProperty(FIELD_COUNT_PROPERTY, FIELD_COUNT_DEFAULT));
+  field_prefix_ = p.GetProperty(FIELD_NAME_PREFIX, FIELD_NAME_PREFIX_DEFAULT);
   field_len_generator_ = GetFieldLenGenerator(p);
 
   double read_proportion = std::stod(p.GetProperty(READ_PROPORTION_PROPERTY,
@@ -195,7 +198,7 @@ void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
   for (int i = 0; i < field_count_; ++i) {
     values.push_back(DB::Field());
     ycsbc::DB::Field &field = values.back();
-    field.name.append("field").append(std::to_string(i));
+    field.name.append(field_prefix_).append(std::to_string(i));
     uint64_t len = field_len_generator_->Next();
     field.value.reserve(len);
     RandomByteGenerator byte_generator;

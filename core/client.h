@@ -76,7 +76,7 @@ inline int Client::TransactionRead() {
   std::vector<DB::Field> result;
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
+    fields.push_back(workload_.NextFieldName());
     return db_.Read(table, key, &fields, result);
   } else {
     return db_.Read(table, key, NULL, result);
@@ -90,7 +90,7 @@ inline int Client::TransactionReadModifyWrite() {
 
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
+    fields.push_back(workload_.NextFieldName());
     db_.Read(table, key, &fields, result);
   } else {
     db_.Read(table, key, NULL, result);
@@ -112,7 +112,7 @@ inline int Client::TransactionScan() {
   std::vector<std::vector<DB::Field>> result;
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
+    fields.push_back(workload_.NextFieldName());
     return db_.Scan(table, key, len, &fields, result);
   } else {
     return db_.Scan(table, key, len, NULL, result);
