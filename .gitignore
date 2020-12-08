@@ -37,7 +37,7 @@
 *.data
 *.output
 
-ycsbc
+ycsb
 
 # vim and clangd
 .vimrc

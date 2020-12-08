@@ -41,11 +41,11 @@ CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc) $(wildcard db/*.cc)
 OBJECTS += $(SOURCES:.cc=.o)
-EXEC = ycsbc
+EXEC = ycsb
 
 all: $(EXEC)
 
-$(EXEC): $(wildcard *.cc) $(OBJECTS)
+$(EXEC): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 .cc.o:
