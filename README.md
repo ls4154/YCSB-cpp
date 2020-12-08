@@ -23,5 +23,5 @@ make EXTRA_CXXFLAGS=-I/example/leveldb/include EXTRA_LDFLAGS=-L/example/leveldb/
 
 Run YCSB with leveldb:
 ```
-./ycsbc -load -run -db leveldb -P workloads/workloada -P workloads/leveldb.properties -s
+./ycsb -load -run -db leveldb -P workloads/workloada -P leveldb/leveldb.properties -s
 ```

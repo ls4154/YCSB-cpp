@@ -9,16 +9,16 @@
 #include <string>
 #include <map>
 
-#include "db/db_factory.h"
-#include "db/basic_db.h"
-#include "core/db_wrapper.h"
+#include "db_factory.h"
+#include "basic_db.h"
+#include "db_wrapper.h"
 
 #ifdef BIND_LEVELDB
-#include "db/leveldb/leveldb_db.h"
+#include "leveldb/leveldb_db.h"
 #endif
 
 #ifdef BIND_ROCKSDB
-#include "db/rocksdb/rocksdb_db.h"
+#include "rocksdb/rocksdb_db.h"
 #endif
 
 namespace ycsbc {

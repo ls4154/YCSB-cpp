@@ -27,19 +27,19 @@ endif
 
 ifeq ($(BIND_LEVELDB), 1)
 	LDFLAGS += -lleveldb
-	SOURCES += $(wildcard db/leveldb/*.cc)
+	SOURCES += $(wildcard leveldb/*.cc)
 	CPPFLAGS += -DBIND_LEVELDB
 endif
 
 ifeq ($(BIND_ROCKSDB), 1)
 	LDFLAGS += -lrocksdb
-	SOURCES += $(wildcard db/rocksdb/*.cc)
+	SOURCES += $(wildcard rocksdb/*.cc)
 	CPPFLAGS += -DBIND_ROCKSDB
 endif
 
 CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
-SOURCES += $(wildcard core/*.cc) $(wildcard db/*.cc)
+SOURCES += $(wildcard core/*.cc)
 OBJECTS += $(SOURCES:.cc=.o)
 EXEC = ycsb
 

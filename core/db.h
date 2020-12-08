@@ -9,7 +9,8 @@
 #ifndef YCSB_C_DB_H_
 #define YCSB_C_DB_H_
 
-#include "core/properties.h"
+#include "properties.h"
+
 #include <vector>
 #include <string>
 

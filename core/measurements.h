@@ -9,8 +9,8 @@
 #define YCSB_C_MEASUREMENTS_H_
 
 #include "core_workload.h"
+
 #include <atomic>
-#include <bits/stdint-uintn.h>
 
 namespace ycsbc {
 

@@ -9,12 +9,12 @@
 #ifndef YCSB_C_BASIC_DB_H_
 #define YCSB_C_BASIC_DB_H_
 
-#include "core/db.h"
+#include "db.h"
+#include "properties.h"
 
 #include <iostream>
 #include <string>
 #include <mutex>
-#include "core/properties.h"
 
 namespace ycsbc {
 
