@@ -40,7 +40,7 @@ class Client {
 inline bool Client::DoInsert() {
   const std::string table = workload_.NextTable();
   const std::string key = workload_.NextSequenceKey();
-  std::vector<DB::KVPair> pairs;
+  std::vector<DB::Field> pairs;
   workload_.BuildValues(pairs);
   return (db_.Insert(table, key, pairs) == DB::kOK);
 }
@@ -73,7 +73,7 @@ inline bool Client::DoTransaction() {
 inline int Client::TransactionRead() {
   const std::string table = workload_.NextTable();
   const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> result;
+  std::vector<DB::Field> result;
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
     fields.push_back("field" + workload_.NextFieldName());
@@ -86,7 +86,7 @@ inline int Client::TransactionRead() {
 inline int Client::TransactionReadModifyWrite() {
   const std::string table = workload_.NextTable();
   const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> result;
+  std::vector<DB::Field> result;
 
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
@@ -96,7 +96,7 @@ inline int Client::TransactionReadModifyWrite() {
     db_.Read(table, key, NULL, result);
   }
 
-  std::vector<DB::KVPair> values;
+  std::vector<DB::Field> values;
   if (workload_.write_all_fields()) {
     workload_.BuildValues(values);
   } else {
@@ -109,7 +109,7 @@ inline int Client::TransactionScan() {
   const std::string table = workload_.NextTable();
   const std::string key = workload_.NextTransactionKey();
   int len = workload_.NextScanLength();
-  std::vector<std::vector<DB::KVPair>> result;
+  std::vector<std::vector<DB::Field>> result;
   if (!workload_.read_all_fields()) {
     std::vector<std::string> fields;
     fields.push_back("field" + workload_.NextFieldName());
@@ -122,7 +122,7 @@ inline int Client::TransactionScan() {
 inline int Client::TransactionUpdate() {
   const std::string table = workload_.NextTable();
   const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> values;
+  std::vector<DB::Field> values;
   if (workload_.write_all_fields()) {
     workload_.BuildValues(values);
   } else {
@@ -135,7 +135,7 @@ inline int Client::TransactionInsert() {
   const std::string table = workload_.NextTable();
   uint64_t key_num;
   const std::string key = workload_.NextTransactionSequenceKey(&key_num);
-  std::vector<DB::KVPair> values;
+  std::vector<DB::Field> values;
   workload_.BuildValues(values);
   int s = db_.Insert(table, key, values);
   workload_.AcknowledgeTransactionSequenceKey(key_num);

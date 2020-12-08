@@ -144,8 +144,8 @@ class CoreWorkload {
   ///
   virtual void Init(const utils::Properties &p);
 
-  virtual void BuildValues(std::vector<ycsbc::DB::KVPair> &values);
-  virtual void BuildSingleValue(std::vector<ycsbc::DB::KVPair> &update);
+  virtual void BuildValues(std::vector<DB::Field> &values);
+  virtual void BuildSingleValue(std::vector<DB::Field> &update);
 
   virtual std::string NextTable() { return table_name_; }
   virtual std::string NextSequenceKey(); /// Used for loading data

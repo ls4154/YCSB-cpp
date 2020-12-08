@@ -191,25 +191,25 @@ ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
   }
 }
 
-void CoreWorkload::BuildValues(std::vector<ycsbc::DB::KVPair> &values) {
+void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
   for (int i = 0; i < field_count_; ++i) {
-    values.push_back(DB::KVPair());
-    ycsbc::DB::KVPair &pair = values.back();
-    pair.first.append("field").append(std::to_string(i));
+    values.push_back(DB::Field());
+    ycsbc::DB::Field &field = values.back();
+    field.name.append("field").append(std::to_string(i));
     uint64_t len = field_len_generator_->Next();
-    pair.second.reserve(len);
+    field.value.reserve(len);
     RandomByteGenerator byte_generator;
-    std::generate_n(std::back_inserter(pair.second), len, [&]() { return byte_generator.Next(); } );
+    std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
   }
 }
 
-void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::KVPair> &values) {
-  values.push_back(DB::KVPair());
-  ycsbc::DB::KVPair &pair = values.back();
-  pair.first.append(NextFieldName());
+void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::Field> &values) {
+  values.push_back(DB::Field());
+  ycsbc::DB::Field &field = values.back();
+  field.name.append(NextFieldName());
   uint64_t len = field_len_generator_->Next();
-  pair.second.reserve(len);
+  field.value.reserve(len);
   RandomByteGenerator byte_generator;
-  std::generate_n(std::back_inserter(pair.second), len, [&]() { return byte_generator.Next(); } );
+  std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
 }
 

@@ -21,7 +21,7 @@ void BasicDB::Init() {
 
 int BasicDB::Read(const std::string &table, const std::string &key,
          const std::vector<std::string> *fields,
-         std::vector<KVPair> &result) {
+         std::vector<Field> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "READ " << table << ' ' << key;
   if (fields) {
@@ -38,7 +38,7 @@ int BasicDB::Read(const std::string &table, const std::string &key,
 
 int BasicDB::Scan(const std::string &table, const std::string &key,
          int len, const std::vector<std::string> *fields,
-         std::vector<std::vector<KVPair>> &result) {
+         std::vector<std::vector<Field>> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "SCAN " << table << ' ' << key << " " << len;
   if (fields) {
@@ -54,22 +54,22 @@ int BasicDB::Scan(const std::string &table, const std::string &key,
 }
 
 int BasicDB::Update(const std::string &table, const std::string &key,
-           std::vector<KVPair> &values) {
+           std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "UPDATE " << table << ' ' << key << " [ ";
   for (auto v : values) {
-    cout << v.first << '=' << v.second << ' ';
+    cout << v.name << '=' << v.value << ' ';
   }
   cout << ']' << endl;
   return 0;
 }
 
 int BasicDB::Insert(const std::string &table, const std::string &key,
-           std::vector<KVPair> &values) {
+           std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "INSERT " << table << ' ' << key << " [ ";
   for (auto v : values) {
-    cout << v.first << '=' << v.second << ' ';
+    cout << v.name << '=' << v.value << ' ';
   }
   cout << ']' << endl;
   return 0;

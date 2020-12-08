@@ -32,7 +32,7 @@ class DBWrapper : public DB {
   }
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
-           std::vector<KVPair> &result) {
+           std::vector<Field> &result) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
     int s = db_->Read(table, key, fields, result);
@@ -42,7 +42,7 @@ class DBWrapper : public DB {
   }
   int Scan(const std::string &table, const std::string &key,
            int record_count, const std::vector<std::string> *fields,
-           std::vector<std::vector<KVPair>> &result) {
+           std::vector<std::vector<Field>> &result) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
     int s = db_->Scan(table, key, record_count, fields, result);
@@ -51,7 +51,7 @@ class DBWrapper : public DB {
     return s;
   }
   int Update(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
+             std::vector<Field> &values) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
     int s = db_->Update(table, key, values);
@@ -60,7 +60,7 @@ class DBWrapper : public DB {
     return s;
   }
   int Insert(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
+             std::vector<Field> &values) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
     int s = db_->Insert(table, key, values);

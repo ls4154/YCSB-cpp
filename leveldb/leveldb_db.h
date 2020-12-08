@@ -36,23 +36,23 @@ class LeveldbDB : public DB {
 
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
-           std::vector<KVPair> &result) {
+           std::vector<Field> &result) {
     return (this->*(method_read_))(table, key, fields, result);
   }
 
   int Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<KVPair>> &result) {
+           std::vector<std::vector<Field>> &result) {
     return (this->*(method_scan_))(table, key, len, fields, result);
   }
 
   int Update(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
+             std::vector<Field> &values) {
     return (this->*(method_update_))(table, key, values);
   }
 
   int Insert(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values) {
+             std::vector<Field> &values) {
     return (this->*(method_insert_))(table, key, values);
   }
 
@@ -68,49 +68,49 @@ class LeveldbDB : public DB {
   };
   LdbFormat format_;
   void GetOptions(const utils::Properties &props, leveldb::Options *opt);
-  void SerializeRow(const std::vector<KVPair> &values, std::string *data);
-  void DeserializeRowFilter(std::vector<KVPair> *values, const std::string &data,
+  void SerializeRow(const std::vector<Field> &values, std::string *data);
+  void DeserializeRowFilter(std::vector<Field> *values, const std::string &data,
                             const std::vector<std::string> &fields);
-  void DeserializeRow(std::vector<KVPair> *values, const std::string &data);
+  void DeserializeRow(std::vector<Field> *values, const std::string &data);
   std::string BuildCompKey(const std::string &key, const std::string &field_name);
   std::string KeyFromCompKey(const std::string &comp_key);
   std::string FieldFromCompKey(const std::string &comp_key);
 
   int ReadSingleEntry(const std::string &table, const std::string &key,
-                      const std::vector<std::string> *fields, std::vector<KVPair> &result);
+                      const std::vector<std::string> *fields, std::vector<Field> &result);
   int ScanSingleEntry(const std::string &table, const std::string &key,
                       int len, const std::vector<std::string> *fields,
-                      std::vector<std::vector<KVPair>> &result);
+                      std::vector<std::vector<Field>> &result);
   int UpdateSingleEntry(const std::string &table, const std::string &key,
-                        std::vector<KVPair> &values);
+                        std::vector<Field> &values);
   int InsertSingleEntry(const std::string &table, const std::string &key,
-                        std::vector<KVPair> &values);
+                        std::vector<Field> &values);
   int DeleteSingleEntry(const std::string &table, const std::string &key);
 
   int ReadCompKeyRM(const std::string &table, const std::string &key,
-                    const std::vector<std::string> *fields, std::vector<KVPair> &result);
+                    const std::vector<std::string> *fields, std::vector<Field> &result);
   int ScanCompKeyRM(const std::string &table, const std::string &key,
                     int len, const std::vector<std::string> *fields,
-                    std::vector<std::vector<KVPair>> &result);
+                    std::vector<std::vector<Field>> &result);
   int ReadCompKeyCM(const std::string &table, const std::string &key,
-                    const std::vector<std::string> *fields, std::vector<KVPair> &result);
+                    const std::vector<std::string> *fields, std::vector<Field> &result);
   int ScanCompKeyCM(const std::string &table, const std::string &key,
                     int len, const std::vector<std::string> *fields,
-                    std::vector<std::vector<KVPair>> &result);
+                    std::vector<std::vector<Field>> &result);
   int InsertCompKey(const std::string &table, const std::string &key,
-                    std::vector<KVPair> &values);
+                    std::vector<Field> &values);
   int DeleteCompKey(const std::string &table, const std::string &key);
 
   leveldb::DB *db_;
   int (LeveldbDB::*method_read_)(const std::string &, const std:: string &,
-                                 const std::vector<std::string> *, std::vector<KVPair> &);
+                                 const std::vector<std::string> *, std::vector<Field> &);
   int (LeveldbDB::*method_scan_)(const std::string &, const std::string &,
                                  int, const std::vector<std::string> *,
-                                 std::vector<std::vector<KVPair>> &);
+                                 std::vector<std::vector<Field>> &);
   int (LeveldbDB::*method_update_)(const std::string &, const std::string &,
-                                   std::vector<KVPair> &);
+                                   std::vector<Field> &);
   int (LeveldbDB::*method_insert_)(const std::string &, const std::string &,
-                                   std::vector<KVPair> &);
+                                   std::vector<Field> &);
   int (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
   int fieldcount_;
 

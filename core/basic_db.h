@@ -24,17 +24,17 @@ class BasicDB : public DB {
 
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
-           std::vector<KVPair> &result);
+           std::vector<Field> &result);
 
   int Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<KVPair>> &result);
+           std::vector<std::vector<Field>> &result);
 
   int Update(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values);
+             std::vector<Field> &values);
 
   int Insert(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values);
+             std::vector<Field> &values);
 
   int Delete(const std::string &table, const std::string &key);
 
