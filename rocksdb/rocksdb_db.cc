@@ -14,6 +14,26 @@
 #include <rocksdb/cache.h>
 #include <rocksdb/write_batch.h>
 
+namespace {
+  const std::string PROP_NAME = "rocksdb.dbname";
+  const std::string PROP_NAME_DEFAULT = "";
+
+  const std::string PROP_FORMAT = "rocksdb.format";
+  const std::string PROP_FORMAT_DEFAULT = "single";
+
+  const std::string PROP_DESTROY = "rocksdb.destroy";
+  const std::string PROP_DESTORY_DEFAULT = "false";
+
+  const std::string PROP_COMPRESSION = "rocksdb.compression";
+  const std::string PROP_COMPRESSION_DEFAULT = "no";
+
+  const std::string PROP_INCREASE_PARALLELISM = "rocksdb.increase_parallelism";
+  const std::string PROP_INCREASE_PARALLELISM_DEFAULT = "false";
+
+  const std::string PROP_OPTIMIZE_LEVELCOMP = "rocksdb.optimize_level_style_compaction";
+  const std::string PROP_OPTIMIZE_LEVELCOMP_DEFAULT = "false";
+} // anonymous
+
 namespace ycsbc {
 
 RocksdbDB::~RocksdbDB() {
@@ -28,7 +48,7 @@ void RocksdbDB::Init() {
   init_done_ = true;
 
   const utils::Properties &props = *props_;
-  const std::string &db_path = props.GetProperty("rocks_path", "");
+  const std::string &db_path = props.GetProperty(PROP_NAME, PROP_NAME_DEFAULT);
   if (db_path == "") {
     throw utils::Exception("RocksDB db path is missing");
   }
@@ -39,7 +59,7 @@ void RocksdbDB::Init() {
 
   rocksdb::Status s;
 
-  if (props.GetProperty("rocks_destroy", "false") == "true") {
+  if (props.GetProperty(PROP_DESTROY, PROP_DESTORY_DEFAULT) == "true") {
     s = rocksdb::DestroyDB(db_path, opt);
     if (!s.ok()) {
       throw utils::Exception(std::string("RocksDB DestoryDB: ") + s.ToString());
@@ -50,7 +70,7 @@ void RocksdbDB::Init() {
     throw utils::Exception(std::string("RocksDB Open: ") + s.ToString());
   }
 
-  const std::string &format = props.GetProperty("rocks_format", "single");
+  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
   if (format == "single") {
     format_ = kSingleEntry;
     method_read_ = &RocksdbDB::ReadSingleEntry;
@@ -70,11 +90,32 @@ void RocksdbDB::Cleanup() {
 }
 
 void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt) {
+  const std::string compression_type = props.GetProperty(PROP_COMPRESSION,
+                                                         PROP_COMPRESSION_DEFAULT);
+  if (compression_type == "no") {
+    opt->compression = rocksdb::kSnappyCompression;
+  } else if (compression_type == "snappy") {
+    opt->compression = rocksdb::kSnappyCompression;
+  } else if (compression_type == "zlib") {
+    opt->compression = rocksdb::kZlibCompression;
+  } else if (compression_type == "bzip2") {
+    opt->compression = rocksdb::kBZip2Compression;
+  } else if (compression_type == "lz4") {
+    opt->compression = rocksdb::kLZ4Compression;
+  } else if (compression_type == "lz4hc") {
+    opt->compression = rocksdb::kLZ4HCCompression;
+  } else if (compression_type == "xpress") {
+    opt->compression = rocksdb::kXpressCompression;
+  } else if (compression_type == "zstd") {
+    opt->compression = rocksdb::kZSTD;
+  } else {
+    throw utils::Exception("Unknown compression type");
+  }
 
-  if (props.GetProperty("rocks_increase_parallelism", "false") == "true") {
+  if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
     opt->IncreaseParallelism();
   }
-  if (props.GetProperty("rocks_optimize_level_style_compaction", "false") == "true") {
+  if (props.GetProperty(PROP_OPTIMIZE_LEVELCOMP, PROP_OPTIMIZE_LEVELCOMP_DEFAULT) == "true") {
     opt->OptimizeLevelStyleCompaction();
   }
 }

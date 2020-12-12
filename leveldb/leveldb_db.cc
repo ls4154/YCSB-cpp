@@ -13,6 +13,35 @@
 #include <leveldb/options.h>
 #include <leveldb/write_batch.h>
 
+namespace {
+  const std::string PROP_NAME = "leveldb.dbname";
+  const std::string PROP_NAME_DEFAULT = "";
+
+  const std::string PROP_FORMAT = "leveldb.format";
+  const std::string PROP_FORMAT_DEFAULT = "single";
+
+  const std::string PROP_DESTROY = "leveldb.destroy";
+  const std::string PROP_DESTROY_DEFAULT = "false";
+
+  const std::string PROP_COMPRESSION = "leveldb.compression";
+  const std::string PROP_COMPRESSION_DEFAULT = "no";
+
+  const std::string PROP_WRITE_BUFFER_SIZE = "leveldb.write_buffer_size";
+  const std::string PROP_WRITE_BUFFER_SIZE_DEFAULT = "-1";
+
+  const std::string PROP_MAX_FILE_SIZE = "leveldb.max_file_size";
+  const std::string PROP_MAX_FILE_SIZE_DEFAULT = "-1";
+
+  const std::string PROP_MAX_OPEN_FILES = "leveldb.max_open_files";
+  const std::string PROP_MAX_OPEN_FILES_DEFAULT = "-1";
+
+  const std::string PROP_CACHE_SIZE = "leveldb.cache_size";
+  const std::string PROP_CACHE_SIZE_DEFAULT = "-1";
+
+  const std::string PROP_FILTER_BITS = "leveldb.filter_bits";
+  const std::string PROP_FILTER_BITS_DEFAULT = "-1";
+}
+
 namespace ycsbc {
 
 LeveldbDB::~LeveldbDB() {
@@ -27,7 +56,7 @@ void LeveldbDB::Init() {
   init_done_ = true;
 
   const utils::Properties &props = *props_;
-  const std::string &db_path = props.GetProperty("ldb_path", "");
+  const std::string &db_path = props.GetProperty(PROP_NAME, PROP_NAME_DEFAULT);
   if (db_path == "") {
     throw utils::Exception("LevelDB db path is missing");
   }
@@ -38,7 +67,7 @@ void LeveldbDB::Init() {
 
   leveldb::Status s;
 
-  if (props.GetProperty("ldb_destroy", "false") == "true") {
+  if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
     s = leveldb::DestroyDB(db_path, opt);
     if (!s.ok()) {
       throw utils::Exception(std::string("LevelDB DestoryDB: ") + s.ToString());
@@ -49,7 +78,7 @@ void LeveldbDB::Init() {
     throw utils::Exception(std::string("LevelDB Open: ") + s.ToString());
   }
 
-  const std::string &format = props.GetProperty("ldb_format", "single");
+  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
   if (format == "single") {
     format_ = kSingleEntry;
     method_read_ = &LeveldbDB::ReadSingleEntry;
@@ -85,30 +114,35 @@ void LeveldbDB::Cleanup() {
 }
 
 void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt) {
-  size_t writer_buffer_size = std::stol(props.GetProperty("ldb_write_buffer_size", "0"));
+  size_t writer_buffer_size = std::stol(props.GetProperty(PROP_WRITE_BUFFER_SIZE,
+                                                          PROP_WRITE_BUFFER_SIZE_DEFAULT));
   if (writer_buffer_size > 0) {
     opt->write_buffer_size = writer_buffer_size;
   }
-  props.GetProperty("ldb_max_file_size", "0");
-  size_t max_file_size = std::stol(props.GetProperty("ldb_max_file_size", "0"));
+  size_t max_file_size = std::stol(props.GetProperty(PROP_MAX_FILE_SIZE,
+                                                     PROP_MAX_FILE_SIZE_DEFAULT));
   if (max_file_size > 0) {
     opt->max_file_size = max_file_size;
   }
-  size_t cache_size = std::stol(props.GetProperty("ldb_cache_size", "0"));
-  if (cache_size > 0) {
+  size_t cache_size = std::stol(props.GetProperty(PROP_CACHE_SIZE,
+                                                  PROP_CACHE_SIZE_DEFAULT));
+  if (cache_size >= 0) {
     opt->block_cache = leveldb::NewLRUCache(cache_size);
   }
-  int max_open_files = std::stoi(props.GetProperty("ldb_max_open_files", "0"));
+  int max_open_files = std::stoi(props.GetProperty(PROP_MAX_OPEN_FILES,
+                                                   PROP_MAX_OPEN_FILES_DEFAULT));
   if (max_open_files > 0) {
     opt->max_open_files = max_open_files;
   }
-  std::string compression = props.GetProperty("ldb_compression", "no");
+  std::string compression = props.GetProperty(PROP_COMPRESSION,
+                                              PROP_COMPRESSION_DEFAULT);
   if (compression == "snappy") {
     opt->compression = leveldb::kSnappyCompression;
   } else {
     opt->compression = leveldb::kNoCompression;
   }
-  int filter_bits = std::stoi(props.GetProperty("ldb_filter_bits", "0"));
+  int filter_bits = std::stoi(props.GetProperty(PROP_FILTER_BITS,
+                                                PROP_FILTER_BITS_DEFAULT));
   if (filter_bits > 0) {
     opt->filter_policy = leveldb::NewBloomFilterPolicy(filter_bits);
   }
