@@ -37,7 +37,8 @@ inline uint64_t FNVHash64(uint64_t val) {
 inline uint64_t Hash(uint64_t val) { return FNVHash64(val); }
 
 inline uint32_t ThreadLocalRandomInt() {
-  static thread_local std::minstd_rand rn;
+  static thread_local std::random_device rd;
+  static thread_local std::minstd_rand rn(rd());
   return rn();
 }
 
