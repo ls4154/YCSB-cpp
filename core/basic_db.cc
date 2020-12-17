@@ -20,9 +20,9 @@ void BasicDB::Init() {
   cout << "A new thread begins working." << endl;
 }
 
-int BasicDB::Read(const std::string &table, const std::string &key,
-         const std::vector<std::string> *fields,
-         std::vector<Field> &result) {
+DB::Status BasicDB::Read(const std::string &table, const std::string &key,
+                         const std::vector<std::string> *fields,
+                         std::vector<Field> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "READ " << table << ' ' << key;
   if (fields) {
@@ -34,12 +34,12 @@ int BasicDB::Read(const std::string &table, const std::string &key,
   } else {
     cout  << " < all fields >" << endl;
   }
-  return 0;
+  return kOK;
 }
 
-int BasicDB::Scan(const std::string &table, const std::string &key,
-         int len, const std::vector<std::string> *fields,
-         std::vector<std::vector<Field>> &result) {
+DB::Status BasicDB::Scan(const std::string &table, const std::string &key,
+                         int len, const std::vector<std::string> *fields,
+                         std::vector<std::vector<Field>> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "SCAN " << table << ' ' << key << " " << len;
   if (fields) {
@@ -51,35 +51,35 @@ int BasicDB::Scan(const std::string &table, const std::string &key,
   } else {
     cout  << " < all fields >" << endl;
   }
-  return 0;
+  return kOK;
 }
 
-int BasicDB::Update(const std::string &table, const std::string &key,
-           std::vector<Field> &values) {
+DB::Status BasicDB::Update(const std::string &table, const std::string &key,
+                           std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "UPDATE " << table << ' ' << key << " [ ";
   for (auto v : values) {
     cout << v.name << '=' << v.value << ' ';
   }
   cout << ']' << endl;
-  return 0;
+  return kOK;
 }
 
-int BasicDB::Insert(const std::string &table, const std::string &key,
-           std::vector<Field> &values) {
+DB::Status BasicDB::Insert(const std::string &table, const std::string &key,
+                           std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "INSERT " << table << ' ' << key << " [ ";
   for (auto v : values) {
     cout << v.name << '=' << v.value << ' ';
   }
   cout << ']' << endl;
-  return 0;
+  return kOK;
 }
 
-int BasicDB::Delete(const std::string &table, const std::string &key) {
+DB::Status BasicDB::Delete(const std::string &table, const std::string &key) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "DELETE " << table << ' ' << key << endl;
-  return 0; 
+  return kOK;
 }
 
 DB *NewBasicDB() {

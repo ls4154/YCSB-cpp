@@ -22,21 +22,17 @@ class BasicDB : public DB {
  public:
   void Init();
 
-  int Read(const std::string &table, const std::string &key,
-           const std::vector<std::string> *fields,
-           std::vector<Field> &result);
+  Status Read(const std::string &table, const std::string &key,
+              const std::vector<std::string> *fields, std::vector<Field> &result);
 
-  int Scan(const std::string &table, const std::string &key,
-           int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<Field>> &result);
+  Status Scan(const std::string &table, const std::string &key, int len,
+              const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result);
 
-  int Update(const std::string &table, const std::string &key,
-             std::vector<Field> &values);
+  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values);
 
-  int Insert(const std::string &table, const std::string &key,
-             std::vector<Field> &values);
+  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values);
 
-  int Delete(const std::string &table, const std::string &key);
+  Status Delete(const std::string &table, const std::string &key);
 
  private:
   std::mutex mutex_;

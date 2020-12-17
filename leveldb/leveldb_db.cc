@@ -227,12 +227,14 @@ std::string LeveldbDB::FieldFromCompKey(const std::string &comp_key) {
   return comp_key.substr(idx + 1);
 }
 
-int LeveldbDB::ReadSingleEntry(const std::string &table, const std::string &key,
-                               const std::vector<std::string> *fields,
-                               std::vector<Field> &result) {
+DB::Status LeveldbDB::ReadSingleEntry(const std::string &table, const std::string &key,
+                                      const std::vector<std::string> *fields,
+                                      std::vector<Field> &result) {
   std::string data;
   leveldb::Status s = db_->Get(leveldb::ReadOptions(), key, &data);
-  if (!s.ok()) {
+  if (s.IsNotFound()) {
+    return kNotFound;
+  } else if (!s.ok()) {
     throw utils::Exception(std::string("LevelDB Get: ") + s.ToString());
   }
   if (fields != nullptr) {
@@ -243,9 +245,9 @@ int LeveldbDB::ReadSingleEntry(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int LeveldbDB::ScanSingleEntry(const std::string &table, const std::string &key,
-                               int len, const std::vector<std::string> *fields,
-                               std::vector<std::vector<Field>> &result) {
+DB::Status LeveldbDB::ScanSingleEntry(const std::string &table, const std::string &key, int len,
+                                      const std::vector<std::string> *fields,
+                                      std::vector<std::vector<Field>> &result) {
   leveldb::Iterator *db_iter = db_->NewIterator(leveldb::ReadOptions());
   db_iter->Seek(key);
   for (int i = 0; db_iter->Valid() && i < len; i++) {
@@ -263,11 +265,13 @@ int LeveldbDB::ScanSingleEntry(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int LeveldbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
-                                 std::vector<Field> &values) {
+DB::Status LeveldbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
+                                        std::vector<Field> &values) {
   std::string data;
   leveldb::Status s = db_->Get(leveldb::ReadOptions(), key, &data);
-  if (!s.ok()) {
+  if (s.IsNotFound()) {
+    return kNotFound;
+  } else if (!s.ok()) {
     throw utils::Exception(std::string("LevelDB Get: ") + s.ToString());
   }
   std::vector<Field> current_values;
@@ -294,8 +298,8 @@ int LeveldbDB::UpdateSingleEntry(const std::string &table, const std::string &ke
   return kOK;
 }
 
-int LeveldbDB::InsertSingleEntry(const std::string &table, const std::string &key,
-                                 std::vector<Field> &values) {
+DB::Status LeveldbDB::InsertSingleEntry(const std::string &table, const std::string &key,
+                                        std::vector<Field> &values) {
   std::string data;
   SerializeRow(values, &data);
   leveldb::WriteOptions wopt;
@@ -306,7 +310,7 @@ int LeveldbDB::InsertSingleEntry(const std::string &table, const std::string &ke
   return kOK;
 }
 
-int LeveldbDB::DeleteSingleEntry(const std::string &table, const std::string &key) {
+DB::Status LeveldbDB::DeleteSingleEntry(const std::string &table, const std::string &key) {
   leveldb::WriteOptions wopt;
   leveldb::Status s = db_->Delete(wopt, key);
   if (!s.ok()) {
@@ -315,11 +319,14 @@ int LeveldbDB::DeleteSingleEntry(const std::string &table, const std::string &ke
   return kOK;
 }
 
-int LeveldbDB::ReadCompKeyRM(const std::string &table, const std::string &key,
-                             const std::vector<std::string> *fields,
-                             std::vector<Field> &result) {
+DB::Status LeveldbDB::ReadCompKeyRM(const std::string &table, const std::string &key,
+                                    const std::vector<std::string> *fields,
+                                    std::vector<Field> &result) {
   leveldb::Iterator *db_iter = db_->NewIterator(leveldb::ReadOptions());
   db_iter->Seek(key);
+  if (!db_iter->Valid() || KeyFromCompKey(db_iter->key().ToString()) != key) {
+    return kNotFound;
+  }
   if (fields != nullptr) {
     std::vector<std::string>::const_iterator filter_iter = fields->begin();
     for (int i = 0; i < fieldcount_ && filter_iter != fields->end() && db_iter->Valid(); i++) {
@@ -355,9 +362,9 @@ int LeveldbDB::ReadCompKeyRM(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int LeveldbDB::ScanCompKeyRM(const std::string &table, const std::string &key,
-                             int len, const std::vector<std::string> *fields,
-                             std::vector<std::vector<Field>> &result) {
+DB::Status LeveldbDB::ScanCompKeyRM(const std::string &table, const std::string &key, int len,
+                                    const std::vector<std::string> *fields,
+                                    std::vector<std::vector<Field>> &result) {
   leveldb::Iterator *db_iter = db_->NewIterator(leveldb::ReadOptions());
   db_iter->Seek(key);
   assert(db_iter->Valid() && KeyFromCompKey(db_iter->key().ToString()) == key);
@@ -398,22 +405,20 @@ int LeveldbDB::ScanCompKeyRM(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int LeveldbDB::ReadCompKeyCM(const std::string &table, const std::string &key,
-                             const std::vector<std::string> *fields,
-                             std::vector<Field> &result) {
-  throw utils::Exception("not implemented");
-  return kOK;
+DB::Status LeveldbDB::ReadCompKeyCM(const std::string &table, const std::string &key,
+                                    const std::vector<std::string> *fields,
+                                    std::vector<Field> &result) {
+  return kNotImplemented;
 }
 
-int LeveldbDB::ScanCompKeyCM(const std::string &table, const std::string &key,
-                             int len, const std::vector<std::string> *fields,
-                             std::vector<std::vector<Field>> &result) {
-  throw utils::Exception("not implemented");
-  return kOK;
+DB::Status LeveldbDB::ScanCompKeyCM(const std::string &table, const std::string &key, int len,
+                                    const std::vector<std::string> *fields,
+                                    std::vector<std::vector<Field>> &result) {
+  return kNotImplemented;
 }
 
-int LeveldbDB::InsertCompKey(const std::string &table, const std::string &key,
-                             std::vector<Field> &values) {
+DB::Status LeveldbDB::InsertCompKey(const std::string &table, const std::string &key,
+                                    std::vector<Field> &values) {
   leveldb::WriteOptions wopt;
   leveldb::WriteBatch batch;
 
@@ -430,7 +435,7 @@ int LeveldbDB::InsertCompKey(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int LeveldbDB::DeleteCompKey(const std::string &table, const std::string &key) {
+DB::Status LeveldbDB::DeleteCompKey(const std::string &table, const std::string &key) {
   leveldb::WriteOptions wopt;
   leveldb::WriteBatch batch;
 

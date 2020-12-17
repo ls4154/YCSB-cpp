@@ -34,29 +34,25 @@ class LeveldbDB : public DB {
 
   void Cleanup();
 
-  int Read(const std::string &table, const std::string &key,
-           const std::vector<std::string> *fields,
-           std::vector<Field> &result) {
+  Status Read(const std::string &table, const std::string &key,
+              const std::vector<std::string> *fields, std::vector<Field> &result) {
     return (this->*(method_read_))(table, key, fields, result);
   }
 
-  int Scan(const std::string &table, const std::string &key,
-           int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<Field>> &result) {
+  Status Scan(const std::string &table, const std::string &key, int len,
+              const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
     return (this->*(method_scan_))(table, key, len, fields, result);
   }
 
-  int Update(const std::string &table, const std::string &key,
-             std::vector<Field> &values) {
+  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
     return (this->*(method_update_))(table, key, values);
   }
 
-  int Insert(const std::string &table, const std::string &key,
-             std::vector<Field> &values) {
+  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
     return (this->*(method_insert_))(table, key, values);
   }
 
-  int Delete(const std::string &table, const std::string &key) {
+  Status Delete(const std::string &table, const std::string &key) {
     return (this->*(method_delete_))(table, key);
   }
 
@@ -76,42 +72,42 @@ class LeveldbDB : public DB {
   std::string KeyFromCompKey(const std::string &comp_key);
   std::string FieldFromCompKey(const std::string &comp_key);
 
-  int ReadSingleEntry(const std::string &table, const std::string &key,
-                      const std::vector<std::string> *fields, std::vector<Field> &result);
-  int ScanSingleEntry(const std::string &table, const std::string &key,
-                      int len, const std::vector<std::string> *fields,
-                      std::vector<std::vector<Field>> &result);
-  int UpdateSingleEntry(const std::string &table, const std::string &key,
-                        std::vector<Field> &values);
-  int InsertSingleEntry(const std::string &table, const std::string &key,
-                        std::vector<Field> &values);
-  int DeleteSingleEntry(const std::string &table, const std::string &key);
+  Status ReadSingleEntry(const std::string &table, const std::string &key,
+                         const std::vector<std::string> *fields, std::vector<Field> &result);
+  Status ScanSingleEntry(const std::string &table, const std::string &key, int len,
+                         const std::vector<std::string> *fields,
+                         std::vector<std::vector<Field>> &result);
+  Status UpdateSingleEntry(const std::string &table, const std::string &key,
+                           std::vector<Field> &values);
+  Status InsertSingleEntry(const std::string &table, const std::string &key,
+                           std::vector<Field> &values);
+  Status DeleteSingleEntry(const std::string &table, const std::string &key);
 
-  int ReadCompKeyRM(const std::string &table, const std::string &key,
-                    const std::vector<std::string> *fields, std::vector<Field> &result);
-  int ScanCompKeyRM(const std::string &table, const std::string &key,
-                    int len, const std::vector<std::string> *fields,
-                    std::vector<std::vector<Field>> &result);
-  int ReadCompKeyCM(const std::string &table, const std::string &key,
-                    const std::vector<std::string> *fields, std::vector<Field> &result);
-  int ScanCompKeyCM(const std::string &table, const std::string &key,
-                    int len, const std::vector<std::string> *fields,
-                    std::vector<std::vector<Field>> &result);
-  int InsertCompKey(const std::string &table, const std::string &key,
-                    std::vector<Field> &values);
-  int DeleteCompKey(const std::string &table, const std::string &key);
+  Status ReadCompKeyRM(const std::string &table, const std::string &key,
+                       const std::vector<std::string> *fields, std::vector<Field> &result);
+  Status ScanCompKeyRM(const std::string &table, const std::string &key, int len,
+                       const std::vector<std::string> *fields,
+                       std::vector<std::vector<Field>> &result);
+  Status ReadCompKeyCM(const std::string &table, const std::string &key,
+                       const std::vector<std::string> *fields, std::vector<Field> &result);
+  Status ScanCompKeyCM(const std::string &table, const std::string &key, int len,
+                       const std::vector<std::string> *fields,
+                       std::vector<std::vector<Field>> &result);
+  Status InsertCompKey(const std::string &table, const std::string &key,
+                       std::vector<Field> &values);
+  Status DeleteCompKey(const std::string &table, const std::string &key);
 
   leveldb::DB *db_;
-  int (LeveldbDB::*method_read_)(const std::string &, const std:: string &,
-                                 const std::vector<std::string> *, std::vector<Field> &);
-  int (LeveldbDB::*method_scan_)(const std::string &, const std::string &,
-                                 int, const std::vector<std::string> *,
-                                 std::vector<std::vector<Field>> &);
-  int (LeveldbDB::*method_update_)(const std::string &, const std::string &,
-                                   std::vector<Field> &);
-  int (LeveldbDB::*method_insert_)(const std::string &, const std::string &,
-                                   std::vector<Field> &);
-  int (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
+  Status (LeveldbDB::*method_read_)(const std::string &, const std:: string &,
+                                    const std::vector<std::string> *, std::vector<Field> &);
+  Status (LeveldbDB::*method_scan_)(const std::string &, const std::string &, int,
+                                    const std::vector<std::string> *,
+                                    std::vector<std::vector<Field>> &);
+  Status (LeveldbDB::*method_update_)(const std::string &, const std::string &,
+                                      std::vector<Field> &);
+  Status (LeveldbDB::*method_insert_)(const std::string &, const std::string &,
+                                      std::vector<Field> &);
+  Status (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
   int fieldcount_;
   std::string field_prefix_;
 

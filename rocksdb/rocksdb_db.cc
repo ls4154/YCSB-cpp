@@ -174,12 +174,14 @@ void RocksdbDB::DeserializeRow(std::vector<Field> *values, const std::string &da
   assert(values->size() == fieldcount_);
 }
 
-int RocksdbDB::ReadSingleEntry(const std::string &table, const std::string &key,
-                               const std::vector<std::string> *fields,
-                               std::vector<Field> &result) {
+DB::Status RocksdbDB::ReadSingleEntry(const std::string &table, const std::string &key,
+                                      const std::vector<std::string> *fields,
+                                      std::vector<Field> &result) {
   std::string data;
   rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
-  if (!s.ok()) {
+  if (s.IsNotFound()) {
+    return kNotFound;
+  } else if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Get: ") + s.ToString());
   }
   if (fields != nullptr) {
@@ -190,9 +192,9 @@ int RocksdbDB::ReadSingleEntry(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int RocksdbDB::ScanSingleEntry(const std::string &table, const std::string &key,
-                               int len, const std::vector<std::string> *fields,
-                               std::vector<std::vector<Field>> &result) {
+DB::Status RocksdbDB::ScanSingleEntry(const std::string &table, const std::string &key, int len,
+                                      const std::vector<std::string> *fields,
+                                      std::vector<std::vector<Field>> &result) {
   rocksdb::Iterator *db_iter = db_->NewIterator(rocksdb::ReadOptions());
   db_iter->Seek(key);
   for (int i = 0; db_iter->Valid() && i < len; i++) {
@@ -210,11 +212,13 @@ int RocksdbDB::ScanSingleEntry(const std::string &table, const std::string &key,
   return kOK;
 }
 
-int RocksdbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
-                                 std::vector<Field> &values) {
+DB::Status RocksdbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
+                                        std::vector<Field> &values) {
   std::string data;
   rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &data);
-  if (!s.ok()) {
+  if (s.IsNotFound()) {
+    return kNotFound;
+  } else if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Get: ") + s.ToString());
   }
   std::vector<Field> current_values;
@@ -241,8 +245,8 @@ int RocksdbDB::UpdateSingleEntry(const std::string &table, const std::string &ke
   return kOK;
 }
 
-int RocksdbDB::InsertSingleEntry(const std::string &table, const std::string &key,
-                                 std::vector<Field> &values) {
+DB::Status RocksdbDB::InsertSingleEntry(const std::string &table, const std::string &key,
+                                        std::vector<Field> &values) {
   std::string data;
   SerializeRow(values, &data);
   rocksdb::WriteOptions wopt;
@@ -253,7 +257,7 @@ int RocksdbDB::InsertSingleEntry(const std::string &table, const std::string &ke
   return kOK;
 }
 
-int RocksdbDB::DeleteSingleEntry(const std::string &table, const std::string &key) {
+DB::Status RocksdbDB::DeleteSingleEntry(const std::string &table, const std::string &key) {
   rocksdb::WriteOptions wopt;
   rocksdb::Status s = db_->Delete(wopt, key);
   if (!s.ok()) {

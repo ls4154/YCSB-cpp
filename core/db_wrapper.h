@@ -30,48 +30,44 @@ class DBWrapper : public DB {
   void Cleanup() {
     db_->Cleanup();
   }
-  int Read(const std::string &table, const std::string &key,
-           const std::vector<std::string> *fields,
-           std::vector<Field> &result) {
+  Status Read(const std::string &table, const std::string &key,
+              const std::vector<std::string> *fields, std::vector<Field> &result) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    int s = db_->Read(table, key, fields, result);
+    Status s = db_->Read(table, key, fields, result);
     uint64_t elapsed = timer.End();
     measurements_->Report(READ, elapsed);
     return s;
   }
-  int Scan(const std::string &table, const std::string &key,
-           int record_count, const std::vector<std::string> *fields,
-           std::vector<std::vector<Field>> &result) {
+  Status Scan(const std::string &table, const std::string &key, int record_count,
+              const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    int s = db_->Scan(table, key, record_count, fields, result);
+    Status s = db_->Scan(table, key, record_count, fields, result);
     uint64_t elapsed = timer.End();
     measurements_->Report(SCAN, elapsed);
     return s;
   }
-  int Update(const std::string &table, const std::string &key,
-             std::vector<Field> &values) {
+  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    int s = db_->Update(table, key, values);
+    Status s = db_->Update(table, key, values);
     uint64_t elapsed = timer.End();
     measurements_->Report(UPDATE, elapsed);
     return s;
   }
-  int Insert(const std::string &table, const std::string &key,
-             std::vector<Field> &values) {
+  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    int s = db_->Insert(table, key, values);
+    Status s = db_->Insert(table, key, values);
     uint64_t elapsed = timer.End();
     measurements_->Report(INSERT, elapsed);
     return s;
   }
-  int Delete(const std::string &table, const std::string &key) {
+  Status Delete(const std::string &table, const std::string &key) {
     utils::Timer<uint64_t, std::nano> timer;
     timer.Start();
-    int s = db_->Delete(table, key);
+    Status s = db_->Delete(table, key);
     uint64_t elapsed = timer.End();
     measurements_->Report(DELETE, elapsed);
     return s;
