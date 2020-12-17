@@ -13,134 +13,26 @@
 #include "db.h"
 #include "core_workload.h"
 #include "utils.h"
+#include "countdown_latch.h"
 
 namespace ycsbc {
 
-class Client {
- public:
-  Client(DB &db, CoreWorkload &wl) : db_(db), workload_(wl) { }
-
-  virtual bool DoInsert();
-  virtual bool DoTransaction();
-
-  virtual ~Client() { }
-
- protected:
-
-  virtual int TransactionRead();
-  virtual int TransactionReadModifyWrite();
-  virtual int TransactionScan();
-  virtual int TransactionUpdate();
-  virtual int TransactionInsert();
-
-  DB &db_;
-  CoreWorkload &workload_;
-};
-
-inline bool Client::DoInsert() {
-  const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextSequenceKey();
-  std::vector<DB::Field> pairs;
-  workload_.BuildValues(pairs);
-  return (db_.Insert(table, key, pairs) == DB::kOK);
-}
-
-inline bool Client::DoTransaction() {
-  int status = -1;
-  switch (workload_.NextOperation()) {
-    case READ:
-      status = TransactionRead();
-      break;
-    case UPDATE:
-      status = TransactionUpdate();
-      break;
-    case INSERT:
-      status = TransactionInsert();
-      break;
-    case SCAN:
-      status = TransactionScan();
-      break;
-    case READMODIFYWRITE:
-      status = TransactionReadModifyWrite();
-      break;
-    default:
-      throw utils::Exception("Operation request is not recognized!");
+inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
+                 CountDownLatch *latch) {
+  db->Init();
+  int oks = 0;
+  for (int i = 0; i < num_ops; ++i) {
+    if (is_loading) {
+      oks += wl->DoInsert(*db);
+    } else {
+      oks += wl->DoTransaction(*db);
+    }
   }
-  assert(status >= 0);
-  return (status == DB::kOK);
+  db->Cleanup();
+  latch->CountDown();
+  return oks;
 }
 
-inline int Client::TransactionRead() {
-  const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::Field> result;
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back(workload_.NextFieldName());
-    return db_.Read(table, key, &fields, result);
-  } else {
-    return db_.Read(table, key, NULL, result);
-  }
-}
-
-inline int Client::TransactionReadModifyWrite() {
-  const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::Field> result;
-
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back(workload_.NextFieldName());
-    db_.Read(table, key, &fields, result);
-  } else {
-    db_.Read(table, key, NULL, result);
-  }
-
-  std::vector<DB::Field> values;
-  if (workload_.write_all_fields()) {
-    workload_.BuildValues(values);
-  } else {
-    workload_.BuildSingleValue(values);
-  }
-  return db_.Update(table, key, values);
-}
-
-inline int Client::TransactionScan() {
-  const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextTransactionKey();
-  int len = workload_.NextScanLength();
-  std::vector<std::vector<DB::Field>> result;
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back(workload_.NextFieldName());
-    return db_.Scan(table, key, len, &fields, result);
-  } else {
-    return db_.Scan(table, key, len, NULL, result);
-  }
-}
-
-inline int Client::TransactionUpdate() {
-  const std::string table = workload_.NextTable();
-  const std::string key = workload_.NextTransactionKey();
-  std::vector<DB::Field> values;
-  if (workload_.write_all_fields()) {
-    workload_.BuildValues(values);
-  } else {
-    workload_.BuildSingleValue(values);
-  }
-  return db_.Update(table, key, values);
-}
-
-inline int Client::TransactionInsert() {
-  const std::string table = workload_.NextTable();
-  uint64_t key_num;
-  const std::string key = workload_.NextTransactionSequenceKey(&key_num);
-  std::vector<DB::Field> values;
-  workload_.BuildValues(values);
-  int s = db_.Insert(table, key, values);
-  workload_.AcknowledgeTransactionSequenceKey(key_num);
-  return s;
-}
 
 } // ycsbc
 

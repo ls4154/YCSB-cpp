@@ -67,6 +67,9 @@ const string CoreWorkload::READMODIFYWRITE_PROPORTION_DEFAULT = "0.0";
 const string CoreWorkload::REQUEST_DISTRIBUTION_PROPERTY = "requestdistribution";
 const string CoreWorkload::REQUEST_DISTRIBUTION_DEFAULT = "uniform";
 
+const string CoreWorkload::MIN_SCAN_LENGTH_PROPERTY = "minscanlength";
+const string CoreWorkload::MIN_SCAN_LENGTH_DEFAULT = "1";
+
 const string CoreWorkload::MAX_SCAN_LENGTH_PROPERTY = "maxscanlength";
 const string CoreWorkload::MAX_SCAN_LENGTH_DEFAULT = "1000";
 
@@ -106,6 +109,8 @@ void CoreWorkload::Init(const utils::Properties &p) {
   record_count_ = std::stoi(p.GetProperty(RECORD_COUNT_PROPERTY));
   std::string request_dist = p.GetProperty(REQUEST_DISTRIBUTION_PROPERTY,
                                            REQUEST_DISTRIBUTION_DEFAULT);
+  int min_scan_len = std::stoi(p.GetProperty(MIN_SCAN_LENGTH_PROPERTY,
+                                             MIN_SCAN_LENGTH_DEFAULT));
   int max_scan_len = std::stoi(p.GetProperty(MAX_SCAN_LENGTH_PROPERTY,
                                              MAX_SCAN_LENGTH_DEFAULT));
   std::string scan_len_dist = p.GetProperty(SCAN_LENGTH_DISTRIBUTION_PROPERTY,
@@ -167,9 +172,9 @@ void CoreWorkload::Init(const utils::Properties &p) {
   field_chooser_ = new UniformGenerator(0, field_count_ - 1);
 
   if (scan_len_dist == "uniform") {
-    scan_len_chooser_ = new UniformGenerator(1, max_scan_len);
+    scan_len_chooser_ = new UniformGenerator(min_scan_len, max_scan_len);
   } else if (scan_len_dist == "zipfian") {
-    scan_len_chooser_ = new ZipfianGenerator(1, max_scan_len);
+    scan_len_chooser_ = new ZipfianGenerator(min_scan_len, max_scan_len);
   } else {
     throw utils::Exception("Distribution not allowed for scan length: " +
                            scan_len_dist);

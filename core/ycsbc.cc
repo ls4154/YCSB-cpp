@@ -25,11 +25,9 @@
 #include "countdown_latch.h"
 #include "db_factory.h"
 
-using namespace ycsbc;
-
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
-void ParseCommandLine(int argc, const char *argv[], utils::Properties &props);
+void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
 
 void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
   using namespace std::chrono;
@@ -69,25 +67,8 @@ void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int 
   };
 }
 
-int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
-                 CountDownLatch *latch) {
-  db->Init();
-  ycsbc::Client client(*db, *wl);
-  int oks = 0;
-  for (int i = 0; i < num_ops; ++i) {
-    if (is_loading) {
-      oks += client.DoInsert();
-    } else {
-      oks += client.DoTransaction();
-    }
-  }
-  db->Cleanup();
-  latch->CountDown();
-  return oks;
-}
-
 int main(const int argc, const char *argv[]) {
-  utils::Properties props;
+  ycsbc::utils::Properties props;
   ParseCommandLine(argc, argv, props);
 
   bool do_load = (props.GetProperty("doload", "false") == "true");
@@ -117,7 +98,7 @@ int main(const int argc, const char *argv[]) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
 
     CountDownLatch latch(num_threads);
-    utils::Timer<double> timer;
+    ycsbc::utils::Timer<double> timer;
 
     timer.Start();
     std::future<void> status_future;
@@ -131,7 +112,7 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ClientThread,
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread,
                                              db, &wl, thread_ops, true, &latch));
     }
     assert((int)client_threads.size() == num_threads);
@@ -159,7 +140,7 @@ int main(const int argc, const char *argv[]) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
 
     CountDownLatch latch(num_threads);
-    utils::Timer<double> timer;
+    ycsbc::utils::Timer<double> timer;
 
     timer.Start();
     std::future<void> status_future;
@@ -173,7 +154,7 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ClientThread,
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread,
                                              db, &wl, thread_ops, false, &latch));
     }
     assert((int)client_threads.size() == num_threads);
@@ -197,7 +178,7 @@ int main(const int argc, const char *argv[]) {
   delete db;
 }
 
-void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
+void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props) {
   int argindex = 1;
   while (argindex < argc && StrStartWith(argv[argindex], "-")) {
     if (strcmp(argv[argindex], "-load") == 0) {
@@ -255,7 +236,8 @@ void ParseCommandLine(int argc, const char *argv[], utils::Properties &props) {
                      "(e.g., -p operationcount=99999)" << std::endl;
         exit(0);
       }
-      props.SetProperty(utils::Trim(prop.substr(0, eq)), utils::Trim(prop.substr(eq + 1)));
+      props.SetProperty(ycsbc::utils::Trim(prop.substr(0, eq)),
+                        ycsbc::utils::Trim(prop.substr(eq + 1)));
       argindex++;
     } else if (strcmp(argv[argindex], "-s") == 0) {
       props.SetProperty("status", "true");
