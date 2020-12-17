@@ -32,12 +32,13 @@ bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], utils::Properties &props);
 
 void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
-  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  using namespace std::chrono;
+  time_point<system_clock> start = system_clock::now();
   bool done = false;
   while (1) {
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::chrono::duration<double> elapsed_time = now - start;
+    time_point<system_clock> now = system_clock::now();
+    std::time_t now_c = system_clock::to_time_t(now);
+    duration<double> elapsed_time = now - start;
 
     std::cout << std::put_time(std::localtime(&now_c), "%F %T") << ' '
               << static_cast<long long>(elapsed_time.count()) << " sec: ";
@@ -121,8 +122,8 @@ int main(const int argc, const char *argv[]) {
     timer.Start();
     std::future<void> status_future;
     if (show_status) {
-      status_future = std::async(std::launch::async, StatusThread, &measurements, &latch,
-                                 status_interval);
+      status_future = std::async(std::launch::async, StatusThread,
+                                 &measurements, &latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -130,8 +131,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async,
-                                  ClientThread, db, &wl, thread_ops, true, &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ClientThread,
+                                             db, &wl, thread_ops, true, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -163,8 +164,8 @@ int main(const int argc, const char *argv[]) {
     timer.Start();
     std::future<void> status_future;
     if (show_status) {
-      status_future = std::async(std::launch::async, StatusThread, &measurements, &latch,
-                                 status_interval);
+      status_future = std::async(std::launch::async, StatusThread,
+                                 &measurements, &latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -172,8 +173,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async,
-                                  ClientThread, db, &wl, thread_ops, false, &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ClientThread,
+                                             db, &wl, thread_ops, false, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
