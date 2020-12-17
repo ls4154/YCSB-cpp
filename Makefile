@@ -28,13 +28,11 @@ endif
 ifeq ($(BIND_LEVELDB), 1)
 	LDFLAGS += -lleveldb
 	SOURCES += $(wildcard leveldb/*.cc)
-	CPPFLAGS += -DBIND_LEVELDB
 endif
 
 ifeq ($(BIND_ROCKSDB), 1)
 	LDFLAGS += -lrocksdb
 	SOURCES += $(wildcard rocksdb/*.cc)
-	CPPFLAGS += -DBIND_ROCKSDB
 endif
 
 CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./

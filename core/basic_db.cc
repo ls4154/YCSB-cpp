@@ -7,6 +7,7 @@
 //
 
 #include "basic_db.h"
+#include "core/db_factory.h"
 
 using std::cout;
 using std::endl;
@@ -84,5 +85,7 @@ int BasicDB::Delete(const std::string &table, const std::string &key) {
 DB *NewBasicDB() {
   return new BasicDB;
 }
+
+const bool registered = DBFactory::RegisterDB("basic", NewBasicDB);
 
 } // ycsbc

@@ -9,6 +9,7 @@
 #include "core/properties.h"
 #include "core/utils.h"
 #include "core/core_workload.h"
+#include "core/db_factory.h"
 
 #include <rocksdb/status.h>
 #include <rocksdb/cache.h>
@@ -264,5 +265,7 @@ int RocksdbDB::DeleteSingleEntry(const std::string &table, const std::string &ke
 DB *NewRocksdbDB() {
   return new RocksdbDB;
 }
+
+const bool registered = DBFactory::RegisterDB("rocksdb", NewRocksdbDB);
 
 } // ycsbc

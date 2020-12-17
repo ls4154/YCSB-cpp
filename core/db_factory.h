@@ -13,11 +13,18 @@
 #include "measurements.h"
 #include "properties.h"
 
+#include <string>
+#include <map>
+
 namespace ycsbc {
 
 class DBFactory {
  public:
+  using DBCreator = DB *(*)();
+  static bool RegisterDB(std::string db_name, DBCreator db_creator);
   static DB *CreateDB(utils::Properties *props, Measurements *measurements);
+ private:
+  static std::map<std::string, DBCreator> &Registry();
 };
 
 } // ycsbc
