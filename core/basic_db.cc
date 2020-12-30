@@ -12,17 +12,14 @@
 using std::cout;
 using std::endl;
 
-
 namespace ycsbc {
 
 void BasicDB::Init() {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "A new thread begins working." << endl;
 }
 
 DB::Status BasicDB::Read(const std::string &table, const std::string &key,
-                         const std::vector<std::string> *fields,
-                         std::vector<Field> &result) {
+                         const std::vector<std::string> *fields, std::vector<Field> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "READ " << table << ' ' << key;
   if (fields) {
@@ -37,8 +34,8 @@ DB::Status BasicDB::Read(const std::string &table, const std::string &key,
   return kOK;
 }
 
-DB::Status BasicDB::Scan(const std::string &table, const std::string &key,
-                         int len, const std::vector<std::string> *fields,
+DB::Status BasicDB::Scan(const std::string &table, const std::string &key, int len,
+                         const std::vector<std::string> *fields,
                          std::vector<std::vector<Field>> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
   cout << "SCAN " << table << ' ' << key << " " << len;

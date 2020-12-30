@@ -18,7 +18,7 @@
 namespace ycsbc {
 
 inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
-                 CountDownLatch *latch) {
+                        CountDownLatch *latch) {
   db->Init();
   int oks = 0;
   for (int i = 0; i < num_ops; ++i) {
@@ -32,7 +32,6 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
   latch->CountDown();
   return oks;
 }
-
 
 } // ycsbc
 
