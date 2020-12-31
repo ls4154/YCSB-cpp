@@ -35,7 +35,7 @@ class BasicDB : public DB {
   Status Delete(const std::string &table, const std::string &key);
 
  private:
-  std::mutex mutex_;
+  static std::mutex mutex_;
 };
 
 DB *NewBasicDB();

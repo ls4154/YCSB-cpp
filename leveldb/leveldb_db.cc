@@ -41,44 +41,18 @@ namespace {
 
   const std::string PROP_FILTER_BITS = "leveldb.filter_bits";
   const std::string PROP_FILTER_BITS_DEFAULT = "-1";
-}
+} // anonymous
 
 namespace ycsbc {
 
-LeveldbDB::~LeveldbDB() {
-  delete db_;
-}
+leveldb::DB *LeveldbDB::db_ = nullptr;
+int LeveldbDB::ref_cnt_ = 0;
+std::mutex LeveldbDB::mu_;
 
 void LeveldbDB::Init() {
   const std::lock_guard<std::mutex> lock(mu_);
-  if (init_done_) {
-    return;
-  }
-  init_done_ = true;
 
   const utils::Properties &props = *props_;
-  const std::string &db_path = props.GetProperty(PROP_NAME, PROP_NAME_DEFAULT);
-  if (db_path == "") {
-    throw utils::Exception("LevelDB db path is missing");
-  }
-
-  leveldb::Options opt;
-  opt.create_if_missing = true;
-  GetOptions(props, &opt);
-
-  leveldb::Status s;
-
-  if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
-    s = leveldb::DestroyDB(db_path, opt);
-    if (!s.ok()) {
-      throw utils::Exception(std::string("LevelDB DestoryDB: ") + s.ToString());
-    }
-  }
-  s = leveldb::DB::Open(opt, db_path, &db_);
-  if (!s.ok()) {
-    throw utils::Exception(std::string("LevelDB Open: ") + s.ToString());
-  }
-
   const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
   if (format == "single") {
     format_ = kSingleEntry;
@@ -104,14 +78,45 @@ void LeveldbDB::Init() {
   } else {
     throw utils::Exception("unknown format");
   }
-
   fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
                                             CoreWorkload::FIELD_COUNT_DEFAULT));
   field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
                                     CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
+
+  ref_cnt_++;
+  if (db_) {
+    return;
+  }
+
+  const std::string &db_path = props.GetProperty(PROP_NAME, PROP_NAME_DEFAULT);
+  if (db_path == "") {
+    throw utils::Exception("LevelDB db path is missing");
+  }
+
+  leveldb::Options opt;
+  opt.create_if_missing = true;
+  GetOptions(props, &opt);
+
+  leveldb::Status s;
+
+  if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
+    s = leveldb::DestroyDB(db_path, opt);
+    if (!s.ok()) {
+      throw utils::Exception(std::string("LevelDB DestoryDB: ") + s.ToString());
+    }
+  }
+  s = leveldb::DB::Open(opt, db_path, &db_);
+  if (!s.ok()) {
+    throw utils::Exception(std::string("LevelDB Open: ") + s.ToString());
+  }
 }
 
 void LeveldbDB::Cleanup() {
+  const std::lock_guard<std::mutex> lock(mu_);
+  if (--ref_cnt_) {
+    return;
+  }
+  delete db_;
 }
 
 void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt) {

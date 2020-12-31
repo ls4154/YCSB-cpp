@@ -18,8 +18,11 @@
 namespace ycsbc {
 
 inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
-                        CountDownLatch *latch) {
-  db->Init();
+                        bool init_db, bool cleanup_db, CountDownLatch *latch) {
+  if (init_db) {
+    db->Init();
+  }
+
   int oks = 0;
   for (int i = 0; i < num_ops; ++i) {
     if (is_loading) {
@@ -28,7 +31,11 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
       oks += wl->DoTransaction(*db);
     }
   }
-  db->Cleanup();
+
+  if (cleanup_db) {
+    db->Cleanup();
+  }
+
   latch->CountDown();
   return oks;
 }

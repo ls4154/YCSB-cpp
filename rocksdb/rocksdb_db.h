@@ -20,12 +20,10 @@
 
 namespace ycsbc {
 
-// TODO table handling (ycsb core use only single table)
 class RocksdbDB : public DB {
  public:
-  RocksdbDB() : db_(nullptr), init_done_(false) {}
-
-  ~RocksdbDB();
+  RocksdbDB() {}
+  ~RocksdbDB() {}
 
   void Init();
 
@@ -60,6 +58,7 @@ class RocksdbDB : public DB {
     kColumnMajor
   };
   RocksFormat format_;
+
   void GetOptions(const utils::Properties &props, rocksdb::Options *opt);
   void SerializeRow(const std::vector<Field> &values, std::string *data);
   void DeserializeRowFilter(std::vector<Field> *values, const std::string &data,
@@ -94,7 +93,6 @@ class RocksdbDB : public DB {
                        std::vector<Field> &values);
   Status DeleteCompKey(const std::string &table, const std::string &key);
 
-  rocksdb::DB *db_;
   Status (RocksdbDB::*method_read_)(const std::string &, const std:: string &,
                                     const std::vector<std::string> *, std::vector<Field> &);
   Status (RocksdbDB::*method_scan_)(const std::string &, const std::string &,
@@ -105,10 +103,12 @@ class RocksdbDB : public DB {
   Status (RocksdbDB::*method_insert_)(const std::string &, const std::string &,
                                       std::vector<Field> &);
   Status (RocksdbDB::*method_delete_)(const std::string &, const std::string &);
+
   int fieldcount_;
 
-  bool init_done_;
-  std::mutex mu_;
+  static rocksdb::DB *db_;
+  static int ref_cnt_;
+  static std::mutex mu_;
 };
 
 DB *NewRocksdbDB();

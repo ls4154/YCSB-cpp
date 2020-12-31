@@ -37,18 +37,33 @@ namespace {
 
 namespace ycsbc {
 
-RocksdbDB::~RocksdbDB() {
-  delete db_;
-}
+rocksdb::DB *RocksdbDB::db_ = nullptr;
+int RocksdbDB::ref_cnt_ = 0;
+std::mutex RocksdbDB::mu_;
 
 void RocksdbDB::Init() {
   const std::lock_guard<std::mutex> lock(mu_);
-  if (init_done_) {
-    return;
-  }
-  init_done_ = true;
 
   const utils::Properties &props = *props_;
+  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
+  if (format == "single") {
+    format_ = kSingleEntry;
+    method_read_ = &RocksdbDB::ReadSingleEntry;
+    method_scan_ = &RocksdbDB::ScanSingleEntry;
+    method_update_ = &RocksdbDB::UpdateSingleEntry;
+    method_insert_ = &RocksdbDB::InsertSingleEntry;
+    method_delete_ = &RocksdbDB::DeleteSingleEntry;
+  } else {
+    throw utils::Exception("unknown format");
+  }
+  fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
+                                            CoreWorkload::FIELD_COUNT_DEFAULT));
+
+  ref_cnt_++;
+  if (db_) {
+    return;
+  }
+
   const std::string &db_path = props.GetProperty(PROP_NAME, PROP_NAME_DEFAULT);
   if (db_path == "") {
     throw utils::Exception("RocksDB db path is missing");
@@ -70,24 +85,14 @@ void RocksdbDB::Init() {
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Open: ") + s.ToString());
   }
-
-  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
-  if (format == "single") {
-    format_ = kSingleEntry;
-    method_read_ = &RocksdbDB::ReadSingleEntry;
-    method_scan_ = &RocksdbDB::ScanSingleEntry;
-    method_update_ = &RocksdbDB::UpdateSingleEntry;
-    method_insert_ = &RocksdbDB::InsertSingleEntry;
-    method_delete_ = &RocksdbDB::DeleteSingleEntry;
-  } else {
-    throw utils::Exception("unknown format");
-  }
-
-  fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
-                                            CoreWorkload::FIELD_COUNT_DEFAULT));
 }
 
 void RocksdbDB::Cleanup() {
+  const std::lock_guard<std::mutex> lock(mu_);
+  if (--ref_cnt_) {
+    return;
+  }
+  delete db_;
 }
 
 void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt) {

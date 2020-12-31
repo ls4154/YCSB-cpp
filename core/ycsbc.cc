@@ -71,24 +71,28 @@ int main(const int argc, const char *argv[]) {
   ycsbc::utils::Properties props;
   ParseCommandLine(argc, argv, props);
 
-  bool do_load = (props.GetProperty("doload", "false") == "true");
-  bool do_transaction = (props.GetProperty("dotransaction", "false") == "true");
+  const bool do_load = (props.GetProperty("doload", "false") == "true");
+  const bool do_transaction = (props.GetProperty("dotransaction", "false") == "true");
   if (!do_load && !do_transaction) {
     std::cerr << "No operation to do" << std::endl;
     exit(1);
   }
 
+  const int num_threads = stoi(props.GetProperty("threadcount", "1"));
+
   ycsbc::Measurements measurements;
-  ycsbc::DB *db = ycsbc::DBFactory::CreateDB(&props, &measurements);
-  if (db == nullptr) {
-    std::cerr << "Unknown database name " << props["dbname"] << std::endl;
-    exit(1);
+  std::vector<ycsbc::DB *> dbs;
+  for (int i = 0; i < num_threads; i++) {
+    ycsbc::DB *db = ycsbc::DBFactory::CreateDB(&props, &measurements);
+    if (db == nullptr) {
+      std::cerr << "Unknown database name " << props["dbname"] << std::endl;
+      exit(1);
+    }
+    dbs.push_back(db);
   }
 
   ycsbc::CoreWorkload wl;
   wl.Init(props);
-
-  const int num_threads = stoi(props.GetProperty("threadcount", "1"));
 
   const bool show_status = (props.GetProperty("status", "false") == "true");
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
@@ -112,8 +116,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread,
-                                             db, &wl, thread_ops, true, &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
+                                             thread_ops, true, true, !do_transaction, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -154,8 +158,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread,
-                                             db, &wl, thread_ops, false, &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
+                                             thread_ops, false, !do_load, true,  &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -175,7 +179,9 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Run throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
-  delete db;
+  for (int i = 0; i < num_threads; i++) {
+    delete dbs[i];
+  }
 }
 
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props) {

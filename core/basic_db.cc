@@ -14,6 +14,8 @@ using std::endl;
 
 namespace ycsbc {
 
+std::mutex BasicDB:: mutex_;
+
 void BasicDB::Init() {
   std::lock_guard<std::mutex> lock(mutex_);
 }

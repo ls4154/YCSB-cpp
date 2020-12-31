@@ -23,12 +23,10 @@
 
 namespace ycsbc {
 
-// TODO table handling (ycsb core use only single table)
 class LeveldbDB : public DB {
  public:
-  LeveldbDB() : db_(nullptr), init_done_(false) {}
-
-  ~LeveldbDB();
+  LeveldbDB() {}
+  ~LeveldbDB() {}
 
   void Init();
 
@@ -63,6 +61,7 @@ class LeveldbDB : public DB {
     kColumnMajor
   };
   LdbFormat format_;
+
   void GetOptions(const utils::Properties &props, leveldb::Options *opt);
   void SerializeRow(const std::vector<Field> &values, std::string *data);
   void DeserializeRowFilter(std::vector<Field> *values, const std::string &data,
@@ -97,7 +96,6 @@ class LeveldbDB : public DB {
                        std::vector<Field> &values);
   Status DeleteCompKey(const std::string &table, const std::string &key);
 
-  leveldb::DB *db_;
   Status (LeveldbDB::*method_read_)(const std::string &, const std:: string &,
                                     const std::vector<std::string> *, std::vector<Field> &);
   Status (LeveldbDB::*method_scan_)(const std::string &, const std::string &, int,
@@ -108,11 +106,13 @@ class LeveldbDB : public DB {
   Status (LeveldbDB::*method_insert_)(const std::string &, const std::string &,
                                       std::vector<Field> &);
   Status (LeveldbDB::*method_delete_)(const std::string &, const std::string &);
+
   int fieldcount_;
   std::string field_prefix_;
 
-  bool init_done_;
-  std::mutex mu_;
+  static leveldb::DB *db_;
+  static int ref_cnt_;
+  static std::mutex mu_;
 };
 
 DB *NewLeveldbDB();
