@@ -102,7 +102,7 @@ void LeveldbDB::Init() {
   if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
     s = leveldb::DestroyDB(db_path, opt);
     if (!s.ok()) {
-      throw utils::Exception(std::string("LevelDB DestoryDB: ") + s.ToString());
+      throw utils::Exception(std::string("LevelDB DestroyDB: ") + s.ToString());
     }
   }
   s = leveldb::DB::Open(opt, db_path, &db_);

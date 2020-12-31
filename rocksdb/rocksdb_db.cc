@@ -23,7 +23,7 @@ namespace {
   const std::string PROP_FORMAT_DEFAULT = "single";
 
   const std::string PROP_DESTROY = "rocksdb.destroy";
-  const std::string PROP_DESTORY_DEFAULT = "false";
+  const std::string PROP_DESTROY_DEFAULT = "false";
 
   const std::string PROP_COMPRESSION = "rocksdb.compression";
   const std::string PROP_COMPRESSION_DEFAULT = "no";
@@ -75,10 +75,10 @@ void RocksdbDB::Init() {
 
   rocksdb::Status s;
 
-  if (props.GetProperty(PROP_DESTROY, PROP_DESTORY_DEFAULT) == "true") {
+  if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
     s = rocksdb::DestroyDB(db_path, opt);
     if (!s.ok()) {
-      throw utils::Exception(std::string("RocksDB DestoryDB: ") + s.ToString());
+      throw utils::Exception(std::string("RocksDB DestroyDB: ") + s.ToString());
     }
   }
   s = rocksdb::DB::Open(opt, db_path, &db_);
