@@ -215,7 +215,41 @@ DB::Status LmdbDB::ReadSingleEntry(const std::string &table, const std::string &
 DB::Status LmdbDB::ScanSingleEntry(const std::string &table, const std::string &key, int len,
                                    const std::vector<std::string> *fields,
                                    std::vector<std::vector<Field>> &result) {
-  return kNotImplemented;
+  MDB_txn *txn;
+  MDB_cursor *cursor;
+  MDB_val key_slice, val_slice;
+
+  key_slice.mv_data = static_cast<void *>(const_cast<char *>(key.data()));
+  key_slice.mv_size = key.size();
+
+  int ret;
+  ret = mdb_txn_begin(env_, nullptr, 0, &txn);
+  if (ret) {
+    throw utils::Exception(std::string("Scan mdb_txn_begin: ") + mdb_strerror(ret));
+  }
+  ret = mdb_cursor_open(txn, dbi_, &cursor);
+  if (ret) {
+    throw utils::Exception(std::string("Scan mdb_cursor_open: ") + mdb_strerror(ret));
+  }
+  ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_SET);
+  assert(ret != MDB_NOTFOUND);
+  if (ret) {
+    throw utils::Exception(std::string("Scan mdb_cursor_get: ") + mdb_strerror(ret));
+  }
+  for (int i = 0; !ret && i < len; i++) {
+    result.push_back(std::vector<Field>());
+    std::vector<Field> &values = result.back();
+    if (fields != nullptr) {
+      DeserializeRowFilter(&values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size,
+                           *fields);
+    } else {
+      DeserializeRow(&values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size);
+    }
+    ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_NEXT);
+  }
+  mdb_cursor_close(cursor);
+  mdb_txn_abort(txn);
+  return kOK;
 }
 
 DB::Status LmdbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
