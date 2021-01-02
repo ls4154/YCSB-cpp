@@ -220,7 +220,49 @@ DB::Status LmdbDB::ScanSingleEntry(const std::string &table, const std::string &
 
 DB::Status LmdbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
                                      std::vector<Field> &values) {
-  return kNotImplemented;
+  MDB_txn *txn;
+  MDB_val key_slice, val_slice;
+
+  key_slice.mv_data = static_cast<void *>(const_cast<char *>(key.data()));
+  key_slice.mv_size = key.size();
+
+  int ret;
+  ret = mdb_txn_begin(env_, nullptr, 0, &txn);
+  if (ret) {
+    throw utils::Exception(std::string("Update mdb_txn_begin: ") + mdb_strerror(ret));
+  }
+  ret = mdb_get(txn, dbi_, &key_slice, &val_slice);
+  if (ret) {
+    throw utils::Exception(std::string("Update mdb_get: ") + mdb_strerror(ret));
+  }
+  std::vector<Field> current_values;
+  DeserializeRow(&current_values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size);
+  for (Field &new_field : values) {
+    bool found __attribute__((unused)) = false;
+    for (Field &cur_field : current_values) {
+      if (cur_field.name == new_field.name) {
+        found = true;
+        cur_field.value = new_field.value;
+        break;
+      }
+    }
+    assert(found);
+  }
+
+  std::string data;
+  SerializeRow(current_values, &data);
+  val_slice.mv_data = const_cast<char *>(data.data());
+  val_slice.mv_size = data.size();
+  ret = mdb_put(txn, dbi_, &key_slice, &val_slice, 0);
+  if (ret) {
+    throw utils::Exception(std::string("Update mdb_put: ") + mdb_strerror(ret));
+  }
+
+  ret = mdb_txn_commit(txn);
+  if (ret) {
+    throw utils::Exception(std::string("Update mdb_txn_commit: ") + mdb_strerror(ret));
+  }
+  return kOK;
 }
 
 DB::Status LmdbDB::InsertSingleEntry(const std::string &table, const std::string &key,
@@ -262,15 +304,15 @@ DB::Status LmdbDB::DeleteSingleEntry(const std::string &table, const std::string
   int ret;
   ret = mdb_txn_begin(env_, nullptr, 0, &txn);
   if (ret) {
-    throw utils::Exception(std::string("mdb_txn_begin: ") + mdb_strerror(ret));
+    throw utils::Exception(std::string("Delete mdb_txn_begin: ") + mdb_strerror(ret));
   }
   ret = mdb_del(txn, dbi_, &key_slice, nullptr);
   if (ret) {
-    throw utils::Exception(std::string("mdb_del: ") + mdb_strerror(ret));
+    throw utils::Exception(std::string("Delete mdb_del: ") + mdb_strerror(ret));
   }
   ret = mdb_txn_commit(txn);
   if (ret) {
-    throw utils::Exception(std::string("mdb_txn_commit: ") + mdb_strerror(ret));
+    throw utils::Exception(std::string("Delete mdb_txn_commit: ") + mdb_strerror(ret));
   }
   return kOK;
 }

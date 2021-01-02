@@ -81,7 +81,7 @@ class LmdbDB : public DB {
   Status (LmdbDB::*method_insert_)(const std::string &, const std::string &, std::vector<Field> &);
   Status (LmdbDB::*method_delete_)(const std::string &, const std::string &);
 
-  int fieldcount_;
+  unsigned fieldcount_;
   std::string field_prefix_;
 
   static MDB_env *env_;
