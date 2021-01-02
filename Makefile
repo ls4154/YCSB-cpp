@@ -15,6 +15,7 @@ EXTRA_LDFLAGS ?=
 
 BIND_LEVELDB ?= 1
 BIND_ROCKSDB ?= 1
+BIND_LMDB ?= 1
 
 #----------------------------------------------------------
 
@@ -33,6 +34,11 @@ endif
 ifeq ($(BIND_ROCKSDB), 1)
 	LDFLAGS += -lrocksdb
 	SOURCES += $(wildcard rocksdb/*.cc)
+endif
+
+ifeq ($(BIND_LMDB), 1)
+	LDFLAGS += -llmdb
+	SOURCES += $(wildcard lmdb/*.cc)
 endif
 
 CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
