@@ -42,10 +42,11 @@ inline uint32_t ThreadLocalRandomInt() {
   return rn();
 }
 
-inline double RandomDouble(double min = 0.0, double max = 1.0) {
-  static std::default_random_engine generator;
-  static std::uniform_real_distribution<double> uniform(min, max);
-  return uniform(generator);
+inline double ThreadLocalRandomDouble(double min = 0.0, double max = 1.0) {
+  static thread_local std::random_device rd;
+  static thread_local std::minstd_rand rn(rd());
+  static thread_local std::uniform_real_distribution<double> uniform(min, max);
+  return uniform(rn);
 }
 
 ///

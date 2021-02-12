@@ -1,8 +1,8 @@
 //
 //  scrambled_zipfian_generator.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by Jinglei Ren on 12/8/14.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
@@ -11,7 +11,6 @@
 
 #include "generator.h"
 
-#include <atomic>
 #include <cstdint>
 #include "utils.h"
 #include "zipfian_generator.h"
@@ -20,18 +19,21 @@ namespace ycsbc {
 
 class ScrambledZipfianGenerator : public Generator<uint64_t> {
  public:
-  ScrambledZipfianGenerator(uint64_t min, uint64_t max,
-      double zipfian_const = ZipfianGenerator::kZipfianConst) :
+  ScrambledZipfianGenerator(uint64_t min, uint64_t max, double zipfian_const) :
+      base_(min), num_items_(max - min + 1), generator_(0, 10000000000LL, zipfian_const) { }
+
+  ScrambledZipfianGenerator(uint64_t min, uint64_t max) :
       base_(min), num_items_(max - min + 1),
-      generator_(min, max, zipfian_const) { }
-  
+      generator_(0, 10000000000LL, ZipfianGenerator::kZipfianConst, kZetan) { }
+
   ScrambledZipfianGenerator(uint64_t num_items) :
       ScrambledZipfianGenerator(0, num_items - 1) { }
-  
+
   uint64_t Next();
   uint64_t Last();
-  
+
  private:
+  static constexpr double kZetan = 26.46902820178302;
   const uint64_t base_;
   const uint64_t num_items_;
   ZipfianGenerator generator_;

@@ -1,8 +1,8 @@
 //
 //  discrete_generator.h
-//  YCSB-C
+//  YCSB-cpp
 //
-//  Created by Jinglei Ren on 12/6/14.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
@@ -13,7 +13,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <mutex>
 #include <vector>
 #include "utils.h"
 
@@ -32,7 +31,6 @@ class DiscreteGenerator : public Generator<Value> {
   std::vector<std::pair<Value, double>> values_;
   double sum_;
   std::atomic<Value> last_;
-  std::mutex mutex_;
 };
 
 template <typename Value>
@@ -46,17 +44,15 @@ inline void DiscreteGenerator<Value>::AddValue(Value value, double weight) {
 
 template <typename Value>
 inline Value DiscreteGenerator<Value>::Next() {
-  mutex_.lock();
-  double chooser = utils::RandomDouble();
-  mutex_.unlock();
-  
+  double chooser = utils::ThreadLocalRandomDouble();
+
   for (auto p = values_.cbegin(); p != values_.cend(); ++p) {
     if (chooser < p->second / sum_) {
       return last_ = p->first;
     }
     chooser -= p->second / sum_;
   }
-  
+
   assert(false);
   return last_;
 }
