@@ -59,7 +59,8 @@ class RocksdbDB : public DB {
   };
   RocksFormat format_;
 
-  void GetOptions(const utils::Properties &props, rocksdb::Options *opt);
+  void GetOptions(const utils::Properties &props, rocksdb::Options *opt,
+                  std::vector<rocksdb::ColumnFamilyDescriptor> *cf_descs);
   void SerializeRow(const std::vector<Field> &values, std::string *data);
   void DeserializeRowFilter(std::vector<Field> *values, const std::string &data,
                             const std::vector<std::string> &fields);

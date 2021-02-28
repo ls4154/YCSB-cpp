@@ -14,6 +14,7 @@
 #include <rocksdb/status.h>
 #include <rocksdb/cache.h>
 #include <rocksdb/write_batch.h>
+#include <rocksdb/utilities/options_util.h>
 
 namespace {
   const std::string PROP_NAME = "rocksdb.dbname";
@@ -33,6 +34,9 @@ namespace {
 
   const std::string PROP_OPTIMIZE_LEVELCOMP = "rocksdb.optimize_level_style_compaction";
   const std::string PROP_OPTIMIZE_LEVELCOMP_DEFAULT = "false";
+
+  const std::string PROP_OPTIONS_FILE = "rocksdb.optionsfile";
+  const std::string PROP_OPTIONS_FILE_DEFAULT = "";
 } // anonymous
 
 namespace ycsbc {
@@ -45,7 +49,7 @@ void RocksdbDB::Init() {
   const std::lock_guard<std::mutex> lock(mu_);
 
   const utils::Properties &props = *props_;
-  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
+  const std::string format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
   if (format == "single") {
     format_ = kSingleEntry;
     method_read_ = &RocksdbDB::ReadSingleEntry;
@@ -71,17 +75,22 @@ void RocksdbDB::Init() {
 
   rocksdb::Options opt;
   opt.create_if_missing = true;
-  GetOptions(props, &opt);
+  std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
+  std::vector<rocksdb::ColumnFamilyHandle *> cf_handles;
+  GetOptions(props, &opt, &cf_descs);
 
   rocksdb::Status s;
-
   if (props.GetProperty(PROP_DESTROY, PROP_DESTROY_DEFAULT) == "true") {
     s = rocksdb::DestroyDB(db_path, opt);
     if (!s.ok()) {
       throw utils::Exception(std::string("RocksDB DestroyDB: ") + s.ToString());
     }
   }
-  s = rocksdb::DB::Open(opt, db_path, &db_);
+  if (cf_descs.empty()) {
+    s = rocksdb::DB::Open(opt, db_path, &db_);
+  } else {
+    s = rocksdb::DB::Open(opt, db_path, cf_descs, &cf_handles, &db_);
+  }
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Open: ") + s.ToString());
   }
@@ -95,11 +104,22 @@ void RocksdbDB::Cleanup() {
   delete db_;
 }
 
-void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt) {
+void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt,
+                           std::vector<rocksdb::ColumnFamilyDescriptor> *cf_descs) {
+  const std::string options_file = props.GetProperty(PROP_OPTIONS_FILE, PROP_OPTIONS_FILE_DEFAULT);
+  if (options_file != "") {
+    rocksdb::Status s = rocksdb::LoadOptionsFromFile(options_file, rocksdb::Env::Default(), opt,
+                                                     cf_descs);
+    if (!s.ok()) {
+      throw utils::Exception(std::string("RocksDB LoadOptionsFromFile: ") + s.ToString());
+    }
+    return;
+  }
+
   const std::string compression_type = props.GetProperty(PROP_COMPRESSION,
                                                          PROP_COMPRESSION_DEFAULT);
   if (compression_type == "no") {
-    opt->compression = rocksdb::kSnappyCompression;
+    opt->compression = rocksdb::kNoCompression;
   } else if (compression_type == "snappy") {
     opt->compression = rocksdb::kSnappyCompression;
   } else if (compression_type == "zlib") {
