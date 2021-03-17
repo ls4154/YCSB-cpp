@@ -1,9 +1,11 @@
 # YCSB-cpp
 
 Yahoo! Cloud Serving Benchmark([YCSB](https://github.com/brianfrankcooper/YCSB/wiki)) written in C++.
-This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C).
+This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with following changes.
 
-Currently LevelDB, RocksDB and LMDB are supported.
+ * Make Zipf distribution and data value more similar to the original YCSB
+ * Status and latency report during benchmark
+ * Supported Databases: LevelDB, RocksDB, LMDB
 
 ## Building
 
@@ -13,12 +15,13 @@ To bind only LevelDB:
 ```
 make BIND_LEVELDB=1 BIND_ROCKSDB=0 BIND_LMDB=0
 ```
-or modify Makefile.
 
 To build with additional libraries and include directories:
 ```
 make EXTRA_CXXFLAGS=-I/example/leveldb/include EXTRA_LDFLAGS=-L/example/leveldb/build
 ```
+
+or modify config section in `Makefile`.
 
 ## Running
 
