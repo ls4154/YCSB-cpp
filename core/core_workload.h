@@ -113,6 +113,12 @@ class CoreWorkload {
   static const std::string REQUEST_DISTRIBUTION_DEFAULT;
 
   ///
+  /// The default zero padding value. Matches integer sort order
+  ///
+  static const std::string ZERO_PADDING_PROPERTY;
+  static const std::string ZERO_PADDING_DEFAULT;
+
+  ///
   /// The name of the property for the min scan length (number of records).
   ///
   static const std::string MIN_SCAN_LENGTH_PROPERTY;
@@ -207,6 +213,7 @@ class CoreWorkload {
   AcknowledgedCounterGenerator *transaction_insert_key_sequence_; // transaction insert key gen
   bool ordered_inserts_;
   size_t record_count_;
+  int zero_padding_;
 };
 
 inline uint64_t CoreWorkload::NextTransactionKeyNum() {
@@ -215,13 +222,6 @@ inline uint64_t CoreWorkload::NextTransactionKeyNum() {
     key_num = key_chooser_->Next();
   } while (key_num > transaction_insert_key_sequence_->Last());
   return key_num;
-}
-
-inline std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
-  if (!ordered_inserts_) {
-    key_num = utils::Hash(key_num);
-  }
-  return std::string("user").append(std::to_string(key_num));
 }
 
 inline std::string CoreWorkload::NextFieldName() {
