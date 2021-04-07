@@ -41,24 +41,7 @@ void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int 
     std::cout << std::put_time(std::localtime(&now_c), "%F %T") << ' '
               << static_cast<long long>(elapsed_time.count()) << " sec: ";
 
-    uint64_t cnt_op[ycsbc::MAXOPTYPE];
-    uint64_t cnt_total = 0;
-    uint64_t latency_op[ycsbc::MAXOPTYPE];
-    for (int i = 0; i < ycsbc::MAXOPTYPE; i++) {
-      cnt_op[i] = measurements->GetCount(static_cast<ycsbc::Operation>(i));
-      latency_op[i] = measurements->GetLatency(static_cast<ycsbc::Operation>(i));
-      cnt_total += cnt_op[i];
-    }
-
-    std::cout << cnt_total << " operations;";
-    for (int i = 0; i < ycsbc::MAXOPTYPE; i++) {
-      if (cnt_op[i] > 0) {
-        std::cout << " " << ycsbc::kOperationString[i] << ":";
-        std::cout << " Count="<< cnt_op[i];
-        std::cout << " Latency="<< latency_op[i] / 1000.0;
-      }
-    }
-    std::cout << std::endl;
+    std::cout << measurements->GetStatusMsg() << std::endl;
 
     if (done) {
       break;
@@ -137,6 +120,7 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Load throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
+  measurements.Reset();
   std::this_thread::sleep_for(std::chrono::seconds(stoi(props.GetProperty("sleepafterload", "0"))));
 
   // transaction phase
