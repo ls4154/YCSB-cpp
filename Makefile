@@ -45,6 +45,7 @@ CXXFLAGS += -std=c++11 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
 OBJECTS += $(SOURCES:.cc=.o)
+DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
 
 all: $(EXEC)
@@ -55,8 +56,15 @@ $(EXEC): $(OBJECTS)
 .cc.o:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
+%.d : %.cc
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$(<:.cc=.o)' -o $@ $<
+
+ifneq ($(MAKECMDGOALS),clean)
+-include $(DEPS)
+endif
+
 clean:
-	find . -name "*.o" -delete
+	find . -name "*.[od]" -delete
 	$(RM) $(EXEC)
 
 .PHONY: clean
