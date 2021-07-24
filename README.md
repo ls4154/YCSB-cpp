@@ -11,17 +11,28 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with followin
 
 Simply use `make` to build.
 
-To bind only LevelDB:
+The databases to bind must be specified. You may also need to add additional link flags (e.g., `-lsnappy`).
+
+To bind LevelDB:
 ```
-make BIND_LEVELDB=1 BIND_ROCKSDB=0 BIND_LMDB=0
+make BIND_LEVELDB=1
 ```
 
 To build with additional libraries and include directories:
 ```
-make EXTRA_CXXFLAGS=-I/example/leveldb/include EXTRA_LDFLAGS=-L/example/leveldb/build
+make BIND_LEVELDB=1 EXTRA_CXXFLAGS=-I/example/leveldb/include \
+                    EXTRA_LDFLAGS="-L/example/leveldb/build -lsnappy"
 ```
 
-or modify config section in `Makefile`.
+Or modify config section in `Makefile`.
+
+RocksDB build example:
+```
+EXTRA_CXXFLAGS ?= -I/example/rocksdb/include
+EXTRA_LDFLAGS ?= -L/example/rocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
+
+BIND_ROCKSDB ?= 1
+```
 
 ## Running
 

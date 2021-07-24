@@ -13,9 +13,9 @@ DEBUG_BUILD ?= 0
 EXTRA_CXXFLAGS ?=
 EXTRA_LDFLAGS ?=
 
-BIND_LEVELDB ?= 1
-BIND_ROCKSDB ?= 1
-BIND_LMDB ?= 1
+BIND_LEVELDB ?= 0
+BIND_ROCKSDB ?= 0
+BIND_LMDB ?= 0
 
 #----------------------------------------------------------
 
@@ -51,13 +51,15 @@ EXEC = ycsb
 all: $(EXEC)
 
 $(EXEC): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	@echo "  LD      " $@
 
 .cc.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@echo "  CC      " $@
 
 %.d : %.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$(<:.cc=.o)' -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$(<:.cc=.o)' -o $@ $<
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)
