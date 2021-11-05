@@ -37,6 +37,14 @@ namespace {
 
   const std::string PROP_OPTIONS_FILE = "rocksdb.optionsfile";
   const std::string PROP_OPTIONS_FILE_DEFAULT = "";
+
+  const std::string PROP_ENV_URI = "rocksdb.env_uri";
+  const std::string PROP_ENV_URI_DEFAULT = "";
+
+  const std::string PROP_FS_URI = "rocksdb.fs_uri";
+  const std::string PROP_FS_URI_DEFAULT = "";
+
+  static std::shared_ptr<rocksdb::Env> env_guard;
 } // anonymous
 
 namespace ycsbc {
@@ -106,43 +114,53 @@ void RocksdbDB::Cleanup() {
 
 void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt,
                            std::vector<rocksdb::ColumnFamilyDescriptor> *cf_descs) {
+  std::string env_uri = props.GetProperty(PROP_ENV_URI, PROP_ENV_URI_DEFAULT);
+  std::string fs_uri = props.GetProperty(PROP_FS_URI, PROP_FS_URI_DEFAULT);
+  rocksdb::Env* env =  rocksdb::Env::Default();;
+  if (!env_uri.empty() || !fs_uri.empty()) {
+    rocksdb::Status s = rocksdb::Env::CreateFromUri(rocksdb::ConfigOptions(),
+                                                    env_uri, fs_uri, &env, &env_guard);
+    if (!s.ok()) {
+      throw utils::Exception(std::string("RocksDB CreateFromUri: ") + s.ToString());
+    }
+    opt->env = env;
+  }
+
   const std::string options_file = props.GetProperty(PROP_OPTIONS_FILE, PROP_OPTIONS_FILE_DEFAULT);
   if (options_file != "") {
-    rocksdb::Status s = rocksdb::LoadOptionsFromFile(options_file, rocksdb::Env::Default(), opt,
-                                                     cf_descs);
+    rocksdb::Status s = rocksdb::LoadOptionsFromFile(options_file, env, opt, cf_descs);
     if (!s.ok()) {
       throw utils::Exception(std::string("RocksDB LoadOptionsFromFile: ") + s.ToString());
     }
-    return;
-  }
-
-  const std::string compression_type = props.GetProperty(PROP_COMPRESSION,
-                                                         PROP_COMPRESSION_DEFAULT);
-  if (compression_type == "no") {
-    opt->compression = rocksdb::kNoCompression;
-  } else if (compression_type == "snappy") {
-    opt->compression = rocksdb::kSnappyCompression;
-  } else if (compression_type == "zlib") {
-    opt->compression = rocksdb::kZlibCompression;
-  } else if (compression_type == "bzip2") {
-    opt->compression = rocksdb::kBZip2Compression;
-  } else if (compression_type == "lz4") {
-    opt->compression = rocksdb::kLZ4Compression;
-  } else if (compression_type == "lz4hc") {
-    opt->compression = rocksdb::kLZ4HCCompression;
-  } else if (compression_type == "xpress") {
-    opt->compression = rocksdb::kXpressCompression;
-  } else if (compression_type == "zstd") {
-    opt->compression = rocksdb::kZSTD;
   } else {
-    throw utils::Exception("Unknown compression type");
-  }
+    const std::string compression_type = props.GetProperty(PROP_COMPRESSION,
+        PROP_COMPRESSION_DEFAULT);
+    if (compression_type == "no") {
+      opt->compression = rocksdb::kNoCompression;
+    } else if (compression_type == "snappy") {
+      opt->compression = rocksdb::kSnappyCompression;
+    } else if (compression_type == "zlib") {
+      opt->compression = rocksdb::kZlibCompression;
+    } else if (compression_type == "bzip2") {
+      opt->compression = rocksdb::kBZip2Compression;
+    } else if (compression_type == "lz4") {
+      opt->compression = rocksdb::kLZ4Compression;
+    } else if (compression_type == "lz4hc") {
+      opt->compression = rocksdb::kLZ4HCCompression;
+    } else if (compression_type == "xpress") {
+      opt->compression = rocksdb::kXpressCompression;
+    } else if (compression_type == "zstd") {
+      opt->compression = rocksdb::kZSTD;
+    } else {
+      throw utils::Exception("Unknown compression type");
+    }
 
-  if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
-    opt->IncreaseParallelism();
-  }
-  if (props.GetProperty(PROP_OPTIMIZE_LEVELCOMP, PROP_OPTIMIZE_LEVELCOMP_DEFAULT) == "true") {
-    opt->OptimizeLevelStyleCompaction();
+    if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
+      opt->IncreaseParallelism();
+    }
+    if (props.GetProperty(PROP_OPTIMIZE_LEVELCOMP, PROP_OPTIMIZE_LEVELCOMP_DEFAULT) == "true") {
+      opt->OptimizeLevelStyleCompaction();
+    }
   }
 }
 
