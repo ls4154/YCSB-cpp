@@ -8,7 +8,6 @@
 #ifndef YCSB_C_ROCKSDB_DB_H_
 #define YCSB_C_ROCKSDB_DB_H_
 
-#include <iostream>
 #include <string>
 #include <mutex>
 
@@ -53,46 +52,32 @@ class RocksdbDB : public DB {
 
  private:
   enum RocksFormat {
-    kSingleEntry,
-    kRowMajor,
-    kColumnMajor
+    kSingleRow,
   };
   RocksFormat format_;
 
   void GetOptions(const utils::Properties &props, rocksdb::Options *opt,
                   std::vector<rocksdb::ColumnFamilyDescriptor> *cf_descs);
-  void SerializeRow(const std::vector<Field> &values, std::string *data);
-  void DeserializeRowFilter(std::vector<Field> *values, const std::string &data,
-                            const std::vector<std::string> &fields);
-  void DeserializeRow(std::vector<Field> *values, const std::string &data);
-  std::string BuildCompKey(const std::string &key, const std::string &field_name);
-  std::string KeyFromCompKey(const std::string &comp_key);
-  std::string FieldFromCompKey(const std::string &comp_key);
+  static void SerializeRow(const std::vector<Field> &values, std::string &data);
+  static void DeserializeRowFilter(std::vector<Field> &values, const char *p, const char *lim,
+                                   const std::vector<std::string> &fields);
+  static void DeserializeRowFilter(std::vector<Field> &values, const std::string &data,
+                                   const std::vector<std::string> &fields);
+  static void DeserializeRow(std::vector<Field> &values, const char *p, const char *lim);
+  static void DeserializeRow(std::vector<Field> &values, const std::string &data);
 
-  Status ReadSingleEntry(const std::string &table, const std::string &key,
-                         const std::vector<std::string> *fields, std::vector<Field> &result);
-  Status ScanSingleEntry(const std::string &table, const std::string &key, int len,
-                         const std::vector<std::string> *fields,
-                         std::vector<std::vector<Field>> &result);
-  Status UpdateSingleEntry(const std::string &table, const std::string &key,
-                           std::vector<Field> &values);
-  Status InsertSingleEntry(const std::string &table, const std::string &key,
-                           std::vector<Field> &values);
-  Status DeleteSingleEntry(const std::string &table, const std::string &key);
-
-  Status ReadCompKeyRM(const std::string &table, const std::string &key,
-                       const std::vector<std::string> *fields, std::vector<Field> &result);
-  Status ScanCompKeyRM(const std::string &table, const std::string &key, int len,
-                       const std::vector<std::string> *fields,
-                       std::vector<std::vector<Field>> &result);
-  Status ReadCompKeyCM(const std::string &table, const std::string &key,
-                       const std::vector<std::string> *fields, std::vector<Field> &result);
-  Status ScanCompKeyCM(const std::string &table, const std::string &key, int len,
-                       const std::vector<std::string> *fields,
-                       std::vector<std::vector<Field>> &result);
-  Status InsertCompKey(const std::string &table, const std::string &key,
-                       std::vector<Field> &values);
-  Status DeleteCompKey(const std::string &table, const std::string &key);
+  Status ReadSingle(const std::string &table, const std::string &key,
+                    const std::vector<std::string> *fields, std::vector<Field> &result);
+  Status ScanSingle(const std::string &table, const std::string &key, int len,
+                    const std::vector<std::string> *fields,
+                    std::vector<std::vector<Field>> &result);
+  Status UpdateSingle(const std::string &table, const std::string &key,
+                      std::vector<Field> &values);
+  Status MergeSingle(const std::string &table, const std::string &key,
+                     std::vector<Field> &values);
+  Status InsertSingle(const std::string &table, const std::string &key,
+                      std::vector<Field> &values);
+  Status DeleteSingle(const std::string &table, const std::string &key);
 
   Status (RocksdbDB::*method_read_)(const std::string &, const std:: string &,
                                     const std::vector<std::string> *, std::vector<Field> &);
