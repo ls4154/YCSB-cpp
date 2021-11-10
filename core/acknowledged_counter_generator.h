@@ -20,12 +20,12 @@ class AcknowledgedCounterGenerator : public CounterGenerator {
  public:
   AcknowledgedCounterGenerator(uint64_t start)
       : CounterGenerator(start), limit_(start - 1), ack_window_(kWindowSize, false) {}
-  uint64_t Last() { return limit_; }
+  uint64_t Last() { return limit_.load(); }
   void Acknowledge(uint64_t value);
  private:
   static const size_t kWindowSize = (1 << 16);
   static const size_t kWindowMask = kWindowSize - 1;
-  uint64_t limit_;
+  std::atomic<uint64_t> limit_;
   std::vector<bool> ack_window_;
   std::mutex mutex_;
 };

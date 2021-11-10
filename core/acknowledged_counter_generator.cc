@@ -16,16 +16,17 @@ void AcknowledgedCounterGenerator::Acknowledge(uint64_t value) {
     throw utils::Exception("Not enough window size");
   }
   ack_window_[cur_slot] = true;
-  size_t until = limit_ + kWindowSize;
+  uint64_t limit = limit_.load();
+  size_t until = limit + kWindowSize;
   size_t i;
-  for (i = limit_ + 1; i < until; i++) {
+  for (i = limit + 1; i < until; i++) {
     size_t slot = i & kWindowMask;
     if (!ack_window_[slot]) {
       break;
     }
     ack_window_[slot] = false;
   }
-  limit_ = i - 1;
+  limit_.store(i - 1);
 }
 
 } // ycsbc
