@@ -34,6 +34,27 @@ namespace {
   const std::string PROP_COMPRESSION = "rocksdb.compression";
   const std::string PROP_COMPRESSION_DEFAULT = "no";
 
+  const std::string PROP_MAX_BG_JOBS = "rocksdb.max_background_jobs";
+  const std::string PROP_MAX_BG_JOBS_DEFAULT = "0";
+
+  const std::string PROP_TARGET_FILE_SIZE_BASE = "rocksdb.target_file_size_base";
+  const std::string PROP_TARGET_FILE_SIZE_BASE_DEFAULT = "0";
+
+  const std::string PROP_TARGET_FILE_SIZE_MULT = "rocksdb.target_file_size_multiplier";
+  const std::string PROP_TARGET_FILE_SIZE_MULT_DEFAULT = "0";
+
+  const std::string PROP_MAX_BYTES_FOR_LEVEL_BASE = "rocksdb.max_bytes_for_level_base";
+  const std::string PROP_MAX_BYTES_FOR_LEVEL_BASE_DEFAULT = "0";
+
+  const std::string PROP_WRITE_BUFFER_SIZE = "rocksdb.write_buffer_size";
+  const std::string PROP_WRITE_BUFFER_SIZE_DEFAULT = "0";
+
+  const std::string PROP_MAX_WRITE_BUFFER = "rocksdb.max_write_buffer_number";
+  const std::string PROP_MAX_WRITE_BUFFER_DEFAULT = "0";
+
+  const std::string PROP_COMPACTION_PRI = "rocksdb.compaction_pri";
+  const std::string PROP_COMPACTION_PRI_DEFAULT = "-1";
+
   const std::string PROP_INCREASE_PARALLELISM = "rocksdb.increase_parallelism";
   const std::string PROP_INCREASE_PARALLELISM_DEFAULT = "false";
 
@@ -208,6 +229,35 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
       opt->compression = rocksdb::kZSTD;
     } else {
       throw utils::Exception("Unknown compression type");
+    }
+
+    int val = std::stoi(props.GetProperty(PROP_MAX_BG_JOBS, PROP_MAX_BG_JOBS_DEFAULT));
+    if (val != 0) {
+      opt->max_background_jobs = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_TARGET_FILE_SIZE_BASE, PROP_TARGET_FILE_SIZE_BASE_DEFAULT));
+    if (val != 0) {
+      opt->target_file_size_base = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_TARGET_FILE_SIZE_MULT, PROP_TARGET_FILE_SIZE_MULT_DEFAULT));
+    if (val != 0) {
+      opt->target_file_size_multiplier = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_MAX_BYTES_FOR_LEVEL_BASE, PROP_MAX_BYTES_FOR_LEVEL_BASE_DEFAULT));
+    if (val != 0) {
+      opt->max_bytes_for_level_base = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_WRITE_BUFFER_SIZE, PROP_WRITE_BUFFER_SIZE_DEFAULT));
+    if (val != 0) {
+      opt->write_buffer_size = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_MAX_WRITE_BUFFER, PROP_MAX_WRITE_BUFFER_DEFAULT));
+    if (val != 0) {
+      opt->max_write_buffer_number = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_COMPACTION_PRI, PROP_COMPACTION_PRI_DEFAULT));
+    if (val != -1) {
+      opt->compaction_pri = static_cast<rocksdb::CompactionPri>(val);
     }
 
     if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
