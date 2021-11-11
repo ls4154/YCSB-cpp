@@ -55,6 +55,9 @@ namespace {
   const std::string PROP_COMPACTION_PRI = "rocksdb.compaction_pri";
   const std::string PROP_COMPACTION_PRI_DEFAULT = "-1";
 
+  const std::string PROP_CACHE_SIZE = "rocksdb.cache_size";
+  const std::string PROP_CACHE_SIZE_DEFAULT = "0";
+
   const std::string PROP_INCREASE_PARALLELISM = "rocksdb.increase_parallelism";
   const std::string PROP_INCREASE_PARALLELISM_DEFAULT = "false";
 
@@ -71,6 +74,7 @@ namespace {
   const std::string PROP_FS_URI_DEFAULT = "";
 
   static std::shared_ptr<rocksdb::Env> env_guard;
+  static std::shared_ptr<rocksdb::Cache> block_cache;
 } // anonymous
 
 namespace ycsbc {
@@ -258,6 +262,14 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
     val = std::stoi(props.GetProperty(PROP_COMPACTION_PRI, PROP_COMPACTION_PRI_DEFAULT));
     if (val != -1) {
       opt->compaction_pri = static_cast<rocksdb::CompactionPri>(val);
+    }
+
+    size_t cache_size = std::stoul(props.GetProperty(PROP_CACHE_SIZE, PROP_CACHE_SIZE_DEFAULT));
+    if (cache_size > 0) {
+      block_cache = rocksdb::NewLRUCache(cache_size);
+      rocksdb::BlockBasedTableOptions table_options;
+      table_options.block_cache = block_cache;
+      opt->table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
     }
 
     if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
