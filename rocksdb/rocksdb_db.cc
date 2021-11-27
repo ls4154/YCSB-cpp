@@ -13,6 +13,7 @@
 #include "core/utils.h"
 
 #include <rocksdb/cache.h>
+#include <rocksdb/filter_policy.h>
 #include <rocksdb/merge_operator.h>
 #include <rocksdb/status.h>
 #include <rocksdb/utilities/options_util.h>
@@ -55,8 +56,29 @@ namespace {
   const std::string PROP_COMPACTION_PRI = "rocksdb.compaction_pri";
   const std::string PROP_COMPACTION_PRI_DEFAULT = "-1";
 
+  const std::string PROP_MAX_OPEN_FILES = "rocksdb.max_open_files";
+  const std::string PROP_MAX_OPEN_FILES_DEFAULT = "-1";
+
+  const std::string PROP_USE_DIRECT_WRITE = "rocksdb.use_direct_io_for_flush_compaction";
+  const std::string PROP_USE_DIRECT_WRITE_DEFAULT = "false";
+
+  const std::string PROP_USE_DIRECT_READ = "rocksdb.use_direct_reads";
+  const std::string PROP_USE_DIRECT_READ_DEFAULT = "false";
+
+  const std::string PROP_USE_MMAP_WRITE = "rocksdb.allow_mmap_writes";
+  const std::string PROP_USE_MMAP_WRITE_DEFAULT = "false";
+
+  const std::string PROP_USE_MMAP_READ = "rocksdb.allow_mmap_reads";
+  const std::string PROP_USE_MMAP_READ_DEFAULT = "false";
+
   const std::string PROP_CACHE_SIZE = "rocksdb.cache_size";
   const std::string PROP_CACHE_SIZE_DEFAULT = "0";
+
+  const std::string PROP_COMPRESSED_CACHE_SIZE = "rocksdb.compressed_cache_size";
+  const std::string PROP_COMPRESSED_CACHE_SIZE_DEFAULT = "0";
+
+  const std::string PROP_BLOOM_BITS = "rocksdb.bloom_bits";
+  const std::string PROP_BLOOM_BITS_DEFAULT = "0";
 
   const std::string PROP_INCREASE_PARALLELISM = "rocksdb.increase_parallelism";
   const std::string PROP_INCREASE_PARALLELISM_DEFAULT = "false";
@@ -75,6 +97,7 @@ namespace {
 
   static std::shared_ptr<rocksdb::Env> env_guard;
   static std::shared_ptr<rocksdb::Cache> block_cache;
+  static std::shared_ptr<rocksdb::Cache> block_cache_compressed;
 } // anonymous
 
 namespace ycsbc {
@@ -263,14 +286,41 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
     if (val != -1) {
       opt->compaction_pri = static_cast<rocksdb::CompactionPri>(val);
     }
+    val = std::stoi(props.GetProperty(PROP_MAX_OPEN_FILES, PROP_MAX_OPEN_FILES_DEFAULT));
+    if (val != 0) {
+      opt->max_open_files = val;
+    }
 
+    if (props.GetProperty(PROP_USE_DIRECT_WRITE, PROP_USE_DIRECT_WRITE_DEFAULT) == "true") {
+      opt->use_direct_io_for_flush_and_compaction = true;
+    }
+    if (props.GetProperty(PROP_USE_DIRECT_READ, PROP_USE_DIRECT_READ_DEFAULT) == "true") {
+      opt->use_direct_reads = true;
+    }
+    if (props.GetProperty(PROP_USE_MMAP_WRITE, PROP_USE_MMAP_WRITE_DEFAULT) == "true") {
+      opt->allow_mmap_writes = true;
+    }
+    if (props.GetProperty(PROP_USE_MMAP_READ, PROP_USE_MMAP_READ_DEFAULT) == "true") {
+      opt->allow_mmap_reads = true;
+    }
+
+    rocksdb::BlockBasedTableOptions table_options;
     size_t cache_size = std::stoul(props.GetProperty(PROP_CACHE_SIZE, PROP_CACHE_SIZE_DEFAULT));
     if (cache_size > 0) {
       block_cache = rocksdb::NewLRUCache(cache_size);
-      rocksdb::BlockBasedTableOptions table_options;
       table_options.block_cache = block_cache;
-      opt->table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
     }
+    size_t compressed_cache_size = std::stoul(props.GetProperty(PROP_CACHE_SIZE,
+                                                                PROP_CACHE_SIZE_DEFAULT));
+    if (compressed_cache_size > 0) {
+      block_cache_compressed = rocksdb::NewLRUCache(cache_size);
+      table_options.block_cache_compressed = rocksdb::NewLRUCache(compressed_cache_size);
+    }
+    int bloom_bits = std::stoul(props.GetProperty(PROP_BLOOM_BITS, PROP_BLOOM_BITS_DEFAULT));
+    if (bloom_bits > 0) {
+      table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits));
+    }
+    opt->table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
 
     if (props.GetProperty(PROP_INCREASE_PARALLELISM, PROP_INCREASE_PARALLELISM_DEFAULT) == "true") {
       opt->IncreaseParallelism();
