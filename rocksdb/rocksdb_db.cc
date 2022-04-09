@@ -59,6 +59,15 @@ namespace {
   const std::string PROP_MAX_OPEN_FILES = "rocksdb.max_open_files";
   const std::string PROP_MAX_OPEN_FILES_DEFAULT = "-1";
 
+  const std::string PROP_L0_COMPACTION_TRIGGER = "rocksdb.level0_file_num_compaction_trigger";
+  const std::string PROP_L0_COMPACTION_TRIGGER_DEFAULT = "0";
+
+  const std::string PROP_L0_SLOWDOWN_TRIGGER = "rocksdb.level0_slowdown_writes_trigger";
+  const std::string PROP_L0_SLOWDOWN_TRIGGER_DEFAULT = "0";
+
+  const std::string PROP_L0_STOP_TRIGGER = "rocksdb.level0_stop_writes_trigger";
+  const std::string PROP_L0_STOP_TRIGGER_DEFAULT = "0";
+
   const std::string PROP_USE_DIRECT_WRITE = "rocksdb.use_direct_io_for_flush_compaction";
   const std::string PROP_USE_DIRECT_WRITE_DEFAULT = "false";
 
@@ -289,6 +298,19 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
     val = std::stoi(props.GetProperty(PROP_MAX_OPEN_FILES, PROP_MAX_OPEN_FILES_DEFAULT));
     if (val != 0) {
       opt->max_open_files = val;
+    }
+
+    val = std::stoi(props.GetProperty(PROP_L0_COMPACTION_TRIGGER, PROP_L0_COMPACTION_TRIGGER_DEFAULT));
+    if (val != 0) {
+      opt->level0_file_num_compaction_trigger = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_L0_SLOWDOWN_TRIGGER, PROP_L0_SLOWDOWN_TRIGGER_DEFAULT));
+    if (val != 0) {
+      opt->level0_slowdown_writes_trigger = val;
+    }
+    val = std::stoi(props.GetProperty(PROP_L0_STOP_TRIGGER, PROP_L0_STOP_TRIGGER_DEFAULT));
+    if (val != 0) {
+      opt->level0_stop_writes_trigger = val;
     }
 
     if (props.GetProperty(PROP_USE_DIRECT_WRITE, PROP_USE_DIRECT_WRITE_DEFAULT) == "true") {
