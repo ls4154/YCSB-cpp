@@ -28,19 +28,19 @@ namespace {
   const std::string PROP_COMPRESSION_DEFAULT = "no";
 
   const std::string PROP_WRITE_BUFFER_SIZE = "leveldb.write_buffer_size";
-  const std::string PROP_WRITE_BUFFER_SIZE_DEFAULT = "-1";
+  const std::string PROP_WRITE_BUFFER_SIZE_DEFAULT = "0";
 
   const std::string PROP_MAX_FILE_SIZE = "leveldb.max_file_size";
-  const std::string PROP_MAX_FILE_SIZE_DEFAULT = "-1";
+  const std::string PROP_MAX_FILE_SIZE_DEFAULT = "0";
 
   const std::string PROP_MAX_OPEN_FILES = "leveldb.max_open_files";
-  const std::string PROP_MAX_OPEN_FILES_DEFAULT = "-1";
+  const std::string PROP_MAX_OPEN_FILES_DEFAULT = "0";
 
   const std::string PROP_CACHE_SIZE = "leveldb.cache_size";
-  const std::string PROP_CACHE_SIZE_DEFAULT = "-1";
+  const std::string PROP_CACHE_SIZE_DEFAULT = "0";
 
   const std::string PROP_FILTER_BITS = "leveldb.filter_bits";
-  const std::string PROP_FILTER_BITS_DEFAULT = "-1";
+  const std::string PROP_FILTER_BITS_DEFAULT = "0";
 } // anonymous
 
 namespace ycsbc {
@@ -132,7 +132,7 @@ void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt
   }
   size_t cache_size = std::stol(props.GetProperty(PROP_CACHE_SIZE,
                                                   PROP_CACHE_SIZE_DEFAULT));
-  if (cache_size >= 0) {
+  if (cache_size > 0) {
     opt->block_cache = leveldb::NewLRUCache(cache_size);
   }
   int max_open_files = std::stoi(props.GetProperty(PROP_MAX_OPEN_FILES,
