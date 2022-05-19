@@ -332,8 +332,8 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
       block_cache = rocksdb::NewLRUCache(cache_size);
       table_options.block_cache = block_cache;
     }
-    size_t compressed_cache_size = std::stoul(props.GetProperty(PROP_CACHE_SIZE,
-                                                                PROP_CACHE_SIZE_DEFAULT));
+    size_t compressed_cache_size = std::stoul(props.GetProperty(PROP_COMPRESSED_CACHE_SIZE,
+                                                                PROP_COMPRESSED_CACHE_SIZE_DEFAULT));
     if (compressed_cache_size > 0) {
       block_cache_compressed = rocksdb::NewLRUCache(cache_size);
       table_options.block_cache_compressed = rocksdb::NewLRUCache(compressed_cache_size);
