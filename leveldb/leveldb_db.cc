@@ -158,19 +158,16 @@ void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt
   if (filter_bits > 0) {
     opt->filter_policy = leveldb::NewBloomFilterPolicy(filter_bits);
   }
-
   int block_size = std::stoi(props.GetProperty(PROP_BLOCK_SIZE,
                                                PROP_BLOCK_SIZE_DEFAULT)); 
   if (block_size > 0) {
     opt->block_size = block_size;
   }
-
   int block_restart_interval = std::stoi(props.GetProperty(PROP_BLOCK_RESTART_INTERVAL,
                                                 PROP_BLOCK_RESTART_INTERVAL_DEFAULT));
   if (block_restart_interval > 0) {
     opt->block_restart_interval = block_restart_interval;
   }
-
 }
 
 void LeveldbDB::SerializeRow(const std::vector<Field> &values, std::string *data) {
