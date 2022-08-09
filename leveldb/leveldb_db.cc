@@ -41,6 +41,12 @@ namespace {
 
   const std::string PROP_FILTER_BITS = "leveldb.filter_bits";
   const std::string PROP_FILTER_BITS_DEFAULT = "0";
+
+  const std::string PROP_BLOCK_SIZE = "leveldb.block_size";
+  const std::string PROP_BLOCK_SIZE_DEFAULT = "0";
+
+  const std::string PROP_BLOCK_RESTART_INTERVAL = "leveldb.block_restart_interval";
+  const std::string PROP_BLOCK_RESTART_INTERVAL_DEFAULT = "0";
 } // anonymous
 
 namespace ycsbc {
@@ -151,6 +157,16 @@ void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt
                                                 PROP_FILTER_BITS_DEFAULT));
   if (filter_bits > 0) {
     opt->filter_policy = leveldb::NewBloomFilterPolicy(filter_bits);
+  }
+  int block_size = std::stoi(props.GetProperty(PROP_BLOCK_SIZE,
+                                               PROP_BLOCK_SIZE_DEFAULT)); 
+  if (block_size > 0) {
+    opt->block_size = block_size;
+  }
+  int block_restart_interval = std::stoi(props.GetProperty(PROP_BLOCK_RESTART_INTERVAL,
+                                                PROP_BLOCK_RESTART_INTERVAL_DEFAULT));
+  if (block_restart_interval > 0) {
+    opt->block_restart_interval = block_restart_interval;
   }
 }
 
