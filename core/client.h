@@ -17,11 +17,14 @@
 
 namespace ycsbc {
 
-inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
-                        bool init_db, bool cleanup_db, CountDownLatch *latch) {
+inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Properties &p, const int num_ops,
+                        const int thread_id, const int thread_count, bool is_loading, bool init_db, bool cleanup_db,
+                        CountDownLatch *latch) {
   if (init_db) {
     db->Init();
   }
+
+  wl->InitThread(p, thread_id, thread_count);
 
   int oks = 0;
   for (int i = 0; i < num_ops; ++i) {

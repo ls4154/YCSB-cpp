@@ -14,6 +14,7 @@
 #include "const_generator.h"
 #include "core_workload.h"
 #include "random_byte_generator.h"
+#include "workload_factory.h"
 
 #include <algorithm>
 #include <random>
@@ -230,3 +231,7 @@ void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::Field> &values) {
   std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
 }
 
+const bool registered = ycsbc::WorkloadFactory::RegisterWorkload(
+  "com.yahoo.ycsb.workloads.CoreWorkload",
+  []() { return new CoreWorkload; }
+);

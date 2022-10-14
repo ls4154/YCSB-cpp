@@ -11,7 +11,7 @@
 
 DEBUG_BUILD ?= 0
 EXTRA_CXXFLAGS ?=
-EXTRA_LDFLAGS ?=
+EXTRA_LDFLAGS ?= -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 
 BIND_LEVELDB ?= 0
 BIND_ROCKSDB ?= 0

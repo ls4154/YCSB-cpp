@@ -24,6 +24,8 @@
 #include "core_workload.h"
 #include "countdown_latch.h"
 #include "db_factory.h"
+#include "workload_factory.h"
+#include "pure_insert_workload.h"
 
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
@@ -74,8 +76,8 @@ int main(const int argc, const char *argv[]) {
     dbs.push_back(db);
   }
 
-  ycsbc::CoreWorkload wl;
-  wl.Init(props);
+  ycsbc::CoreWorkload *wl = ycsbc::WorkloadFactory::CreateWorkload(props);
+  wl->Init(props);
 
   const bool show_status = (props.GetProperty("status", "false") == "true");
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
@@ -99,8 +101,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
-                                             thread_ops, true, true, !do_transaction, &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
+                                             num_threads, true, true, !do_transaction, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -142,8 +144,8 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
-      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
-                                             thread_ops, false, !do_load, true,  &latch));
+      client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
+                                             num_threads, true, true, !do_transaction, &latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -162,6 +164,8 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Run operations(ops): " << sum << std::endl;
     std::cout << "Run throughput(ops/sec): " << sum / runtime << std::endl;
   }
+
+  delete wl;
 
   for (int i = 0; i < num_threads; i++) {
     delete dbs[i];

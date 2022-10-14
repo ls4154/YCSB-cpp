@@ -1,0 +1,10 @@
+# Yahoo! Cloud System Benchmark
+# Workload W: Pure Insertion workload
+#
+#   Default data size: 100 B records (1 fields, 100 bytes each, plus key)
+
+recordcount=10
+workload=com.yahoo.ycsb.workloads.PureInsertWorkload
+
+valuelength=100
+workloadpath=/home/xuhao/runw

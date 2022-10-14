@@ -162,6 +162,13 @@ class CoreWorkload {
   ///
   virtual void Init(const utils::Properties &p);
 
+  ///
+  /// Initialize per-thread states.
+  /// Called once per-thread
+  ///
+  virtual void InitThread(const utils::Properties &p, const int mythreadid,
+                          const int threadcount) {}
+
   virtual bool DoInsert(DB &db);
   virtual bool DoTransaction(DB &db);
 
