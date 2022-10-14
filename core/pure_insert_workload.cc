@@ -53,7 +53,7 @@ bool PureInsertWorkload::DoInsert(DB &db) {
   const std::string key = GetNextKey();
   std::vector<DB::Field> value;
   BuildSingleValueOfLen(value, value_len);
-  return db.Insert(table_name_, key, value);
+  return db.Insert(table_name_, key, value) == DB::kOK;
 }
 
 bool PureInsertWorkload::DoTransaction(DB &db) { return DoInsert(db); }
@@ -81,7 +81,7 @@ void PureInsertWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &va
   // field.name = "";
   field.value.reserve(val_len);
   RandomByteGenerator byte_generator;
-  std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
+  std::generate_n(std::back_inserter(field.value), val_len, [&]() { return byte_generator.Next(); } );
 }
 
 CoreWorkload *NewPureInsertWorkload() {
