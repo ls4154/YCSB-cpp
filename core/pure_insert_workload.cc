@@ -23,7 +23,7 @@ void PureInsertWorkload::Init(const utils::Properties &p) {
   value_len = std::stoi(p.GetProperty("valuelength", "100"));
 }
 
-void PureInsertWorkload::InitThread(const utils::Properties &p, const int mythreadid, const int threadcount) {
+bool PureInsertWorkload::InitThread(const utils::Properties &p, const int mythreadid, const int threadcount) {
   struct stat status;
   int fd;
 
@@ -32,14 +32,14 @@ void PureInsertWorkload::InitThread(const utils::Properties &p, const int mythre
   const path workload_name("run.w." + std::to_string(mythreadid + 1));
 
   if ((fd = ::open((workload_path / workload_name).c_str(), O_RDONLY)) < 0) {
-    std::cerr << "unable to read file: " << (workload_path / workload_name) << std::endl;
-    return;
+    std::cerr << "unable to read file: " << (workload_path / workload_name).c_str() << std::endl;
+    return false;
   }
 
   if (::fstat(fd, &status) < 0) {
     std::cerr << "unable to get file size" << std::endl;
     ::close(fd);
-    return;
+    return false;
   }
 
   len = status.st_size;
@@ -47,6 +47,8 @@ void PureInsertWorkload::InitThread(const utils::Properties &p, const int mythre
     std::cerr << "unable to mmap file" << std::endl;
   }
   ::close(fd);
+
+  return true;
 }
 
 bool PureInsertWorkload::DoInsert(DB &db) {

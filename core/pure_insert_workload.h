@@ -23,7 +23,7 @@ class PureInsertWorkload : public CoreWorkload {
   ~PureInsertWorkload() override;
 
   void Init(const utils::Properties &p) override;
-  void InitThread(const utils::Properties &p, const int mythreadid, const int threadcount) override;
+  bool InitThread(const utils::Properties &p, const int mythreadid, const int threadcount) override;
 
   bool DoInsert(DB &db) override;
   bool DoTransaction(DB &db) override;
