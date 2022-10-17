@@ -14,7 +14,7 @@
 
 namespace ycsbc {
 
-Measurements::Measurements() : count_{}, latency_sum_{}, latency_max_{} {
+Measurements::Measurements() : count_{}, last_count_{}, latency_sum_{}, last_latency_sum_{}, latency_max_{} {
   std::fill(std::begin(latency_min_), std::end(latency_min_), std::numeric_limits<uint64_t>::max());
 }
 
@@ -37,6 +37,8 @@ std::string Measurements::GetStatusMsg() {
   for (int i = 0; i < MAXOPTYPE; i++) {
     Operation op = static_cast<Operation>(i);
     uint64_t cnt = GetCount(op);
+    uint64_t period_cnt = cnt - last_count_[op];
+    uint64_t latency_sum = latency_sum_[op].load(std::memory_order_relaxed);
     if (cnt == 0)
       continue;
     msg_stream << " [" << kOperationString[op] << ":"
@@ -45,10 +47,14 @@ std::string Measurements::GetStatusMsg() {
                << " Min=" << latency_min_[op].load(std::memory_order_relaxed) / 1000.0
                << " Avg="
                << ((cnt > 0)
-                   ? static_cast<double>(latency_sum_[op].load(std::memory_order_relaxed)) / cnt
+                   ? static_cast<double>(latency_sum) / cnt
                    : 0) / 1000.0
+               << " | Period Count=" << period_cnt
+               << " Period Avg=" << static_cast<double>(latency_sum - last_latency_sum_[op]) / period_cnt / 1000.0
                << "]";
     total_cnt += cnt;
+    last_latency_sum_[op] = latency_sum;
+    last_count_[op] = cnt;
   }
   return std::to_string(total_cnt) + msg_stream.str();
 }

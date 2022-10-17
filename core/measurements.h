@@ -31,7 +31,9 @@ class Measurements {
   void Reset();
  private:
   std::atomic<uint> count_[MAXOPTYPE];
+  uint last_count_[MAXOPTYPE];  // the op count at last measurement
   std::atomic<uint64_t> latency_sum_[MAXOPTYPE];
+  uint64_t last_latency_sum_[MAXOPTYPE];
   std::atomic<uint64_t> latency_min_[MAXOPTYPE];
   std::atomic<uint64_t> latency_max_[MAXOPTYPE];
 };
