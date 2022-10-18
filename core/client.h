@@ -24,18 +24,18 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Pro
     db->Init();
   }
 
-  if (!wl->InitThread(p, thread_id, thread_count)) {
-    return 0;
-  }
+  ThreadState *thread_state = wl->InitThread(p, thread_id, thread_count);
 
   int oks = 0;
   for (int i = 0; i < num_ops; ++i) {
     if (is_loading) {
-      oks += wl->DoInsert(*db);
+      oks += wl->DoInsert(*db, thread_state);
     } else {
-      oks += wl->DoTransaction(*db);
+      oks += wl->DoTransaction(*db, thread_state);
     }
   }
+
+  delete thread_state;
 
   if (cleanup_db) {
     db->Cleanup();

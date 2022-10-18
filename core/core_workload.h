@@ -33,6 +33,11 @@ enum Operation {
 
 extern const char *kOperationString[MAXOPTYPE];
 
+class ThreadState {
+ public:
+  virtual ~ThreadState() {}
+};
+
 class CoreWorkload {
  public:
   ///
@@ -167,11 +172,11 @@ class CoreWorkload {
   /// Called once per-thread
   /// @return true if successfully initiated
   ///
-  virtual bool InitThread(const utils::Properties &p, const int mythreadid,
-                          const int threadcount) { return true; }
+  virtual ThreadState *InitThread(const utils::Properties &p, const int mythreadid,
+                          const int threadcount) { return new ThreadState; }
 
-  virtual bool DoInsert(DB &db);
-  virtual bool DoTransaction(DB &db);
+  virtual bool DoInsert(DB &db, ThreadState *state);
+  virtual bool DoTransaction(DB &db, ThreadState *state);
 
   bool read_all_fields() const { return read_all_fields_; }
   bool write_all_fields() const { return write_all_fields_; }
@@ -236,14 +241,14 @@ inline std::string CoreWorkload::NextFieldName() {
   return std::string(field_prefix_).append(std::to_string(field_chooser_->Next()));
 }
 
-inline bool CoreWorkload::DoInsert(DB &db) {
+inline bool CoreWorkload::DoInsert(DB &db, ThreadState *_state) {
   const std::string key = BuildKeyName(insert_key_sequence_->Next());
   std::vector<DB::Field> fields;
   BuildValues(fields);
   return db.Insert(table_name_, key, fields) == DB::kOK;
 }
 
-inline bool CoreWorkload::DoTransaction(DB &db) {
+inline bool CoreWorkload::DoTransaction(DB &db, ThreadState *_state) {
   int status = -1;
   switch (op_chooser_.Next()) {
     case READ:
