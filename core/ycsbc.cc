@@ -31,8 +31,9 @@ void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
 
-void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
+void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, CountDownLatch *init_latch, int interval) {
   using namespace std::chrono;
+  init_latch->Await(); // wait for all client threads to finish initializing before start printing status
   time_point<system_clock> start = system_clock::now();
   bool done = false;
   while (1) {
@@ -86,14 +87,14 @@ int main(const int argc, const char *argv[]) {
   if (do_load) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
 
-    CountDownLatch latch(num_threads);
+    CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
     timer.Start();
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 &measurements, &latch, status_interval);
+                                 &measurements, &latch, &init_latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -102,7 +103,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, true, true, !do_transaction, &latch));
+                                             num_threads, true, true, !do_transaction, &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -129,14 +130,14 @@ int main(const int argc, const char *argv[]) {
   if (do_transaction) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
 
-    CountDownLatch latch(num_threads);
+    CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
     timer.Start();
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 &measurements, &latch, status_interval);
+                                 &measurements, &latch, &init_latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -145,7 +146,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, true, true, !do_transaction, &latch));
+                                             num_threads, true, true, !do_transaction, &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
 
