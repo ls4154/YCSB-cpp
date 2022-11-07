@@ -90,7 +90,6 @@ int main(const int argc, const char *argv[]) {
     CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
-    timer.Start();
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
@@ -106,6 +105,8 @@ int main(const int argc, const char *argv[]) {
                                              num_threads, true, true, !do_transaction, &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
+    init_latch.Await();
+    timer.Start();
 
     int sum = 0;
     for (auto &n : client_threads) {
@@ -133,7 +134,6 @@ int main(const int argc, const char *argv[]) {
     CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
-    timer.Start();
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
@@ -149,6 +149,8 @@ int main(const int argc, const char *argv[]) {
                                              num_threads, true, true, !do_transaction, &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
+    init_latch.Await();
+    timer.Start();
 
     int sum = 0;
     for (auto &n : client_threads) {
