@@ -23,3 +23,6 @@ cd $dir/YCSB-cpp
 
 
 make BIND_ROCKSDB=1 EXTRA_CXXFLAGS="-I$dir/rocksdb/include -L$dir/rocksdb" -j
+
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/$dir/rocksdb/" >> ~/.bashrc
+source ~/.bashrc
