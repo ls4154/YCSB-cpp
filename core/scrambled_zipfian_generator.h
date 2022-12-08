@@ -20,11 +20,11 @@ namespace ycsbc {
 class ScrambledZipfianGenerator : public Generator<uint64_t> {
  public:
   ScrambledZipfianGenerator(uint64_t min, uint64_t max, double zipfian_const) :
-      base_(min), num_items_(max - min + 1), generator_(0, 10000000000LL, zipfian_const) { }
+      base_(min), num_items_(max - min + 1), generator_(0, max - min + 1, zipfian_const) { }
 
   ScrambledZipfianGenerator(uint64_t min, uint64_t max) :
       base_(min), num_items_(max - min + 1),
-      generator_(0, 10000000000LL, ZipfianGenerator::kZipfianConst, kZetan) { }
+      generator_(0, max - min + 1, ZipfianGenerator::kZipfianConst, kZetan) { }
 
   ScrambledZipfianGenerator(uint64_t num_items) :
       ScrambledZipfianGenerator(0, num_items - 1) { }
