@@ -35,7 +35,11 @@ class DBWrapper : public DB {
     timer_.Start();
     Status s = db_->Read(table, key, fields, result);
     uint64_t elapsed = timer_.End();
-    measurements_->Report(READ, elapsed);
+    if (s == kOK) {
+      measurements_->Report(READ, elapsed);
+    } else {
+      measurements_->Report(READ_FAILED, elapsed);
+    }
     return s;
   }
   Status Scan(const std::string &table, const std::string &key, int record_count,
@@ -43,28 +47,44 @@ class DBWrapper : public DB {
     timer_.Start();
     Status s = db_->Scan(table, key, record_count, fields, result);
     uint64_t elapsed = timer_.End();
-    measurements_->Report(SCAN, elapsed);
+    if (s == kOK) {
+      measurements_->Report(SCAN, elapsed);
+    } else {
+      measurements_->Report(SCAN_FAILED, elapsed);
+    }
     return s;
   }
   Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
     timer_.Start();
     Status s = db_->Update(table, key, values);
     uint64_t elapsed = timer_.End();
-    measurements_->Report(UPDATE, elapsed);
+    if (s == kOK) {
+      measurements_->Report(UPDATE, elapsed);
+    } else {
+      measurements_->Report(UPDATE_FAILED, elapsed);
+    }
     return s;
   }
   Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
     timer_.Start();
     Status s = db_->Insert(table, key, values);
     uint64_t elapsed = timer_.End();
-    measurements_->Report(INSERT, elapsed);
+    if (s == kOK) {
+      measurements_->Report(INSERT, elapsed);
+    } else {
+      measurements_->Report(INSERT_FAILED, elapsed);
+    }
     return s;
   }
   Status Delete(const std::string &table, const std::string &key) {
     timer_.Start();
     Status s = db_->Delete(table, key);
     uint64_t elapsed = timer_.End();
-    measurements_->Report(DELETE, elapsed);
+    if (s == kOK) {
+      measurements_->Report(DELETE, elapsed);
+    } else {
+      measurements_->Report(DELETE_FAILED, elapsed);
+    }
     return s;
   }
  private:

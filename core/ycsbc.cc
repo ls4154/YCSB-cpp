@@ -63,10 +63,15 @@ int main(const int argc, const char *argv[]) {
 
   const int num_threads = stoi(props.GetProperty("threadcount", "1"));
 
-  ycsbc::Measurements measurements;
+  ycsbc::Measurements *measurements = ycsbc::CreateMeasurements(&props);
+  if (measurements == nullptr) {
+    std::cerr << "Unknown measurements name" << std::endl;
+    exit(1);
+  }
+
   std::vector<ycsbc::DB *> dbs;
   for (int i = 0; i < num_threads; i++) {
-    ycsbc::DB *db = ycsbc::DBFactory::CreateDB(&props, &measurements);
+    ycsbc::DB *db = ycsbc::DBFactory::CreateDB(&props, measurements);
     if (db == nullptr) {
       std::cerr << "Unknown database name " << props["dbname"] << std::endl;
       exit(1);
@@ -91,7 +96,7 @@ int main(const int argc, const char *argv[]) {
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 &measurements, &latch, status_interval);
+                                 measurements, &latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -120,7 +125,7 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Load throughput(ops/sec): " << sum / runtime << std::endl;
   }
 
-  measurements.Reset();
+  measurements->Reset();
   std::this_thread::sleep_for(std::chrono::seconds(stoi(props.GetProperty("sleepafterload", "0"))));
 
   // transaction phase
@@ -134,7 +139,7 @@ int main(const int argc, const char *argv[]) {
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 &measurements, &latch, status_interval);
+                                 measurements, &latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {

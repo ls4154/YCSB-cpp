@@ -9,32 +9,49 @@
 #define YCSB_C_MEASUREMENTS_H_
 
 #include "core_workload.h"
+#include "properties.h"
 
 #include <atomic>
+
+#ifdef HDRMEASUREMENT
+#include <hdr/hdr_histogram.h>
+#endif
 
 namespace ycsbc {
 
 class Measurements {
  public:
-  Measurements();
-  void Report(Operation op, uint64_t latency);
-  uint64_t GetCount(Operation op) {
-    return count_[op].load(std::memory_order_relaxed);
-  }
-  double GetLatency(Operation op) {
-    uint64_t cnt = GetCount(op);
-    return cnt > 0
-        ? static_cast<double>(latency_sum_[op].load(std::memory_order_relaxed)) / cnt
-        : 0.0;
-  }
-  std::string GetStatusMsg();
-  void Reset();
+  virtual void Report(Operation op, uint64_t latency) = 0;
+  virtual std::string GetStatusMsg() = 0;
+  virtual void Reset() = 0;
+};
+
+class BasicMeasurements : public Measurements {
+ public:
+  BasicMeasurements();
+  void Report(Operation op, uint64_t latency) override;
+  std::string GetStatusMsg() override;
+  void Reset() override;
  private:
   std::atomic<uint> count_[MAXOPTYPE];
   std::atomic<uint64_t> latency_sum_[MAXOPTYPE];
   std::atomic<uint64_t> latency_min_[MAXOPTYPE];
   std::atomic<uint64_t> latency_max_[MAXOPTYPE];
 };
+
+#ifdef HDRMEASUREMENT
+class HdrHistogramMeasurements : public Measurements {
+ public:
+  HdrHistogramMeasurements();
+  void Report(Operation op, uint64_t latency) override;
+  std::string GetStatusMsg() override;
+  void Reset() override;
+ private:
+  hdr_histogram *histogram_[MAXOPTYPE];
+};
+#endif
+
+Measurements *CreateMeasurements(utils::Properties *props);
 
 } // ycsbc
 

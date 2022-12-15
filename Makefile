@@ -16,6 +16,7 @@ EXTRA_LDFLAGS ?=
 BIND_LEVELDB ?= 0
 BIND_ROCKSDB ?= 0
 BIND_LMDB ?= 0
+BIND_HDRHISTOGRAM ?= 0
 
 #----------------------------------------------------------
 
@@ -39,6 +40,11 @@ endif
 ifeq ($(BIND_LMDB), 1)
 	LDFLAGS += -llmdb
 	SOURCES += $(wildcard lmdb/*.cc)
+endif
+
+ifeq ($(BIND_HDRHISTOGRAM), 1)
+	LDFLAGS += -lhdr_histogram
+	CPPFLAGS += -DHDRMEASUREMENT
 endif
 
 CXXFLAGS += -std=c++17 -Wall -pthread $(EXTRA_CXXFLAGS) -I./

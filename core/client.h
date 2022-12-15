@@ -23,13 +23,14 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
     db->Init();
   }
 
-  int oks = 0;
+  int ops = 0;
   for (int i = 0; i < num_ops; ++i) {
     if (is_loading) {
-      oks += wl->DoInsert(*db);
+      wl->DoInsert(*db);
     } else {
-      oks += wl->DoTransaction(*db);
+      wl->DoTransaction(*db);
     }
+    ops++;
   }
 
   if (cleanup_db) {
@@ -37,7 +38,7 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
   }
 
   latch->CountDown();
-  return oks;
+  return ops;
 }
 
 } // ycsbc
