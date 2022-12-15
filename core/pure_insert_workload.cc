@@ -5,15 +5,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <filesystem>
 #include <iostream>
+#include <string>
 
 #include "random_byte_generator.h"
 #include "workload_factory.h"
 
 namespace ycsbc {
 
-using std::filesystem::path;
+using std::string;
 
 const size_t InsertThreadState::RECORD_LENGTH = 27;  // I user21424693888996579940\n
 const size_t InsertThreadState::KEY_LENGTH = 24;     // user21424693888996579940
@@ -52,11 +52,11 @@ InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythr
   int fd;
 
   std::cout << "init thread " << mythreadid << ", total " << threadcount << std::endl;
-  const path workload_path(p.GetProperty("workloadpath", "."));
-  const path workload_name("run.w." + std::to_string(mythreadid + 1));
+  const string workload_path(p.GetProperty("workloadpath", "."));
+  const string workload_name("run.w." + std::to_string(mythreadid + 1));
 
-  if ((fd = ::open((workload_path / workload_name).c_str(), O_RDONLY)) < 0) {
-    std::cerr << "unable to read file: " << (workload_path / workload_name).c_str() << std::endl;
+  if ((fd = ::open((workload_path + "/" + workload_name).c_str(), O_RDONLY)) < 0) {
+    std::cerr << "unable to read file: " << (workload_path + "/" + workload_name).c_str() << std::endl;
   }
 
   if (::fstat(fd, &status) < 0) {
