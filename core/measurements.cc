@@ -72,7 +72,7 @@ void BasicMeasurements::Reset() {
 #ifdef HDRMEASUREMENT
 HdrHistogramMeasurements::HdrHistogramMeasurements() {
   for (int op = 0; op < MAXOPTYPE; op++) {
-    if (hdr_init(10, 1LL * 1000 * 1000 * 1000, 3, &histogram_[op]) != 0) {
+    if (hdr_init(10, 100LL * 1000 * 1000 * 1000, 3, &histogram_[op]) != 0) {
       utils::Exception("hdr init failed");
     }
   }
