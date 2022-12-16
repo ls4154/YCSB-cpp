@@ -9,14 +9,20 @@
 
 #---------------------build config-------------------------
 
+# Database bindings
+BIND_LEVELDB ?= 0
+BIND_ROCKSDB ?= 0
+BIND_LMDB ?= 0
+
+# Extra options
 DEBUG_BUILD ?= 0
 EXTRA_CXXFLAGS ?=
 EXTRA_LDFLAGS ?=
 
-BIND_LEVELDB ?= 0
-BIND_ROCKSDB ?= 0
-BIND_LMDB ?= 0
-BIND_HDRHISTOGRAM ?= 0
+# HdrHistogram for tail latency report
+BIND_HDRHISTOGRAM ?= 1
+# Build and statically link library, submodule required
+BUILD_HDRHISTOGRAM ?= 1
 
 #----------------------------------------------------------
 
@@ -42,17 +48,25 @@ ifeq ($(BIND_LMDB), 1)
 	SOURCES += $(wildcard lmdb/*.cc)
 endif
 
-ifeq ($(BIND_HDRHISTOGRAM), 1)
-	LDFLAGS += -lhdr_histogram
-	CPPFLAGS += -DHDRMEASUREMENT
-endif
-
 CXXFLAGS += -std=c++17 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
 OBJECTS += $(SOURCES:.cc=.o)
 DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
+
+HDRHISTOGRAM_DIR = HdrHistogram_c
+HDRHISTOGRAM_LIB = $(HDRHISTOGRAM_DIR)/src/libhdr_histogram_static.a
+
+ifeq ($(BIND_HDRHISTOGRAM), 1)
+ifeq ($(BUILD_HDRHISTOGRAM), 1)
+	CXXFLAGS += -I$(HDRHISTOGRAM_DIR)/include
+	OBJECTS += $(HDRHISTOGRAM_LIB)
+else
+	LDFLAGS += -lhdr_histogram
+endif
+CPPFLAGS += -DHDRMEASUREMENT
+endif
 
 all: $(EXEC)
 
@@ -64,8 +78,20 @@ $(EXEC): $(OBJECTS)
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "  CC      " $@
 
-%.d : %.cc
+%.d: %.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$(<:.cc=.o)' -o $@ $<
+
+$(HDRHISTOGRAM_DIR)/CMakeLists.txt:
+	@echo "Download HdrHistogram_c"
+	@git submodule update --init
+
+$(HDRHISTOGRAM_DIR)/Makefile: $(HDRHISTOGRAM_DIR)/CMakeLists.txt
+	@cmake -DCMAKE_BUILD_TYPE=Release -S $(HDRHISTOGRAM_DIR) -B $(HDRHISTOGRAM_DIR)
+
+
+$(HDRHISTOGRAM_LIB): $(HDRHISTOGRAM_DIR)/Makefile
+	@echo "Build HdrHistogram_c"
+	@make -C $(HDRHISTOGRAM_DIR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)
