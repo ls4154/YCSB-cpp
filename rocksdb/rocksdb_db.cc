@@ -121,7 +121,7 @@ void RocksdbDB::Init() {
   class YCSBUpdateMerge : public rocksdb::AssociativeMergeOperator {
    public:
     virtual bool Merge(const rocksdb::Slice &key, const rocksdb::Slice *existing_value,
-                       const rocksdb::Slice &value, std::string *new_value,
+                       const rocksdb::Slice &second, std::string *new_value,
                        rocksdb::Logger *logger) const override {
       assert(existing_value);
 
@@ -131,16 +131,16 @@ void RocksdbDB::Init() {
       DeserializeRow(values, p, lim);
 
       std::vector<Field> new_values;
-      p = value.data();
-      lim = p + value.size();
+      p = second.data();
+      lim = p + second.size();
       DeserializeRow(new_values, p, lim);
 
       for (Field &new_field : new_values) {
         bool found = false;
         for (Field &field : values) {
-          if (field.name == new_field.name) {
+          if (field.first == new_field.first) {
             found = true;
-            field.value = new_field.value;
+            field.second = new_field.second;
             break;
           }
         }
@@ -357,12 +357,12 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
 
 void RocksdbDB::SerializeRow(const std::vector<Field> &values, std::string &data) {
   for (const Field &field : values) {
-    uint32_t len = field.name.size();
+    uint32_t len = field.first.size();
     data.append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data.append(field.name.data(), field.name.size());
-    len = field.value.size();
+    data.append(field.first.data(), field.first.size());
+    len = field.second.size();
     data.append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data.append(field.value.data(), field.value.size());
+    data.append(field.second.data(), field.second.size());
   }
 }
 
@@ -470,9 +470,9 @@ DB::Status RocksdbDB::UpdateSingle(const std::string &table, const std::string &
   for (Field &new_field : values) {
     bool found __attribute__((unused)) = false;
     for (Field &cur_field : current_values) {
-      if (cur_field.name == new_field.name) {
+      if (cur_field.first == new_field.first) {
         found = true;
-        cur_field.value = new_field.value;
+        cur_field.second = new_field.second;
         break;
       }
     }

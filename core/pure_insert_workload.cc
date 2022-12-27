@@ -42,9 +42,9 @@ void PureInsertWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &va
   values.push_back(DB::Field());
   ycsbc::DB::Field &field = values.back();
   // field.name = "";
-  field.value.reserve(val_len);
+  field.second.reserve(val_len);
   RandomByteGenerator byte_generator;
-  std::generate_n(std::back_inserter(field.value), val_len, [&]() { return byte_generator.Next(); });
+  std::generate_n(std::back_inserter(field.second), val_len, [&]() { return byte_generator.Next(); });
 }
 
 InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythreadid, const int threadcount) {

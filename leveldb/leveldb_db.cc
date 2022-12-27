@@ -172,12 +172,12 @@ void LeveldbDB::GetOptions(const utils::Properties &props, leveldb::Options *opt
 
 void LeveldbDB::SerializeRow(const std::vector<Field> &values, std::string *data) {
   for (const Field &field : values) {
-    uint32_t len = field.name.size();
+    uint32_t len = field.first.size();
     data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data->append(field.name.data(), field.name.size());
-    len = field.value.size();
+    data->append(field.first.data(), field.first.size());
+    len = field.second.size();
     data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data->append(field.value.data(), field.value.size());
+    data->append(field.second.data(), field.second.size());
   }
 }
 
@@ -300,9 +300,9 @@ DB::Status LeveldbDB::UpdateSingleEntry(const std::string &table, const std::str
   for (Field &new_field : values) {
     bool found __attribute__((unused)) = false;
     for (Field &cur_field : current_values) {
-      if (cur_field.name == new_field.name) {
+      if (cur_field.first == new_field.first) {
         found = true;
-        cur_field.value = new_field.value;
+        cur_field.second = new_field.second;
         break;
       }
     }
@@ -445,8 +445,8 @@ DB::Status LeveldbDB::InsertCompKey(const std::string &table, const std::string 
 
   std::string comp_key;
   for (Field &field : values) {
-    comp_key = BuildCompKey(key, field.name);
-    batch.Put(comp_key, field.value);
+    comp_key = BuildCompKey(key, field.first);
+    batch.Put(comp_key, field.second);
   }
 
   leveldb::Status s = db_->Write(wopt, &batch);

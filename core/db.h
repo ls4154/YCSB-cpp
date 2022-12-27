@@ -22,10 +22,7 @@ namespace ycsbc {
 ///
 class DB {
  public:
-  struct Field {
-    std::string name;
-    std::string value;
-  };
+  using Field = std::pair<std::string, std::string>;
   enum Status {
     kOK = 0,
     kError,
