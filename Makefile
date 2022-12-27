@@ -41,6 +41,11 @@ ifeq ($(BIND_LMDB), 1)
 	SOURCES += $(wildcard lmdb/*.cc)
 endif
 
+ifeq ($(BIND_REDIS), 1)
+	LDFLAGS += -lredis++ -lhiredis
+	SOURCES += $(wildcard redis/*.cc)
+endif
+
 CXXFLAGS += -std=c++17 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
