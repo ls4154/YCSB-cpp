@@ -43,6 +43,11 @@ BIND_ROCKSDB ?= 1
 
 ## Running
 
+Run workload A with wiredtiger:
+```
+./ycsb -load -run -db wiredtiger -P workloads/workloada -P wiredtiger/wiredtiger.properties -s
+```
+
 Load data with leveldb:
 ```
 ./ycsb -load -db leveldb -P workloads/workloada -P leveldb/leveldb.properties -s

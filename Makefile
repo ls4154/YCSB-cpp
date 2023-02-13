@@ -10,6 +10,7 @@
 #---------------------build config-------------------------
 
 # Database bindings
+BIND_WIREDTIGER ?= 0
 BIND_LEVELDB ?= 0
 BIND_ROCKSDB ?= 0
 BIND_LMDB ?= 0
@@ -33,13 +34,18 @@ else
 	CPPFLAGS += -DNDEBUG
 endif
 
+ifeq ($(BIND_WIREDTIGER), 1)
+	LDFLAGS += -lwiredtiger -ldl -lz -lsnappy -lzstd -lbz2 -llz4
+	SOURCES += $(wildcard wiredtiger/*.cc)
+endif
+
 ifeq ($(BIND_LEVELDB), 1)
 	LDFLAGS += -lleveldb
 	SOURCES += $(wildcard leveldb/*.cc)
 endif
 
 ifeq ($(BIND_ROCKSDB), 1)
-	LDFLAGS += -lrocksdb
+	LDFLAGS += -lrocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 	SOURCES += $(wildcard rocksdb/*.cc)
 endif
 
