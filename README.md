@@ -5,7 +5,7 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
 
  * Tail latency report using [HdrHistogram_c](https://github.com/HdrHistogram/HdrHistogram_c)
  * Small changes to make it behave more like the original YCSB
- * Supported Databases: LevelDB, RocksDB, LMDB
+ * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
 
 ## Building
 
@@ -39,6 +39,22 @@ EXTRA_CXXFLAGS ?= -I/example/rocksdb/include
 EXTRA_LDFLAGS ?= -L/example/rocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 
 BIND_ROCKSDB ?= 1
+```
+
+## Build WiredTiger
+
+Clone the source:
+```
+git clone git://github.com/wiredtiger/wiredtiger.git
+mkdir -p wiredtiger/build
+cd wiredtiger/build
+```
+
+Enable built-in compressors and build
+```
+cmake -DHAVE_BUILTIN_EXTENSION_LZ4=1 -DHAVE_BUILTIN_EXTENSION_SNAPPY=1 -DHAVE_BUILTIN_EXTENSION_ZLIB=1 -DHAVE_BUILTIN_EXTENSION_ZSTD=1 -DENABLE_STATIC=1 ../.
+make -j$(nproc)
+sudo make install
 ```
 
 ## Running

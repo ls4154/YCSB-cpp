@@ -1,3 +1,6 @@
+// Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
+// SPDX-License-Identifier: Apache-2.0
+
 #ifndef _WIREDTIGER_DB_H
 #define _WIREDTIGER_DB_H
 
@@ -84,6 +87,6 @@ class WTDB : public DB {
 
 DB *NewRocksdbDB();
 
-} // ycsbc
+} // namespace ycsbc
 
 #endif
