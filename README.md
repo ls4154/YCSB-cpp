@@ -7,6 +7,10 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
  * Small changes to make it behave more like the original YCSB
  * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
 
+## NOTICE
+
+This repo is forked from [ls4154/YCSB-cpp](https://github.com/ls4154/YCSB-cpp) to support WiredTiger.
+
 ## Building
 
 Simply use `make` to build.
