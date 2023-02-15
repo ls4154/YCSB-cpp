@@ -119,7 +119,7 @@ void WTDB::Init(){
       throw utils::Exception(WT_PREFIX " home is missing");
     }
     char* create_home_dir = (char*)malloc(20+2*home.size());
-    std::sprintf(create_home_dir, "rm -rf %s && mkdir %s", home.c_str(), home.c_str());
+    std::sprintf(create_home_dir, "mkdir -p %s", home.c_str());
     error_check(system(create_home_dir));
     free(create_home_dir);
     
@@ -199,6 +199,7 @@ void WTDB::Cleanup(){
   if (--ref_cnt_) {
     return;
   }
+  std::cout<<"WiredTiger closed"<<std::endl;
   error_check(conn_->close(conn_, NULL));
 }
 
