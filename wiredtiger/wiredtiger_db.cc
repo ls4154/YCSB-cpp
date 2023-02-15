@@ -142,6 +142,7 @@ void WTDB::Init(){
       
       if(!lsm_config.empty()) db_config += "lsm_manager=(" + lsm_config + ")";
     }
+    // db_config += ",block_cache=(enabled=true,hashsize=10K,size=300MB,system_ram=300MB,type=DRAM)";
     std::cout<<"db config: "<<db_config<<std::endl;
     error_check(wiredtiger_open(home.c_str(), NULL, db_config.c_str(), &conn_));
   }
@@ -313,11 +314,11 @@ DB::Status WTDB::DeleteSingleEntry(const std::string &table, const std::string &
 void WTDB::SerializeRow(const std::vector<Field> &values, std::string *data) {
   for (const Field &field : values) {
     uint32_t len = field.name.size();
-    data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data->append(field.name.data(), field.name.size());
+    data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t)); // 4B
+    data->append(field.name.data(), field.name.size());             // len(name)
     len = field.value.size();
-    data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t));
-    data->append(field.value.data(), field.value.size());
+    data->append(reinterpret_cast<char *>(&len), sizeof(uint32_t)); // 4B
+    data->append(field.value.data(), field.value.size());           // len(value)
   }
 }
 

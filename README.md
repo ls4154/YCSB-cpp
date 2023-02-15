@@ -59,9 +59,15 @@ sudo make install
 
 ## Running
 
-Run workload A with wiredtiger:
+Run workload A on wiredtiger:
 ```
 ./ycsb -load -run -db wiredtiger -P workloads/workloada -P wiredtiger/wiredtiger.properties -s
+```
+
+Run workload A on wiredtiger, with len(key)=8B and len(value)=24B:
+```
+./ycsb -load -run -db wiredtiger -P workloads/workloada -P wiredtiger/wiredtiger.properties -s \
+-p fixedkey8b=true -p fixedfieldlen=true -p fieldcount=1 -p fieldlength=24
 ```
 
 Load data with leveldb:

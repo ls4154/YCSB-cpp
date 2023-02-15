@@ -4,6 +4,7 @@
 //
 //  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+//  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
 #include "utils.h"
@@ -45,6 +46,12 @@ const string CoreWorkload::FIELD_COUNT_DEFAULT = "10";
 
 const string CoreWorkload::FIELD_LENGTH_DISTRIBUTION_PROPERTY = "field_len_dist";
 const string CoreWorkload::FIELD_LENGTH_DISTRIBUTION_DEFAULT = "constant";
+
+const string CoreWorkload::FIXED_KEY_8B = "fixedkey8b";
+const string CoreWorkload::FIXED_KEY_8B_DEFAULT = "false";
+
+const string CoreWorkload::FIXED_FIELD_LEN = "fixedfieldlen";
+const string CoreWorkload::FIXED_FIELD_LEN_DEFAULT = "false";
 
 const string CoreWorkload::FIELD_LENGTH_PROPERTY = "fieldlength";
 const string CoreWorkload::FIELD_LENGTH_DEFAULT = "100";
@@ -131,7 +138,10 @@ void CoreWorkload::Init(const utils::Properties &p) {
   read_all_fields_ = utils::StrToBool(p.GetProperty(READ_ALL_FIELDS_PROPERTY,
                                                     READ_ALL_FIELDS_DEFAULT));
   write_all_fields_ = utils::StrToBool(p.GetProperty(WRITE_ALL_FIELDS_PROPERTY,
-                                                     WRITE_ALL_FIELDS_DEFAULT));
+                                                     WRITE_ALL_FIELDS_DEFAULT));                               
+  fixed_key_8b_ = utils::StrToBool(p.GetProperty(FIXED_KEY_8B, FIXED_KEY_8B_DEFAULT));
+
+  fixed_field_len_ = utils::StrToBool(p.GetProperty(FIXED_FIELD_LEN, FIXED_FIELD_LEN_DEFAULT));
 
   if (p.GetProperty(INSERT_ORDER_PROPERTY, INSERT_ORDER_DEFAULT) == "hashed") {
     ordered_inserts_ = false;
@@ -207,6 +217,8 @@ ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
 }
 
 std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
+  if(fixed_key_8b_) return BuildKeyName8B(key_num);
+
   if (!ordered_inserts_) {
     key_num = utils::Hash(key_num);
   }
@@ -216,7 +228,18 @@ std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
   return prekey.append(fill, '0').append(value);
 }
 
+std::string CoreWorkload::BuildKeyName8B(uint64_t key_num) {
+  if (!ordered_inserts_) {
+    key_num = utils::Hash(key_num);
+  }
+  std::string key(8, '\0');
+  *reinterpret_cast<uint64_t*>(&key[0]) = key_num;
+  return key;
+}
+
 void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
+  if(fixed_field_len_) return BuildValuesFixedLen(values);
+
   for (int i = 0; i < field_count_; ++i) {
     values.push_back(DB::Field());
     ycsbc::DB::Field &field = values.back();
@@ -228,11 +251,38 @@ void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
   }
 }
 
+void CoreWorkload::BuildValuesFixedLen(std::vector<ycsbc::DB::Field> &values) {
+  for (int i = 0; i < field_count_; ++i) {
+    values.push_back(DB::Field());
+    ycsbc::DB::Field &field = values.back();
+    field.name.append(field_prefix_).append(std::to_string(i));
+    uint64_t len = field_len_generator_->Next();
+    len = std::max<uint64_t>(0, len - sizeof(uint32_t) - sizeof(uint32_t) - field.name.size());
+    field.value.reserve(len);
+    RandomByteGenerator byte_generator;
+    std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
+  }
+}
+
 void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::Field> &values) {
+  if(fixed_field_len_) return BuildValuesFixedLen(values);
+
+  return BuildSingleValueFixedLen(values);
   values.push_back(DB::Field());
   ycsbc::DB::Field &field = values.back();
   field.name.append(NextFieldName());
   uint64_t len = field_len_generator_->Next();
+  field.value.reserve(len);
+  RandomByteGenerator byte_generator;
+  std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
+}
+
+void CoreWorkload::BuildSingleValueFixedLen(std::vector<ycsbc::DB::Field> &values) {
+  values.push_back(DB::Field());
+  ycsbc::DB::Field &field = values.back();
+  field.name.append(NextFieldName());
+  uint64_t len = field_len_generator_->Next();
+  len = std::max<uint64_t>(0, len - sizeof(uint32_t) - sizeof(uint32_t) - field.name.size());
   field.value.reserve(len);
   RandomByteGenerator byte_generator;
   std::generate_n(std::back_inserter(field.value), len, [&]() { return byte_generator.Next(); } );
