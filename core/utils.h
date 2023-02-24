@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <exception>
 #include <random>
+#include <locale>
 
 namespace ycsbc {
 

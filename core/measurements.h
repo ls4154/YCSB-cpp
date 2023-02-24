@@ -17,6 +17,8 @@
 #include <hdr/hdr_histogram.h>
 #endif
 
+typedef unsigned int uint;
+
 namespace ycsbc {
 
 class Measurements {

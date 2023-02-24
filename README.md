@@ -11,12 +11,30 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
 
 This repo is forked from [ls4154/YCSB-cpp](https://github.com/ls4154/YCSB-cpp) to support WiredTiger.
 
-## Building
+# Build WiredTiger
+
+Clone the source:
+```
+git clone git://github.com/wiredtiger/wiredtiger.git
+mkdir -p wiredtiger/build
+cd wiredtiger/build
+```
+
+Enable built-in compressors and build
+```
+cmake -DHAVE_BUILTIN_EXTENSION_LZ4=1 -DHAVE_BUILTIN_EXTENSION_SNAPPY=1 -DHAVE_BUILTIN_EXTENSION_ZLIB=1 -DHAVE_BUILTIN_EXTENSION_ZSTD=1 -DENABLE_STATIC=1 ../.
+make -j$(nproc)
+sudo make install
+```
+
+## Build YCSB-cpp
+
+## Build with Makefile on GNU
 
 Simply use `make` to build.
 
 ```
-git clone https://github.com/ls4154/YCSB-cpp.git
+git clone https://github.com/kabu1204/YCSB-cpp
 cd YCSB-cpp
 git submodule update --init
 make
@@ -45,21 +63,48 @@ EXTRA_LDFLAGS ?= -L/example/rocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 BIND_ROCKSDB ?= 1
 ```
 
-## Build WiredTiger
+## Build with CMake+vcpkg on Windows
+### Prerequisite
 
-Clone the source:
-```
-git clone git://github.com/wiredtiger/wiredtiger.git
-mkdir -p wiredtiger/build
-cd wiredtiger/build
-```
+1. You need to install Visual Studio Community first, for example VS2019.
+2. [vcpkg](https://github.com/microsoft/vcpkg)
+3. [CMake](https://cmake.org/download/)
 
-Enable built-in compressors and build
-```
-cmake -DHAVE_BUILTIN_EXTENSION_LZ4=1 -DHAVE_BUILTIN_EXTENSION_SNAPPY=1 -DHAVE_BUILTIN_EXTENSION_ZLIB=1 -DHAVE_BUILTIN_EXTENSION_ZSTD=1 -DENABLE_STATIC=1 ../.
-make -j$(nproc)
-sudo make install
-```
+### Building
+
+The following steps are done in *Developer Powershell for VS 2019*(StartMenu - Visual Studio 2019 - Developer Powershell for VS 2019)
+
+1. Install RocksDB
+    ```powershell
+   cd <vcpkg_root>
+   .\vcpkg.exe install rocksdb[*]:x64-windows
+    ```
+    This will automatically install dependent compression libraries(lz4, snappy, zstd, zlib), and build rocksdb with these libraries enabled.
+
+    `<vcpkg_root>` is the path where you've installed the vcpkg, `C:/src/vcpkg` for example.
+
+2. Clone YCSB-cpp
+    ```powershell
+   cd <somewhere>
+   git clone https://github.com/kabu1204/YCSB-cpp
+   cd YCSB-cpp
+   git submodule update --init
+   ```
+3. Build YCSB-cpp
+    ```powershell
+    mkdir build
+    cd build
+    cmake -DBIND_ROCKSDB=1 -DWITH_SNAPPY=1 -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake ..
+    msbuild ycsb-cpp.sln /p:Configuration=Release
+    ```
+    `-DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake` enables CMake `find_packege()` to find libraries 
+    installed by vcpkg. You do not need to use backslash '\' in your path here.
+    
+    `-DBIND_ROCKSDB=1` binds rocksdb.
+    
+    `-DWITH_SNAPPY=1` tells CMake to link snappy with YCSB, same for `WITH_LZ4`, `WITH_ZLIB` and `WITH_ZSTD`.
+
+    The executable `ycsb.exe` can be found in `build/Release`.
 
 ## Running
 

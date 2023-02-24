@@ -19,6 +19,16 @@
 #include <rocksdb/utilities/options_util.h>
 #include <rocksdb/write_batch.h>
 
+#if defined(_MSC_VER)
+  #if _MSC_VER >= 1911
+    #define MAYBE_UNUSED [[maybe_unused]]
+  #else
+    #define MAYBE_UNUSED
+  #endif
+#elif defined(__GNUC__)
+  #define MAYBE_UNUSED __attribute__ ((unused))
+#endif
+
 namespace {
   const std::string PROP_NAME = "rocksdb.dbname";
   const std::string PROP_NAME_DEFAULT = "";
@@ -466,7 +476,7 @@ DB::Status RocksdbDB::UpdateSingle(const std::string &table, const std::string &
   DeserializeRow(current_values, data);
   assert(current_values.size() == static_cast<size_t>(fieldcount_));
   for (Field &new_field : values) {
-    bool found __attribute__((unused)) = false;
+    bool found MAYBE_UNUSED = false;
     for (Field &cur_field : current_values) {
       if (cur_field.name == new_field.name) {
         found = true;

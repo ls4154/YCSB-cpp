@@ -19,26 +19,31 @@ namespace ycsbc {
 
 inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
                         bool init_db, bool cleanup_db, CountDownLatch *latch) {
-  if (init_db) {
-    db->Init();
-  }
+    try {
+        if (init_db) {
+            db->Init();
+        }
 
-  int ops = 0;
-  for (int i = 0; i < num_ops; ++i) {
-    if (is_loading) {
-      wl->DoInsert(*db);
-    } else {
-      wl->DoTransaction(*db);
+        int ops = 0;
+        for (int i = 0; i < num_ops; ++i) {
+            if (is_loading) {
+                wl->DoInsert(*db);
+            } else {
+                wl->DoTransaction(*db);
+            }
+            ops++;
+        }
+
+        if (cleanup_db) {
+            db->Cleanup();
+        }
+
+        latch->CountDown();
+        return ops;
+    } catch(const utils::Exception& e) {
+        std::cerr<<"Caught exception: "<<e.what()<<std::endl;
+        return -1;
     }
-    ops++;
-  }
-
-  if (cleanup_db) {
-    db->Cleanup();
-  }
-
-  latch->CountDown();
-  return ops;
 }
 
 } // ycsbc
