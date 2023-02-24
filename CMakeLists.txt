@@ -3,6 +3,20 @@ project(ycsb-cpp LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_BUILD_TYPE Release)
+set(CompilerFlags
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        )
+
+if(MSVC)
+    foreach(CompilerFlag ${CompilerFlags})
+        string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+    endforeach()
+endif()
 
 option(BIND_ROCKSDB "build with rocksdb" OFF)
 option(BIND_WIREDTIGER "build with wiredtiger" OFF)
@@ -62,5 +76,6 @@ endif()
 
 add_subdirectory(HdrHistogram_c)
 include_directories(HdrHistogram_c/include)
-add_compile_definitions(-DHDRMEASUREMENT)
-add_dependencies(ycsb hdr_histogram)
+add_compile_definitions(HDRMEASUREMENT)
+add_dependencies(ycsb hdr_histogram_static)
+target_link_libraries(ycsb PRIVATE hdr_histogram_static)

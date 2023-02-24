@@ -77,7 +77,7 @@ The following steps are done in *Developer Powershell for VS 2019*(StartMenu - V
 1. Install RocksDB
     ```powershell
    cd <vcpkg_root>
-   .\vcpkg.exe install rocksdb[*]:x64-windows
+   .\vcpkg.exe install rocksdb[*]:x64-windows-static
     ```
     This will automatically install dependent compression libraries(lz4, snappy, zstd, zlib), and build rocksdb with these libraries enabled.
 
@@ -94,7 +94,7 @@ The following steps are done in *Developer Powershell for VS 2019*(StartMenu - V
     ```powershell
     mkdir build
     cd build
-    cmake -DBIND_ROCKSDB=1 -DWITH_SNAPPY=1 -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake ..
+    cmake -DBIND_ROCKSDB=1 -DWITH_SNAPPY=1 -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static ..
     msbuild ycsb-cpp.sln /p:Configuration=Release
     ```
     `-DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake` enables CMake `find_packege()` to find libraries 
