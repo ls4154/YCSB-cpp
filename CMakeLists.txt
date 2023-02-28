@@ -27,6 +27,7 @@ option(WITH_ZLIB "linking YCSB with zlib; needed by HdrHISTOGRAM, DO NOT TURN OF
 option(WITH_LZ4 "linking YCSB with lz4" OFF)
 option(WITH_SNAPPY "linking YCSB with snappy" OFF)
 option(WITH_ZSTD "linking YCSB with zstd" OFF)
+option(WITH_BZ2 "linking YCSB with bzip2" OFF)
 
 file(GLOB_RECURSE YCSB_CORE_SRC "core/*.cc")
 
@@ -35,7 +36,8 @@ target_include_directories(ycsb PRIVATE ${PROJECT_SOURCE_DIR})
 
 if (BIND_ROCKSDB)
     message(STATUS "BIND_ROCKSDB - ON")
-    set(WITH_ZLIB ON)  # rocksdb needs zlib
+    set(WITH_ZLIB ON)
+    set(WITH_BZ2 ON)
     file(GLOB_RECURSE YCSB_ROCKSDB_SRC "rocksdb/*.cc")
     target_sources(ycsb PRIVATE ${YCSB_ROCKSDB_SRC})
 
@@ -170,6 +172,21 @@ if(WITH_ZSTD)
     message(STATUS "Found zstd library")
 else()
     message(STATUS "WITH_ZSTD - OFF")
+endif()
+
+if(WITH_BZ2)
+    message(STATUS "WITH_BZ2 - ON")
+    find_package(BZip2)
+    if(BZip2_FOUND)
+        target_link_libraries(ycsb PRIVATE BZip2::BZip2)
+    else()
+        message(STATUS "Try to find BZip2 library using find_library")
+        find_library(BZ2_LIB bz2 REQUIRED)
+        target_link_libraries(ycsb PRIVATE ${BZ2_LIB})
+    endif()
+    message(STATUS "Found BZip2 library")
+else()
+    message(STATUS "WITH_BZ2 - OFF")
 endif()
 
 add_subdirectory(HdrHistogram_c)
