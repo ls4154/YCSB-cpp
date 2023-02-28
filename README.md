@@ -7,10 +7,6 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
  * Small changes to make it behave more like the original YCSB
  * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
 
-## NOTICE
-
-This repo is forked from [ls4154/YCSB-cpp](https://github.com/ls4154/YCSB-cpp) to support WiredTiger.
-
 # Build YCSB-cpp
 
 ## Build with Makefile on POSIX
@@ -62,17 +58,6 @@ make
 see [BUILD_ON_WINDOWS](BUILD_ON_WINDOWS.md)
 
 ## Running
-
-Run workload A on wiredtiger:
-```
-./ycsb -load -run -db wiredtiger -P workloads/workloada -P wiredtiger/wiredtiger.properties -s
-```
-
-Run workload A on wiredtiger, with len(key)=8B and len(value)=24B:
-```
-./ycsb -load -run -db wiredtiger -P workloads/workloada -P wiredtiger/wiredtiger.properties -s \
--p fixedkey8b=true -p fixedfieldlen=true -p fieldcount=1 -p fieldlength=24
-```
 
 Load data with leveldb:
 ```

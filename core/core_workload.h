@@ -62,20 +62,6 @@ class CoreWorkload {
   static const std::string FIELD_LENGTH_DISTRIBUTION_DEFAULT;
 
   ///
-  /// whether the key length is fixed at 8 bytes. default false.
-  ///
-  static const std::string FIXED_KEY_8B;
-  static const std::string FIXED_KEY_8B_DEFAULT;
-
-  ///
-  /// whether the field length (after serialization, 4B+4B+len(field.name)+len(field.value))
-  /// is fixed. if true, for each field, the length of its serialized bytes array is fixed to 
-  /// FIELD_LENGTH_PROPERTY.
-  ///
-  static const std::string FIXED_FIELD_LEN;
-  static const std::string FIXED_FIELD_LEN_DEFAULT;
-
-  ///
   /// The name of the property for the length of a field in bytes.
   ///
   static const std::string FIELD_LENGTH_PROPERTY;
@@ -190,7 +176,7 @@ class CoreWorkload {
   bool write_all_fields() const { return write_all_fields_; }
 
   CoreWorkload() :
-      field_count_(0), read_all_fields_(false), write_all_fields_(false), fixed_key_8b_(false), fixed_field_len_(false),
+      field_count_(0), read_all_fields_(false), write_all_fields_(false),
       field_len_generator_(nullptr), key_chooser_(nullptr), field_chooser_(nullptr),
       scan_len_chooser_(nullptr), insert_key_sequence_(nullptr),
       transaction_insert_key_sequence_(nullptr), ordered_inserts_(true), record_count_(0) {
@@ -208,11 +194,8 @@ class CoreWorkload {
  protected:
   static Generator<uint64_t> *GetFieldLenGenerator(const utils::Properties &p);
   std::string BuildKeyName(uint64_t key_num);
-  std::string BuildKeyName8B(uint64_t key_num);
   void BuildValues(std::vector<DB::Field> &values);
-  void BuildValuesFixedLen(std::vector<DB::Field> &values);
   void BuildSingleValue(std::vector<DB::Field> &update);
-  void BuildSingleValueFixedLen(std::vector<DB::Field> &update);
 
   uint64_t NextTransactionKeyNum();
   std::string NextFieldName();
@@ -228,8 +211,6 @@ class CoreWorkload {
   std::string field_prefix_;
   bool read_all_fields_;
   bool write_all_fields_;
-  bool fixed_key_8b_;
-  bool fixed_field_len_;
   Generator<uint64_t> *field_len_generator_;
   DiscreteGenerator<Operation> op_chooser_;
   Generator<uint64_t> *key_chooser_; // transaction key gen

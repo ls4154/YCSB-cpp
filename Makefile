@@ -36,7 +36,7 @@ else
 endif
 
 ifeq ($(BIND_WIREDTIGER), 1)
-	LDFLAGS += -lwiredtiger -ldl -lz -lsnappy -lzstd -lbz2 -llz4
+	LDFLAGS += -lwiredtiger
 	SOURCES += $(wildcard wiredtiger/*.cc)
 endif
 
@@ -46,7 +46,7 @@ ifeq ($(BIND_LEVELDB), 1)
 endif
 
 ifeq ($(BIND_ROCKSDB), 1)
-	LDFLAGS += -lrocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
+	LDFLAGS += -lrocksdb
 	SOURCES += $(wildcard rocksdb/*.cc)
 endif
 
