@@ -4,6 +4,7 @@
 //
 //  Created by Jinglei Ren on 12/5/14.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+//  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
 #ifndef YCSB_C_UTILS_H_

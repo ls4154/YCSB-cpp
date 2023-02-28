@@ -47,6 +47,16 @@ EXTRA_LDFLAGS ?= -L/example/rocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 BIND_ROCKSDB ?= 1
 ```
 
+## Build with CMake on POSIX
+
+```shell
+git submodule update --init
+mkdir build
+cd build
+cmake -DBIND_ROCKSDB=1 -DBIND_WIREDTIGER=1 -DBIND_LMDB=1 -DBIND_LEVELDB=1 -DWITH_SNAPPY=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 ..
+make
+```
+
 ## Build with CMake+vcpkg on Windows
 
 see [BUILD_ON_WINDOWS](BUILD_ON_WINDOWS.md)

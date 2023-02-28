@@ -1,3 +1,6 @@
+# Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
+# SPDX-License-Identifier: Apache-2.0
+
 cmake_minimum_required(VERSION 3.10)
 project(ycsb-cpp LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -30,6 +33,8 @@ option(WITH_ZSTD "linking YCSB with zstd" OFF)
 option(WITH_BZ2 "linking YCSB with bzip2" OFF)
 
 file(GLOB_RECURSE YCSB_CORE_SRC "core/*.cc")
+
+include(FindThreads)
 
 add_executable(ycsb ${YCSB_CORE_SRC})
 target_include_directories(ycsb PRIVATE ${PROJECT_SOURCE_DIR})
@@ -64,7 +69,7 @@ if (BIND_LMDB)
     file(GLOB_RECURSE YCSB_LMDB_SRC "lmdb/*.cc")
     target_sources(ycsb PRIVATE ${YCSB_LMDB_SRC})
 
-    find_package(lmdb CONFIG REQUIRED)
+    find_package(lmdb CONFIG)
     if(lmdb_FOUND)
         target_link_libraries(ycsb PRIVATE lmdb)
     else()
@@ -84,7 +89,7 @@ if (BIND_LEVELDB)
     file(GLOB_RECURSE YCSB_LEVELDB_SRC "leveldb/*.cc")
     target_sources(ycsb PRIVATE ${YCSB_LEVELDB_SRC})
 
-    find_package(leveldb CONFIG REQUIRED)
+    find_package(leveldb CONFIG)
     if(leveldb_FOUND)
         target_link_libraries(ycsb PRIVATE leveldb::leveldb)
     else()
