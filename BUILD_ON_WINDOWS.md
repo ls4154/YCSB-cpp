@@ -26,7 +26,7 @@ The following steps are done in *Developer Powershell for VS 2019*(StartMenu - V
 3. Clone YCSB-cpp
     ```powershell
    cd <somewhere>
-   git clone https://github.com/kabu1204/YCSB-cpp
+   git clone https://github.com/ls4154/YCSB-cpp.git
    cd YCSB-cpp
    git submodule update --init
    ```
