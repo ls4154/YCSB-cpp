@@ -7,6 +7,10 @@
 #include <string>
 #include <iostream>
 #include <set>
+#if defined(_MSC_VER)
+#include "direct.h"
+#define mkdir(x, y) _mkdir(x)
+#endif
 
 #include "core/properties.h"
 #include "core/utils.h"
@@ -46,9 +50,6 @@ namespace {
 
   const std::string PROP_LSM_MGR_MAX_WORKERS = WT_PREFIX ".lsm_mgr.max_workers";
   const std::string PROP_LSM_MGR_MAX_WORKERS_DEFAULT = "4";
-
-  const std::string PROP_BLK_MGR_ = WT_PREFIX ".blk_mgr.";
-  const std::string PROP_BLK_MGR__DEFAULT = "";
 
   const std::string PROP_BLK_MGR_ALLOCATION_SIZE = WT_PREFIX ".blk_mgr.allocation_size";
   const std::string PROP_BLK_MGR_ALLOCATION_SIZE_DEFAULT = "4KB";
@@ -119,10 +120,10 @@ void WTDB::Init(){
     if(home.empty()){
       throw utils::Exception(WT_PREFIX " home is missing");
     }
-    char* create_home_dir = (char*)malloc(20+2*home.size());
-    std::sprintf(create_home_dir, "mkdir -p %s", home.c_str());
-    error_check(system(create_home_dir));
-    free(create_home_dir);
+    int ret = mkdir(home.c_str(), 0775);
+    if (ret && errno != EEXIST) {
+        throw utils::Exception(std::string("Init mkdir: ") + strerror(errno));
+    }
     
     // 2. Setup db config
     std::string db_config("create,");
