@@ -32,8 +32,7 @@ target_include_directories(ycsb PRIVATE ${PROJECT_SOURCE_DIR})
 
 if (BIND_ROCKSDB)
     message(STATUS "BIND_ROCKSDB - ON")
-    # rocksdb need zlib
-    set(WITH_ZLIB ON)
+    set(WITH_ZLIB ON)  # rocksdb needs zlib
     file(GLOB_RECURSE YCSB_ROCKSDB_SRC "rocksdb/*.cc")
     target_sources(ycsb PRIVATE ${YCSB_ROCKSDB_SRC})
     find_package(RocksDB CONFIG REQUIRED)
@@ -41,6 +40,18 @@ if (BIND_ROCKSDB)
 else()
     message(STATUS "BIND_ROCKSDB - OFF")
 endif()
+
+if (BIND_WIREDTIGER)
+    message(STATUS "BIND_WIREDTIGER - ON")
+    file(GLOB_RECURSE YCSB_WT_SRC "wiredtiger/*.cc")
+    target_sources(ycsb PRIVATE ${YCSB_WT_SRC})
+    find_library(WIREDTIGER_LIB wiredtiger REQUIRED)
+    find_path(WIREDTIGER_INCLUDE_DIR "wiredtiger.h" REQUIRED)
+    target_link_libraries(ycsb PRIVATE ${WIREDTIGER_LIB})
+    target_include_directories(ycsb PRIVATE ${WIREDTIGER_INCLUDE_DIR})
+else()
+    message(STATUS "BIND_WIREDTIGER - OFF")
+endif ()
 
 if(WITH_ZLIB)
     message(STATUS "WITH_ZLIB - ON")

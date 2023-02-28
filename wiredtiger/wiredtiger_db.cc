@@ -24,6 +24,16 @@
   } \
 }
 
+#if defined(_MSC_VER)
+#if _MSC_VER >= 1911
+#define MAYBE_UNUSED [[maybe_unused]]
+#else
+#define MAYBE_UNUSED
+#endif
+#elif defined(__GNUC__)
+#define MAYBE_UNUSED __attribute__ ((unused))
+#endif
+
 namespace {
   const std::string PROP_HOME = WT_PREFIX ".home";
   const std::string PROP_HOME_DEFAULT = "";
@@ -206,7 +216,7 @@ void WTDB::Cleanup(){
 DB::Status WTDB::ReadSingleEntry(const std::string &table, const std::string &key,
                                       const std::vector<std::string> *fields,
                                       std::vector<Field> &result) {
-  WT_ITEM k = {.data = key.data(), .size = key.size()};
+  WT_ITEM k = {key.data(), key.size()};
   WT_ITEM v;
   int ret;
   cursor_->set_key(cursor_, &k);
@@ -228,7 +238,7 @@ DB::Status WTDB::ReadSingleEntry(const std::string &table, const std::string &ke
 DB::Status WTDB::ScanSingleEntry(const std::string &table, const std::string &key, int len,
                                       const std::vector<std::string> *fields,
                                       std::vector<std::vector<Field>> &result) {
-  WT_ITEM k = {.data = key.data(), .size = key.size()};
+  WT_ITEM k = {key.data(), key.size()};
   WT_ITEM v;
   int ret = 0, exact;
 
@@ -252,7 +262,7 @@ DB::Status WTDB::ScanSingleEntry(const std::string &table, const std::string &ke
 DB::Status WTDB::UpdateSingleEntry(const std::string &table, const std::string &key,
                            std::vector<Field> &values){
   std::vector<Field> current_values;
-  WT_ITEM k = {.data = key.data(), .size = key.size()};
+  WT_ITEM k = {key.data(), key.size()};
   WT_ITEM v;
   int ret;
 
@@ -266,7 +276,7 @@ DB::Status WTDB::UpdateSingleEntry(const std::string &table, const std::string &
   error_check(cursor_->get_value(cursor_, &v));
   DeserializeRow(&current_values, (const char*)v.data, v.size);
   for (Field &new_field : values) {
-    bool found __attribute__((unused)) = false;
+    bool found MAYBE_UNUSED = false;
     for (Field &cur_field : current_values) {
       if (cur_field.name == new_field.name) {
         found = true;
@@ -294,7 +304,7 @@ DB::Status WTDB::UpdateSingleEntry(const std::string &table, const std::string &
 DB::Status WTDB::InsertSingleEntry(const std::string &table, const std::string &key,
                            std::vector<Field> &values){
   std::string data;
-  WT_ITEM k = {.data = key.data(), .size = key.size()}, v;
+  WT_ITEM k = {key.data(), key.size()}, v;
   
   cursor_->set_key(cursor_, &k);
   SerializeRow(values, &data);
@@ -306,7 +316,7 @@ DB::Status WTDB::InsertSingleEntry(const std::string &table, const std::string &
   return kOK;
 }
 DB::Status WTDB::DeleteSingleEntry(const std::string &table, const std::string &key){
-  WT_ITEM k = {.data = key.data(), .size = key.size()};
+  WT_ITEM k = {key.data(), key.size()};
   cursor_->set_key(cursor_, &k);
   error_check(cursor_->remove(cursor_));
   return kOK;
