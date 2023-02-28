@@ -209,7 +209,6 @@ void WTDB::Cleanup(){
   if (--ref_cnt_) {
     return;
   }
-  std::cout<<"WiredTiger closed"<<std::endl;
   error_check(conn_->close(conn_, NULL));
 }
 

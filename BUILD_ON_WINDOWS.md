@@ -32,7 +32,7 @@ The following steps are done in *Developer Powershell for VS 2019*(StartMenu - V
     ```powershell
     mkdir build
     cd build
-    cmake -DBIND_ROCKSDB=1 -DWITH_SNAPPY=1 -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static ..
+    cmake -DBIND_ROCKSDB=1 -DBIND_WIREDTIGER=1 -DWITH_SNAPPY=1 -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static ..
     msbuild ycsb-cpp.sln /p:Configuration=Release
     ```
    `-DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake` enables CMake `find_packege()` to find libraries
