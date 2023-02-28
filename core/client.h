@@ -42,7 +42,7 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_op
         return ops;
     } catch(const utils::Exception& e) {
         std::cerr<<"Caught exception: "<<e.what()<<std::endl;
-        return -1;
+        exit(1);
     }
 }
 
