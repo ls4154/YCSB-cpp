@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <set>
+#include <sys/stat.h>
 #if defined(_MSC_VER)
 #include "direct.h"
 #define mkdir(x, y) _mkdir(x)
