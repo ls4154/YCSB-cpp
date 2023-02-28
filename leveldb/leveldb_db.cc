@@ -298,7 +298,7 @@ DB::Status LeveldbDB::UpdateSingleEntry(const std::string &table, const std::str
   std::vector<Field> current_values;
   DeserializeRow(&current_values, data);
   for (Field &new_field : values) {
-    bool found __attribute__((unused)) = false;
+    bool found MAYBE_UNUSED = false;
     for (Field &cur_field : current_values) {
       if (cur_field.name == new_field.name) {
         found = true;
