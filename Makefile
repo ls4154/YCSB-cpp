@@ -47,7 +47,7 @@ ifeq ($(BIND_REDIS), 1)
 endif
 
 ifeq ($(BIND_ROCKSDBCLI), 1)
-	CXXFLAGS += -Wno-address-of-packed-member
+	CXXFLAGS += -Wno-address-of-packed-member -DERPC_INFINIBAND=true
 	LDFLAGS += -lerpc -libverbs -lnuma
 	SOURCES += rocksdb-clisvr/rocksdb_cli.cc
 endif
