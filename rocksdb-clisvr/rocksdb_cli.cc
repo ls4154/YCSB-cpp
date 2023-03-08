@@ -3,21 +3,25 @@
 #include <string.h>
 
 #include <iostream>
+#include <mutex>
 
 #include "common.h"
 #include "core/db_factory.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 namespace ycsbc {
 
+std::mutex lk_;
 std::atomic<uint8_t> RocksdbCli::global_rpc_id_ = 0;
+erpc::Nexus *RocksdbCli::nexus_ = nullptr;
 
 void cli_sm_handler(int, erpc::SmEventType, erpc::SmErrType, void *) {}
 
 void rpc_cont_func(void *context, void *_tag) { reinterpret_cast<RocksdbCli *>(context)->notifyRpcComplete(); }
 
 void RocksdbCli::Init() {
+  std::lock_guard<std::mutex> guard(lk_);
   const utils::Properties &props = *props_;
   const std::string &client_hostname = props.GetProperty(PROP_CLI_HOSTNAME, PROP_CLI_HOSTNAME_DEFAULT);
   const std::string &client_udpport = props.GetProperty(PROP_UDP_PORT_CLI, PROP_UDP_PORT_CLI_DEFAULT);
@@ -29,7 +33,10 @@ void RocksdbCli::Init() {
 
   uint8_t rpc_id = global_rpc_id_.fetch_add(1);
 
-  nexus_ = new erpc::Nexus(client_uri);
+  if (!nexus_) {
+    nexus_ = new erpc::Nexus(client_uri);
+  }
+
   rpc_ = new erpc::Rpc<erpc::CTransport>(nexus_, this, rpc_id, cli_sm_handler);
 
   session_num_ = rpc_->create_session(server_uri, rpc_id);
@@ -47,7 +54,6 @@ void RocksdbCli::Cleanup() {
   rpc_->free_msg_buffer(req_);
   rpc_->free_msg_buffer(resp_);
   delete rpc_;
-  delete nexus_;
 }
 
 DB::Status RocksdbCli::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,

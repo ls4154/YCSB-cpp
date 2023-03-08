@@ -39,7 +39,7 @@ class RocksdbCli : public DB {
   static void DeserializeRow(std::vector<Field> &values, const std::string &data);
 
  protected:
-  erpc::Nexus *nexus_;
+  static erpc::Nexus *nexus_;
   erpc::Rpc<erpc::CTransport> *rpc_;
   int session_num_;
 
