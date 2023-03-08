@@ -46,17 +46,28 @@ ifeq ($(BIND_REDIS), 1)
 	SOURCES += $(wildcard redis/*.cc)
 endif
 
-CXXFLAGS += -std=c++17 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
+ifeq ($(BIND_ROCKSDBCLI), 1)
+	CXXFLAGS += -Wno-address-of-packed-member
+	LDFLAGS += -lerpc -libverbs -lnuma
+	SOURCES += rocksdb-clisvr/rocksdb_cli.cc
+endif
+
+CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
 OBJECTS += $(SOURCES:.cc=.o)
 DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
+SVR = rocksdb_svr
 
-all: $(EXEC)
+all: $(EXEC) $(SVR)
 
 $(EXEC): $(OBJECTS)
 	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	@echo "  LD      " $@
+
+$(SVR): rocksdb-clisvr/rocksdb_svr.cc
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -lrocksdb -o $@
 	@echo "  LD      " $@
 
 .cc.o:
@@ -72,6 +83,6 @@ endif
 
 clean:
 	find . -name "*.[od]" -delete
-	$(RM) $(EXEC)
+	$(RM) $(EXEC) $(SVR)
 
 .PHONY: clean
