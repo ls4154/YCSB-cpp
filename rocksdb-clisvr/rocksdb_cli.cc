@@ -37,7 +37,7 @@ void RocksdbCli::Init() {
     nexus_ = new erpc::Nexus(client_uri);
   }
 
-  rpc_ = new erpc::Rpc<erpc::CTransport>(nexus_, this, rpc_id, cli_sm_handler);
+  rpc_ = new erpc::Rpc<erpc::CTransport>(nexus_, this, rpc_id, cli_sm_handler, 0x00);
 
   session_num_ = rpc_->create_session(server_uri, rpc_id);
 

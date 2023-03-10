@@ -149,7 +149,7 @@ void delete_handler(erpc::ReqHandle *req_handle, void *context) {
 
 void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *props) {
   ServerContext c;
-  erpc::Rpc<erpc::CTransport> rpc(nexus, static_cast<void *>(&c), thread_id, svr_sm_handler);
+  erpc::Rpc<erpc::CTransport> rpc(nexus, static_cast<void *>(&c), thread_id, svr_sm_handler, 0x00);
   c.rpc_ = &rpc;
   c.thread_id_ = thread_id;
 
