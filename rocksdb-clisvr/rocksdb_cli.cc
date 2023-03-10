@@ -54,6 +54,10 @@ void RocksdbCli::Cleanup() {
   rpc_->free_msg_buffer(req_);
   rpc_->free_msg_buffer(resp_);
   delete rpc_;
+  if (global_rpc_id_.fetch_sub(1) == 1) {  // todo: this assumes Cleanup() and Init() on different threads will never overlap
+    delete nexus_;  // at this moment, all rpc objects must have been freed
+    nexus_ = nullptr;
+  }
 }
 
 DB::Status RocksdbCli::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
