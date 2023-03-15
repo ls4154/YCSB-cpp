@@ -24,8 +24,9 @@ void PureInsertWorkload::Init(const utils::Properties &p) {
   value_len = std::stoi(p.GetProperty("valuelength", "100"));
 }
 
-ThreadState *PureInsertWorkload::InitThread(const utils::Properties &p, const int mythreadid, const int threadcount) {
-  return new InsertThreadState(p, mythreadid, threadcount);
+ThreadState *PureInsertWorkload::InitThread(const utils::Properties &p, const int mythreadid, const int threadcount,
+                                            const int num_ops) {
+  return new InsertThreadState(p, mythreadid, threadcount, num_ops);
 }
 
 bool PureInsertWorkload::DoInsert(DB &db, ThreadState *state) {
@@ -47,39 +48,53 @@ void PureInsertWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &va
   std::generate_n(std::back_inserter(field.second), val_len, [&]() { return byte_generator.Next(); });
 }
 
-InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythreadid, const int threadcount) {
-  struct stat status;
-  int fd;
-
+InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythreadid, const int threadcount,
+                                     const int num_ops)
+    : workload_i(0), offset(0) {
+  int loaded_ops = 0;
+  char *workload = nullptr;
   std::cout << "init thread " << mythreadid << ", total " << threadcount << std::endl;
-  const string workload_path(p.GetProperty("workloadpath", "."));
-  const string workload_name("run.w." + std::to_string(mythreadid + 1));
 
-  if ((fd = ::open((workload_path + "/" + workload_name).c_str(), O_RDONLY)) < 0) {
-    std::cerr << "unable to read file: " << (workload_path + "/" + workload_name).c_str() << std::endl;
-  }
+  for (int i = 0; loaded_ops < num_ops; i++) {
+    struct stat status;
+    int fd;
 
-  if (::fstat(fd, &status) < 0) {
-    std::cerr << "unable to get file size" << std::endl;
+    const string workload_path(p.GetProperty("workloadpath", "."));
+    const string workload_name("run.w." + std::to_string(i * threadcount + mythreadid + 1));
+
+    if ((fd = ::open((workload_path + "/" + workload_name).c_str(), O_RDONLY)) < 0) {
+      std::cerr << "unable to read file: " << (workload_path + "/" + workload_name).c_str() << std::endl;
+    }
+
+    if (::fstat(fd, &status) < 0) {
+      std::cerr << "unable to get file size" << std::endl;
+      ::close(fd);
+    }
+
+    len = status.st_size;
+    loaded_ops += len / RECORD_LENGTH;
+    if ((workload = (char *)::mmap(0, len, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+      std::cerr << "unable to mmap file" << std::endl;
+    }
+    workloads.push_back(workload);
     ::close(fd);
   }
-
-  len = status.st_size;
-  if ((workload = (char *)::mmap(0, len, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
-    std::cerr << "unable to mmap file" << std::endl;
-  }
-  ::close(fd);
 }
 
-InsertThreadState::~InsertThreadState() { ::munmap(workload, len); }
+InsertThreadState::~InsertThreadState() {
+  for (char *w : workloads) {
+    ::munmap(w, len);
+  }
+}
 
 bool InsertThreadState::HasNextKey() { return offset + RECORD_LENGTH <= len; }
 
 std::string InsertThreadState::GetNextKey() {
   if (!HasNextKey()) {
+    workload_i++;  // switch to next workload file
     offset = 0;  // go back to the beginning
   }
-  auto key = std::string(workload + offset + KEY_OFFSET, KEY_LENGTH);
+  auto key = std::string(workloads[workload_i] + offset + KEY_OFFSET, KEY_LENGTH);
   offset += RECORD_LENGTH;
   return key;
 }

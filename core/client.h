@@ -24,7 +24,7 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Pro
     db->Init();
   }
 
-  ThreadState *thread_state = wl->InitThread(p, thread_id, thread_count);
+  ThreadState *thread_state = wl->InitThread(p, thread_id, thread_count, num_ops);
   init_latch->CountDown();
 
   int oks = 0;

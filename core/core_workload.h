@@ -173,7 +173,7 @@ class CoreWorkload {
   /// @return true if successfully initiated
   ///
   virtual ThreadState *InitThread(const utils::Properties &p, const int mythreadid,
-                          const int threadcount) { return new ThreadState; }
+                          const int threadcount, const int num_ops) { return new ThreadState; }
 
   virtual bool DoInsert(DB &db, ThreadState *state);
   virtual bool DoTransaction(DB &db, ThreadState *state);
