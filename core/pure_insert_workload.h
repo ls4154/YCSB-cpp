@@ -48,8 +48,9 @@ class InsertThreadState : public ThreadState {
   std::string GetNextKey();
 
   std::vector<char *> workloads;
-  size_t len;
+  char *cur_workload;
   int workload_i;
+  size_t len;
   off_t offset;
 };
 

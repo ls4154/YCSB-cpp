@@ -50,7 +50,7 @@ void PureInsertWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &va
 
 InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythreadid, const int threadcount,
                                      const int num_ops)
-    : workload_i(0), offset(0) {
+    : cur_workload(nullptr), workload_i(0), offset(0) {
   int loaded_ops = 0;
   char *workload = nullptr;
   std::cout << "init thread " << mythreadid << ", total " << threadcount << std::endl;
@@ -79,6 +79,7 @@ InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythr
     workloads.push_back(workload);
     ::close(fd);
   }
+  cur_workload = workloads[0];
 }
 
 InsertThreadState::~InsertThreadState() {
@@ -92,9 +93,10 @@ bool InsertThreadState::HasNextKey() { return offset + RECORD_LENGTH <= len; }
 std::string InsertThreadState::GetNextKey() {
   if (!HasNextKey()) {
     workload_i++;  // switch to next workload file
+    cur_workload = workloads[workload_i];
     offset = 0;  // go back to the beginning
   }
-  auto key = std::string(workloads[workload_i] + offset + KEY_OFFSET, KEY_LENGTH);
+  auto key = std::string(cur_workload + offset + KEY_OFFSET, KEY_LENGTH);
   offset += RECORD_LENGTH;
   return key;
 }
