@@ -164,6 +164,11 @@ class CoreWorkload {
   static const std::string FIELD_NAME_PREFIX_DEFAULT;
 
   ///
+  /// Zipfian constant for transaction key generation.
+  ///
+  static const std::string ZIPFIAN_CONST_PROPERTY;
+
+  ///
   /// Initialize the scenario.
   /// Called once, in the main client thread, before any operations are started.
   ///

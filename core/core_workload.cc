@@ -98,6 +98,8 @@ const string CoreWorkload::OPERATION_COUNT_PROPERTY = "operationcount";
 const std::string CoreWorkload::FIELD_NAME_PREFIX = "fieldnameprefix";
 const std::string CoreWorkload::FIELD_NAME_PREFIX_DEFAULT = "field";
 
+const std::string CoreWorkload::ZIPFIAN_CONST_PROPERTY = "zipfian_const";
+
 namespace ycsbc {
 
 void CoreWorkload::Init(const utils::Properties &p) {
@@ -171,11 +173,14 @@ void CoreWorkload::Init(const utils::Properties &p) {
     // and pick another key.
     int op_count = std::stoi(p.GetProperty(OPERATION_COUNT_PROPERTY));
     int new_keys = (int)(op_count * insert_proportion * 2); // a fudge factor
-    key_chooser_ = new ScrambledZipfianGenerator(record_count_ + new_keys);
-
+    if (p.ContainsKey(ZIPFIAN_CONST_PROPERTY)) {
+      double zipfian_const = std::stod(p.GetProperty(ZIPFIAN_CONST_PROPERTY));
+      key_chooser_ = new ScrambledZipfianGenerator(0, record_count_ + new_keys - 1, zipfian_const);
+    } else {
+      key_chooser_ = new ScrambledZipfianGenerator(record_count_ + new_keys);
+    }
   } else if (request_dist == "latest") {
     key_chooser_ = new SkewedLatestGenerator(*transaction_insert_key_sequence_);
-
   } else {
     throw utils::Exception("Unknown request distribution: " + request_dist);
   }
