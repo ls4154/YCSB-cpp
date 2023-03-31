@@ -39,15 +39,6 @@ bool PureInsertWorkload::DoInsert(DB &db, ThreadState *state) {
 
 bool PureInsertWorkload::DoTransaction(DB &db, ThreadState *state) { return DoInsert(db, state); }
 
-void PureInsertWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &values, const int val_len) {
-  values.push_back(DB::Field());
-  ycsbc::DB::Field &field = values.back();
-  // field.name = "";
-  field.second.reserve(val_len);
-  RandomByteGenerator byte_generator;
-  std::generate_n(std::back_inserter(field.second), val_len, [&]() { return byte_generator.Next(); });
-}
-
 InsertThreadState::InsertThreadState(const utils::Properties &p, const int mythreadid, const int threadcount,
                                      const int num_ops)
     : cur_workload(nullptr), workload_i(0), offset(0) {

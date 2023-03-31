@@ -224,11 +224,19 @@ void CoreWorkload::BuildValues(std::vector<ycsbc::DB::Field> &values) {
 void CoreWorkload::BuildSingleValue(std::vector<ycsbc::DB::Field> &values) {
   values.push_back(DB::Field());
   ycsbc::DB::Field &field = values.back();
-  field.first.append(NextFieldName());
+  // field.first.append(NextFieldName());
   uint64_t len = field_len_generator_->Next();
   field.second.reserve(len);
   RandomByteGenerator byte_generator;
   std::generate_n(std::back_inserter(field.second), len, [&]() { return byte_generator.Next(); } );
+}
+
+void CoreWorkload::BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &values, const int val_len) {
+  values.push_back(DB::Field());
+  ycsbc::DB::Field &field = values.back();
+  field.second.reserve(val_len);
+  RandomByteGenerator byte_generator;
+  std::generate_n(std::back_inserter(field.second), val_len, [&]() { return byte_generator.Next(); });
 }
 
 const bool registered = ycsbc::WorkloadFactory::RegisterWorkload(

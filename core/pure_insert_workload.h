@@ -26,8 +26,6 @@ class PureInsertWorkload : public CoreWorkload {
   bool DoTransaction(DB &db, ThreadState *state) override;
 
  protected:
-  void BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &values, const int val_len);
-
   int value_len;
 };
 

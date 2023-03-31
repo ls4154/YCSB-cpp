@@ -202,6 +202,7 @@ class CoreWorkload {
   std::string BuildKeyName(uint64_t key_num);
   void BuildValues(std::vector<DB::Field> &values);
   void BuildSingleValue(std::vector<DB::Field> &update);
+  void BuildSingleValueOfLen(std::vector<ycsbc::DB::Field> &values, const int val_len);
 
   uint64_t NextTransactionKeyNum();
   std::string NextFieldName();
@@ -243,9 +244,13 @@ inline std::string CoreWorkload::NextFieldName() {
 
 inline bool CoreWorkload::DoInsert(DB &db, ThreadState *_state) {
   const std::string key = BuildKeyName(insert_key_sequence_->Next());
-  std::vector<DB::Field> fields;
-  BuildValues(fields);
-  return db.Insert(table_name_, key, fields) == DB::kOK;
+  std::vector<DB::Field> values;
+  if (write_all_fields()) {
+    BuildValues(values);
+  } else {
+    BuildSingleValue(values);
+  }
+  return db.Insert(table_name_, key, values) == DB::kOK;
 }
 
 inline bool CoreWorkload::DoTransaction(DB &db, ThreadState *_state) {
@@ -338,7 +343,11 @@ inline int CoreWorkload::TransactionInsert(DB &db) {
   uint64_t key_num = transaction_insert_key_sequence_->Next();
   const std::string key = BuildKeyName(key_num);
   std::vector<DB::Field> values;
-  BuildValues(values);
+  if (write_all_fields()) {
+    BuildValues(values);
+  } else {
+    BuildSingleValue(values);
+  }
   int s = db.Insert(table_name_, key, values);
   transaction_insert_key_sequence_->Acknowledge(key_num);
   return s;
