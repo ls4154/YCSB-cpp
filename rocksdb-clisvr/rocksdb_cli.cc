@@ -76,7 +76,7 @@ DB::Status RocksdbCli::Read(const std::string &table, const std::string &key, co
   return DB::kOK;
 }
 
-DB::Status RocksdbCli::Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
+DB::Status RocksdbCli::Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
   size_t k_size = SerializeKey(key, reinterpret_cast<char *>(req_.buf_));
   size_t v_size = SerializeRow(values, reinterpret_cast<char *>(req_.buf_ + k_size));
 #if DEBUG
@@ -86,7 +86,7 @@ DB::Status RocksdbCli::Insert(const std::string &table, const std::string &key, 
 #endif
 
   rpc_->resize_msg_buffer(&req_, k_size + v_size);
-  rpc_->enqueue_request(session_num_, INSERT_REQ, &req_, &resp_, rpc_cont_func, nullptr);
+  rpc_->enqueue_request(session_num_, PUT_REQ, &req_, &resp_, rpc_cont_func, nullptr);
   pollForRpcComplete();
   assert(resp_.get_data_size() == sizeof(DB::Status));
   return *reinterpret_cast<DB::Status *>(resp_.buf_);

@@ -22,10 +22,10 @@ class RocksdbCli : public DB {
               const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) override {
     return kNotImplemented;
   }
-  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) override {
-    return kNotImplemented;
+  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) override;
+  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) override {
+    return Update(table, key, values);
   }
-  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) override;
   Status Delete(const std::string &table, const std::string &key) override;
 
  protected:

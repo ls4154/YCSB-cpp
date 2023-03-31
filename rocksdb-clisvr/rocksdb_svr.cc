@@ -51,7 +51,7 @@ int main(const int argc, const char *argv[]) {
   std::cout << "start eRPC server on " << server_uri << std::endl;
 
   nexus.register_req_func(READ_REQ, read_handler);
-  nexus.register_req_func(INSERT_REQ, insert_handler);
+  nexus.register_req_func(PUT_REQ, put_handler);
   nexus.register_req_func(DELETE_REQ, delete_handler);
 
   const int n_threads = std::stoi(props.GetProperty("threadcount", "1"));
@@ -104,7 +104,7 @@ void read_handler(erpc::ReqHandle *req_handle, void *context) {
   rpc->enqueue_response(req_handle, &resp);
 }
 
-void insert_handler(erpc::ReqHandle *req_handle, void *context) {
+void put_handler(erpc::ReqHandle *req_handle, void *context) {
   auto *rpc = static_cast<ServerContext *>(context)->rpc_;
   auto *db = static_cast<ServerContext *>(context)->db_;
   auto *req = req_handle->get_req_msgbuf();

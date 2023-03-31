@@ -12,7 +12,7 @@
 #include <mutex>
 
 void read_handler(erpc::ReqHandle *req_handle, void *context);
-void insert_handler(erpc::ReqHandle *req_handle, void *context);
+void put_handler(erpc::ReqHandle *req_handle, void *context);
 void delete_handler(erpc::ReqHandle *req_handle, void *context);
 
 class ServerContext {
