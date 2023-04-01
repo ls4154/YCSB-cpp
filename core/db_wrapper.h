@@ -67,6 +67,8 @@ class DBWrapper : public DB {
     measurements_->Report(DELETE, elapsed);
     return s;
   }
+
+  bool ReInitBeforeTransaction() override { return db_->ReInitBeforeTransaction(); }
  private:
   DB *db_;
   Measurements *measurements_;

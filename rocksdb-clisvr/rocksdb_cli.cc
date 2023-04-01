@@ -73,6 +73,36 @@ DB::Status RocksdbCli::Read(const std::string &table, const std::string &key, co
   size_t v_size = resp_.get_data_size() - sizeof(DB::Status);
   const char *v_base = reinterpret_cast<const char *>(resp_.buf_ + sizeof(DB::Status));
   DeserializeRow(result, v_base, v_base + v_size);
+#if DEBUG
+  std::ostringstream vstream;
+  for (auto &v : result) vstream << "f: " << v.first << " v: " << v.second << std::endl;
+  std::cout << "[READ] value: " << vstream.str();
+#endif
+  return DB::kOK;
+}
+
+DB::Status RocksdbCli::Scan(const std::string &table, const std::string &key, int len,
+                        const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
+  size_t k_size = SerializeKey(key, reinterpret_cast<char *>(req_.buf_));
+  *reinterpret_cast<int *>(req_.buf_ + k_size) = len;
+  rpc_->resize_msg_buffer(&req_, k_size + sizeof(int));
+  rpc_->enqueue_request(session_num_, SCAN_REQ, &req_, &resp_, rpc_cont_func, nullptr);
+  pollForRpcComplete();
+
+  if (resp_.get_data_size() < sizeof(DB::Status)) return DB::kError;
+  DB::Status s = *reinterpret_cast<DB::Status *>(resp_.buf_);
+  if (s != DB::kOK) return s;
+  size_t v_size = resp_.get_data_size() - sizeof(DB::Status);
+  const char *v_base = reinterpret_cast<const char *>(resp_.buf_ + sizeof(DB::Status));
+  DeserializeRowVector(result, v_base, v_base + v_size);
+#if DEBUG
+  std::ostringstream vstream;
+  for (auto &values : result) {
+    vstream << "values:\n";
+    for (auto &v: values) vstream << "\tf: " << v.first << " v: " << v.second << std::endl;
+  }
+  std::cout << "[SCAN] len: " << len << " results: \n" << vstream.str();
+#endif
   return DB::kOK;
 }
 
@@ -152,6 +182,18 @@ void RocksdbCli::DeserializeRow(std::vector<Field> &values, const std::string &d
   const char *p = data.data();
   const char *lim = p + data.size();
   DeserializeRow(values, p, lim);
+}
+
+void RocksdbCli::DeserializeRowVector(std::vector<std::vector<Field>> &results, const char *p, const char *lim) {
+  while (p != lim) {
+    assert(p < lim);
+    uint32_t len = *reinterpret_cast<const uint32_t *>(p);
+    p += sizeof(uint32_t);
+    results.push_back(std::vector<Field>());
+    std::vector<Field> &values = results.back();
+    DeserializeRow(values, p, p + len);
+    p += len;
+  }
 }
 
 RocksdbCli::~RocksdbCli() {}

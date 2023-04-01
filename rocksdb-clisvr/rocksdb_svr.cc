@@ -53,6 +53,7 @@ int main(const int argc, const char *argv[]) {
   nexus.register_req_func(READ_REQ, read_handler);
   nexus.register_req_func(PUT_REQ, put_handler);
   nexus.register_req_func(DELETE_REQ, delete_handler);
+  nexus.register_req_func(SCAN_REQ, scan_handler);
 
   const int n_threads = std::stoi(props.GetProperty("threadcount", "1"));
   std::vector<std::thread> server_threads;
@@ -146,6 +147,34 @@ void delete_handler(erpc::ReqHandle *req_handle, void *context) {
   } else {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
   }
+  rpc->enqueue_response(req_handle, &resp);
+}
+
+void scan_handler(erpc::ReqHandle *req_handle, void *context) {
+  auto *rpc = static_cast<ServerContext *>(context)->rpc_;
+  auto *db = static_cast<ServerContext *>(context)->db_;
+  auto *req = req_handle->get_req_msgbuf();
+  auto req_size = req->get_data_size();
+  std::string key = DeserializeKey(reinterpret_cast<const char *>(req->buf_));
+  int len = *reinterpret_cast<int *>(req->buf_ + sizeof(uint32_t) + key.size());
+
+  rocksdb::Iterator *db_iter = db->NewIterator(rocksdb::ReadOptions());
+  db_iter->Seek(key);
+  auto &resp = req_handle->pre_resp_msgbuf_;
+  
+  size_t offset = sizeof(DB::Status);
+  for (int i = 0; db_iter->Valid() && i < len; i++) {
+    std::string data = db_iter->value().ToString();
+    *reinterpret_cast<uint32_t *>(resp.buf_ + offset) = data.size();
+    offset += sizeof(uint32_t);
+    memcpy(resp.buf_ + offset, data.data(), data.size());
+    offset += data.size();
+
+    db_iter->Next();
+  }
+  delete db_iter;
+  *reinterpret_cast<DB::Status *>(resp.buf_) = DB::kOK;
+  rpc->resize_msg_buffer(&resp, offset);
   rpc->enqueue_response(req_handle, &resp);
 }
 

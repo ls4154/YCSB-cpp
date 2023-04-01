@@ -102,7 +102,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, true, true, !do_transaction, &latch, &init_latch));
+                                             num_threads, true, true, !do_transaction || dbs[i]->ReInitBeforeTransaction(), &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
     init_latch.Await();
@@ -146,7 +146,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, false, false, !do_transaction, &latch, &init_latch));
+                                             num_threads, false, dbs[i]->ReInitBeforeTransaction(), true, &latch, &init_latch));
     }
     assert((int)client_threads.size() == num_threads);
     init_latch.Await();

@@ -99,6 +99,8 @@ class DB {
 
   virtual ~DB() { }
 
+  virtual bool ReInitBeforeTransaction() { return false; }
+
   void SetProps(utils::Properties *props) {
     props_ = props;
   }

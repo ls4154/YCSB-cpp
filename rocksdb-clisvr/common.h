@@ -103,6 +103,7 @@ const std::string PROP_ENV_URI_DEFAULT = "";
 const std::string PROP_FS_URI = "rocksdb.fs_uri";
 const std::string PROP_FS_URI_DEFAULT = "";
 
-#define READ_REQ 0
-#define PUT_REQ 1
-#define DELETE_REQ 2
+#define READ_REQ    0
+#define PUT_REQ     1
+#define DELETE_REQ  2
+#define SCAN_REQ    3
