@@ -1,7 +1,9 @@
 *.o
 *.d
+*.log
 
 ycsb
+rocksdb_svr
 
 .vimrc
 tags
@@ -10,3 +12,4 @@ compile_commands.json
 .cache/
 .vscode/
 tmp/
+uftrace*
