@@ -3,6 +3,7 @@
 //  YCSB-cpp
 //
 //  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
+//  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
 #include "rocksdb_db.h"
@@ -106,7 +107,9 @@ namespace {
 
   static std::shared_ptr<rocksdb::Env> env_guard;
   static std::shared_ptr<rocksdb::Cache> block_cache;
+#if ROCKSDB_MAJOR < 8
   static std::shared_ptr<rocksdb::Cache> block_cache_compressed;
+#endif
 } // anonymous
 
 namespace ycsbc {
@@ -242,7 +245,11 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
 
   const std::string options_file = props.GetProperty(PROP_OPTIONS_FILE, PROP_OPTIONS_FILE_DEFAULT);
   if (options_file != "") {
-    rocksdb::Status s = rocksdb::LoadOptionsFromFile(options_file, env, opt, cf_descs);
+    rocksdb::ConfigOptions config_options;
+    config_options.ignore_unknown_options = false;
+    config_options.input_strings_escaped = true;
+    config_options.env = env;
+    rocksdb::Status s = rocksdb::LoadOptionsFromFile(config_options, options_file, opt, cf_descs);
     if (!s.ok()) {
       throw utils::Exception(std::string("RocksDB LoadOptionsFromFile: ") + s.ToString());
     }
@@ -334,12 +341,14 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
       block_cache = rocksdb::NewLRUCache(cache_size);
       table_options.block_cache = block_cache;
     }
+#if ROCKSDB_MAJOR < 8
     size_t compressed_cache_size = std::stoul(props.GetProperty(PROP_COMPRESSED_CACHE_SIZE,
                                                                 PROP_COMPRESSED_CACHE_SIZE_DEFAULT));
     if (compressed_cache_size > 0) {
-      block_cache_compressed = rocksdb::NewLRUCache(cache_size);
-      table_options.block_cache_compressed = rocksdb::NewLRUCache(compressed_cache_size);
+      block_cache_compressed = rocksdb::NewLRUCache(compressed_cache_size);
+      table_options.block_cache_compressed = block_cache_compressed;
     }
+#endif
     int bloom_bits = std::stoul(props.GetProperty(PROP_BLOOM_BITS, PROP_BLOOM_BITS_DEFAULT));
     if (bloom_bits > 0) {
       table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(bloom_bits));
@@ -468,7 +477,7 @@ DB::Status RocksdbDB::UpdateSingle(const std::string &table, const std::string &
   DeserializeRow(current_values, data);
   assert(current_values.size() == static_cast<size_t>(fieldcount_));
   for (Field &new_field : values) {
-    bool found __attribute__((unused)) = false;
+    bool found MAYBE_UNUSED = false;
     for (Field &cur_field : current_values) {
       if (cur_field.first == new_field.first) {
         found = true;

@@ -3,10 +3,15 @@
 //  YCSB-cpp
 //
 //  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
+//  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
 #include <string.h>
 #include <sys/stat.h>
+#if defined(_MSC_VER)
+#include "direct.h"
+#define mkdir(x, y) _mkdir(x)
+#endif
 
 #include "lmdb_db.h"
 #include "core/properties.h"
@@ -272,7 +277,7 @@ DB::Status LmdbDB::UpdateSingleEntry(const std::string &table, const std::string
   std::vector<Field> current_values;
   DeserializeRow(&current_values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size);
   for (Field &new_field : values) {
-    bool found __attribute__((unused)) = false;
+    bool found MAYBE_UNUSED = false;
     for (Field &cur_field : current_values) {
       if (cur_field.first == new_field.first) {
         found = true;
