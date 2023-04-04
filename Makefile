@@ -4,18 +4,27 @@
 #
 #  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 #  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+#  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 #
 
 
 #---------------------build config-------------------------
 
+# Database bindings
+BIND_WIREDTIGER ?= 0
+BIND_LEVELDB ?= 0
+BIND_ROCKSDB ?= 0
+BIND_LMDB ?= 0
+
+# Extra options
 DEBUG_BUILD ?= 0
 EXTRA_CXXFLAGS ?=
 EXTRA_LDFLAGS ?= -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 
-BIND_LEVELDB ?= 0
-BIND_ROCKSDB ?= 0
-BIND_LMDB ?= 0
+# HdrHistogram for tail latency report
+BIND_HDRHISTOGRAM ?= 1
+# Build and statically link library, submodule required
+BUILD_HDRHISTOGRAM ?= 1
 
 #----------------------------------------------------------
 
@@ -24,6 +33,11 @@ ifeq ($(DEBUG_BUILD), 1)
 else
 	CXXFLAGS += -O3
 	CPPFLAGS += -DNDEBUG
+endif
+
+ifeq ($(BIND_WIREDTIGER), 1)
+	LDFLAGS += -lwiredtiger
+	SOURCES += $(wildcard wiredtiger/*.cc)
 endif
 
 ifeq ($(BIND_LEVELDB), 1)
@@ -60,6 +74,19 @@ DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
 SVR = rocksdb_svr
 
+HDRHISTOGRAM_DIR = HdrHistogram_c
+HDRHISTOGRAM_LIB = $(HDRHISTOGRAM_DIR)/src/libhdr_histogram_static.a
+
+ifeq ($(BIND_HDRHISTOGRAM), 1)
+ifeq ($(BUILD_HDRHISTOGRAM), 1)
+	CXXFLAGS += -I$(HDRHISTOGRAM_DIR)/include
+	OBJECTS += $(HDRHISTOGRAM_LIB)
+else
+	LDFLAGS += -lhdr_histogram
+endif
+CPPFLAGS += -DHDRMEASUREMENT
+endif
+
 all: $(EXEC) $(SVR)
 
 $(EXEC): $(OBJECTS)
@@ -74,8 +101,20 @@ $(SVR): rocksdb-clisvr/rocksdb_svr.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 	@echo "  CC      " $@
 
-%.d : %.cc
+%.d: %.cc
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -MM -MT '$(<:.cc=.o)' -o $@ $<
+
+$(HDRHISTOGRAM_DIR)/CMakeLists.txt:
+	@echo "Download HdrHistogram_c"
+	@git submodule update --init
+
+$(HDRHISTOGRAM_DIR)/Makefile: $(HDRHISTOGRAM_DIR)/CMakeLists.txt
+	@cmake -DCMAKE_BUILD_TYPE=Release -S $(HDRHISTOGRAM_DIR) -B $(HDRHISTOGRAM_DIR)
+
+
+$(HDRHISTOGRAM_LIB): $(HDRHISTOGRAM_DIR)/Makefile
+	@echo "Build HdrHistogram_c"
+	@make -C $(HDRHISTOGRAM_DIR)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)

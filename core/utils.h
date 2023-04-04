@@ -4,6 +4,7 @@
 //
 //  Created by Jinglei Ren on 12/5/14.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+//  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
 #ifndef YCSB_C_UTILS_H_
@@ -13,6 +14,17 @@
 #include <cstdint>
 #include <exception>
 #include <random>
+#include <locale>
+
+#if defined(_MSC_VER)
+#if _MSC_VER >= 1911
+#define MAYBE_UNUSED [[maybe_unused]]
+#else
+#define MAYBE_UNUSED
+#endif
+#elif defined(__GNUC__)
+#define MAYBE_UNUSED __attribute__ ((unused))
+#endif
 
 namespace ycsbc {
 

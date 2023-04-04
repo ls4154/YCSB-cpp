@@ -1,17 +1,26 @@
 # YCSB-cpp
 
 Yahoo! Cloud Serving Benchmark([YCSB](https://github.com/brianfrankcooper/YCSB/wiki)) written in C++.
-This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with following changes.
+This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some additions
 
- * Make Zipf distribution and data value more similar to the original YCSB
- * Status and latency report during benchmark
- * Supported Databases: LevelDB, RocksDB, LMDB
+ * Tail latency report using [HdrHistogram_c](https://github.com/HdrHistogram/HdrHistogram_c)
+ * Small changes to make it behave more like the original YCSB
+ * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
 
-## Building
+# Build YCSB-cpp
+
+## Build with Makefile on POSIX
 
 Simply use `make` to build.
 
-The databases to bind must be specified. You may also need to add additional link flags (e.g., `-lsnappy`).
+```
+git clone https://github.com/ls4154/YCSB-cpp.git
+cd YCSB-cpp
+git submodule update --init
+make
+```
+
+Databases to bind must be specified as build options. You may also need to add additional link flags (e.g., `-lsnappy`).
 
 To bind LevelDB:
 ```
@@ -33,6 +42,20 @@ EXTRA_LDFLAGS ?= -L/example/rocksdb -ldl -lz -lsnappy -lzstd -lbz2 -llz4
 
 BIND_ROCKSDB ?= 1
 ```
+
+## Build with CMake on POSIX
+
+```shell
+git submodule update --init
+mkdir build
+cd build
+cmake -DBIND_ROCKSDB=1 -DBIND_WIREDTIGER=1 -DBIND_LMDB=1 -DBIND_LEVELDB=1 -DWITH_SNAPPY=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 ..
+make
+```
+
+## Build with CMake+vcpkg on Windows
+
+see [BUILD_ON_WINDOWS](BUILD_ON_WINDOWS.md)
 
 ## Running
 
