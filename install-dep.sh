@@ -10,14 +10,11 @@ sudo apt-get install -y \
     liblz4-dev \
     libzstd-dev \
     libhiredis-dev \
-    fio \
-    nload \
-    iftop \
     cmake
 
-git clone https://github.com/facebook/rocksdb.git $dir/rocksdb
+git clone https://github.com/dassl-uiuc/rocksdb.git $dir/rocksdb
 cd $dir/rocksdb
-git checkout v7.7.2
+git checkout fa645ed
 make shared_lib -j
 cd ..
 
@@ -29,10 +26,6 @@ cmake ..
 make -j
 sudo make install
 cd ..
-
-git clone https://github.com/dassl-uiuc/YCSB-cpp.git $dir/YCSB-cpp
-cd $dir/YCSB-cpp
-
 
 make BIND_ROCKSDB=1 EXTRA_CXXFLAGS="-I$dir/rocksdb/include -L$dir/rocksdb" -j
 
