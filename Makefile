@@ -66,16 +66,18 @@ ifeq ($(BIND_ROCKSDBCLI), 1)
 	SOURCES += rocksdb-clisvr/rocksdb_cli.cc
 endif
 
-CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./
+CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
-OBJECTS += $(SOURCES:.cc=.o)
+OBJECTS += $(SOURCES:.cc=.o) $(YAMLCPP_LIB)
 DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
 SVR = rocksdb_svr
 
 HDRHISTOGRAM_DIR = HdrHistogram_c
-HDRHISTOGRAM_LIB = $(HDRHISTOGRAM_DIR)/src/libhdr_histogram_static.a
+HDRHISTOGRAM_LIB = $(HDRHISTOGRAM_DIR)/build/src/libhdr_histogram_static.a
+YAMLCPP_DIR = yaml-cpp
+YAMLCPP_LIB = $(YAMLCPP_DIR)/build/libyaml-cpp.a
 
 ifeq ($(BIND_HDRHISTOGRAM), 1)
 ifeq ($(BUILD_HDRHISTOGRAM), 1)
@@ -108,13 +110,24 @@ $(HDRHISTOGRAM_DIR)/CMakeLists.txt:
 	@echo "Download HdrHistogram_c"
 	@git submodule update --init
 
-$(HDRHISTOGRAM_DIR)/Makefile: $(HDRHISTOGRAM_DIR)/CMakeLists.txt
-	@cmake -DCMAKE_BUILD_TYPE=Release -S $(HDRHISTOGRAM_DIR) -B $(HDRHISTOGRAM_DIR)
+$(HDRHISTOGRAM_DIR)/build/Makefile: $(HDRHISTOGRAM_DIR)/CMakeLists.txt
+	@cmake -DCMAKE_BUILD_TYPE=Release -S $(HDRHISTOGRAM_DIR) -B $(HDRHISTOGRAM_DIR)/build
 
 
-$(HDRHISTOGRAM_LIB): $(HDRHISTOGRAM_DIR)/Makefile
+$(HDRHISTOGRAM_LIB): $(HDRHISTOGRAM_DIR)/build/Makefile
 	@echo "Build HdrHistogram_c"
-	@make -C $(HDRHISTOGRAM_DIR)
+	@make -C $(HDRHISTOGRAM_DIR)/build -j
+
+$(YAMLCPP_DIR)/CMakeLists.txt:
+	@echo "Download yaml-cpp"
+	@git submodule update --init
+
+$(YAMLCPP_DIR)/build/Makefile: $(YAMLCPP_DIR)/CMakeLists.txt
+	@cmake -DCMAKE_BUILD_TYPE=Release -S $(YAMLCPP_DIR) -B $(YAMLCPP_DIR)/build
+
+$(YAMLCPP_LIB): $(YAMLCPP_DIR)/build/Makefile
+	@echo "Build yaml-cpp"
+	@make -C $(YAMLCPP_DIR)/build -j
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEPS)

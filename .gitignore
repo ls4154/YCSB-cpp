@@ -12,4 +12,5 @@ compile_commands.json
 .cache/
 .vscode/
 tmp/
+build/
 uftrace*

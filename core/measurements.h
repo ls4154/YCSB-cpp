@@ -17,6 +17,8 @@
 #include <hdr/hdr_histogram.h>
 #endif
 
+#include <yaml-cpp/yaml.h>
+
 typedef unsigned int uint;
 
 namespace ycsbc {
@@ -26,6 +28,7 @@ class Measurements {
   virtual void Report(Operation op, uint64_t latency) = 0;
   virtual std::string GetStatusMsg() = 0;
   virtual void Reset() = 0;
+  virtual void Emit(YAML::Node &node) = 0;
 };
 
 class BasicMeasurements : public Measurements {
@@ -34,6 +37,7 @@ class BasicMeasurements : public Measurements {
   void Report(Operation op, uint64_t latency) override;
   std::string GetStatusMsg() override;
   void Reset() override;
+  void Emit(YAML::Node &node) override;
  private:
   std::atomic<uint> count_[MAXOPTYPE];
   uint last_count_[MAXOPTYPE];  // the op count at last measurement
@@ -50,6 +54,7 @@ class HdrHistogramMeasurements : public Measurements {
   void Report(Operation op, uint64_t latency) override;
   std::string GetStatusMsg() override;
   void Reset() override;
+  void Emit(YAML::Node &node) override;
  private:
   hdr_histogram *histogram_[MAXOPTYPE];
 };

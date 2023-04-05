@@ -27,9 +27,12 @@
 #include "workload_factory.h"
 #include "pure_insert_workload.h"
 
+const std::string YAML_NAME_PROPERTY = "yamlname";
+
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
+void SaveRunSummary(YAML::Node &node, ycsbc::utils::Properties &props, std::time_t &now);
 
 void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, CountDownLatch *init_latch, int interval) {
   using namespace std::chrono;
@@ -54,6 +57,7 @@ void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, Coun
 }
 
 int main(const int argc, const char *argv[]) {
+  using namespace std::chrono;
   ycsbc::utils::Properties props;
   ParseCommandLine(argc, argv, props);
 
@@ -171,6 +175,21 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Run runtime(sec): " << runtime << std::endl;
     std::cout << "Run operations(ops): " << sum << std::endl;
     std::cout << "Run throughput(ops/sec): " << sum / runtime << std::endl;
+
+    YAML::Node run_summary;
+    std::time_t now_c = system_clock::to_time_t(system_clock::now());
+    std::stringstream tstmp_s;
+    tstmp_s << std::put_time(std::localtime(&now_c), "%F %T");
+    run_summary["timestamp"] = tstmp_s.str();
+    run_summary["recordcount"] = props.GetProperty(ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY);
+    run_summary["operationcount"] = props.GetProperty(ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY);
+    run_summary["runtime"] = runtime;
+    run_summary["operations"] = sum;
+    run_summary["throughput"] = sum / runtime;
+    run_summary["workload"] = props.GetProperty(ycsbc::WorkloadFactory::WORKLOAD_NAME_PROPERTY,
+                                                ycsbc::WorkloadFactory::WORKLOAD_NAME_DEFAULT);
+    measurements->Emit(run_summary);
+    SaveRunSummary(run_summary, props, now_c);
   }
 
   delete wl;
@@ -273,6 +292,20 @@ void UsageMessage(const char *command) {
       "                 values in the propertyfile\n"
       "  -s: print status every 10 seconds (use status.interval prop to override)"
       << std::endl;
+}
+
+void SaveRunSummary(YAML::Node &node, ycsbc::utils::Properties &props, std::time_t &now) {
+  std::string yaml_name = props.GetProperty(YAML_NAME_PROPERTY);
+  if (yaml_name.empty()) {
+    std::stringstream name_s;
+    name_s << std::put_time(std::localtime(&now), "%Y%m%d%s");
+    yaml_name.append(name_s.str());
+  }
+  yaml_name.append(".yml");
+  std::ofstream yaml_file;
+  yaml_file.open(yaml_name);
+  yaml_file << node << std::endl;
+  yaml_file.close();
 }
 
 inline bool StrStartWith(const char *str, const char *pre) {

@@ -75,6 +75,20 @@ void BasicMeasurements::Reset() {
   std::fill(std::begin(latency_max_), std::end(latency_max_), 0);
 }
 
+void BasicMeasurements::Emit(YAML::Node &node) {
+  for (int i = 0; i < MAXOPTYPE; i++) {
+    Operation op = static_cast<Operation>(i);
+    uint64_t cnt = count_[op].load(std::memory_order_relaxed);
+    if (cnt == 0) continue;
+    YAML::Node op_node;
+    op_node["count"] = cnt;
+    op_node["max"] = latency_max_[op].load(std::memory_order_relaxed) / 1000.0;
+    op_node["min"] = latency_min_[op].load(std::memory_order_relaxed) / 1000.0;
+    op_node["avg"] = ((cnt > 0) ? static_cast<double>(latency_sum_[op].load(std::memory_order_relaxed)) / cnt : 0) / 1000.0;
+    node[kOperationString[op]] = op_node;
+  }
+}
+
 #ifdef HDRMEASUREMENT
 HdrHistogramMeasurements::HdrHistogramMeasurements() {
   for (int op = 0; op < MAXOPTYPE; op++) {
@@ -116,6 +130,26 @@ std::string HdrHistogramMeasurements::GetStatusMsg() {
 void HdrHistogramMeasurements::Reset() {
   for (int op = 0; op < MAXOPTYPE; op++) {
     hdr_reset(histogram_[op]);
+  }
+}
+
+void HdrHistogramMeasurements::Emit(YAML::Node &node) {
+  for (int i = 0; i < MAXOPTYPE; i++) {
+    Operation op  = static_cast<Operation>(i);
+    uint64_t cnt = histogram_[op]->total_count;
+    if (cnt == 0) continue;
+    YAML::Node op_node;
+    op_node["count"] = cnt;
+    op_node["max"] = hdr_max(histogram_[op]) / 1000.0;
+    op_node["min"] = hdr_min(histogram_[op]) / 1000.0;
+    op_node["avg"] = hdr_mean(histogram_[op]) / 1000.0;
+    YAML::Node cdf_node;
+    // cdf_node.SetStyle(YAML::EmitterStyle::Flow);
+    for (int p = 1; p < 100; p++) {
+      cdf_node[p] = hdr_value_at_percentile(histogram_[op], p) / 1000.0;
+    }
+    op_node["cdf"] = cdf_node;
+    node[kOperationString[op]] = op_node;
   }
 }
 #endif

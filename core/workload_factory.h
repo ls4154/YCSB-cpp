@@ -12,6 +12,9 @@ namespace ycsbc
 
 class WorkloadFactory {
 public:
+    static const std::string WORKLOAD_NAME_PROPERTY;
+    static const std::string WORKLOAD_NAME_DEFAULT;
+
     using WorkloadCreator = CoreWorkload *(*) ();
     static bool RegisterWorkload(std::string name, WorkloadCreator creator);
     static CoreWorkload *CreateWorkload(const utils::Properties &p);
