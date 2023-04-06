@@ -267,9 +267,13 @@ std::string CoreWorkload::NextFieldName() {
 
 bool CoreWorkload::DoInsert(DB &db, ThreadState *_state) {
   const std::string key = BuildKeyName(insert_key_sequence_->Next());
-  std::vector<DB::Field> fields;
-  BuildValues(fields);
-  return db.Insert(table_name_, key, fields) == DB::kOK;
+  std::vector<DB::Field> values;
+  if (write_all_fields()) {
+    BuildValues(values);
+  } else {
+    BuildSingleValue(values);
+  }
+  return db.Insert(table_name_, key, values) == DB::kOK;
 }
 
 bool CoreWorkload::DoTransaction(DB &db, ThreadState *_state) {
@@ -361,7 +365,11 @@ DB::Status CoreWorkload::TransactionInsert(DB &db) {
   uint64_t key_num = transaction_insert_key_sequence_->Next();
   const std::string key = BuildKeyName(key_num);
   std::vector<DB::Field> values;
-  BuildValues(values);
+  if (write_all_fields()) {
+    BuildValues(values);
+  } else {
+    BuildSingleValue(values);
+  }
   DB::Status s = db.Insert(table_name_, key, values);
   transaction_insert_key_sequence_->Acknowledge(key_num);
   return s;

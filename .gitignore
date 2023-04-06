@@ -1,6 +1,7 @@
 *.o
 *.d
 *.log
+*.yml
 
 ycsb
 rocksdb_svr
