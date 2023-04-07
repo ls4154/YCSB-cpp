@@ -81,6 +81,7 @@ void read_handler(erpc::ReqHandle *req_handle, void *context) {
   auto *rpc = static_cast<ServerContext *>(context)->rpc_;
   auto *db = static_cast<ServerContext *>(context)->db_;
   auto *req = req_handle->get_req_msgbuf();
+  auto &resp = static_cast<ServerContext *>(context)->resp_buf_;
   auto req_size = req->get_data_size();
   std::string key = DeserializeKey(reinterpret_cast<const char *>(req->buf_));
   std::string data;
@@ -90,7 +91,6 @@ void read_handler(erpc::ReqHandle *req_handle, void *context) {
 
   rocksdb::Status s = db->Get(rocksdb::ReadOptions(), key, &data);
 
-  auto &resp = req_handle->pre_resp_msgbuf_;
   if (s.IsNotFound()) {
     rpc->resize_msg_buffer(&resp, sizeof(DB::Status));
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kNotFound;
@@ -154,13 +154,13 @@ void scan_handler(erpc::ReqHandle *req_handle, void *context) {
   auto *rpc = static_cast<ServerContext *>(context)->rpc_;
   auto *db = static_cast<ServerContext *>(context)->db_;
   auto *req = req_handle->get_req_msgbuf();
+  auto &resp = static_cast<ServerContext *>(context)->resp_buf_;
   auto req_size = req->get_data_size();
   std::string key = DeserializeKey(reinterpret_cast<const char *>(req->buf_));
   int len = *reinterpret_cast<int *>(req->buf_ + sizeof(uint32_t) + key.size());
 
   rocksdb::Iterator *db_iter = db->NewIterator(rocksdb::ReadOptions());
   db_iter->Seek(key);
-  auto &resp = req_handle->pre_resp_msgbuf_;
   
   size_t offset = sizeof(DB::Status);
   for (int i = 0; db_iter->Valid() && i < len; i++) {
@@ -215,9 +215,12 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
 
   std::cout << "thread " << thread_id << " start running" << std::endl;
 
+  const int msg_size = std::stoull(props->GetProperty(PROP_MSG_SIZE, PROP_MSG_SIZE_DEFAULT));
+  c.resp_buf_ = rpc.alloc_msg_buffer_or_die(msg_size);
   while (run) {
     rpc.run_event_loop(1000);
   }
+  rpc.free_msg_buffer(c.resp_buf_);
 
   std::cout << "thread " << thread_id << " stop running" << std::endl;
 }

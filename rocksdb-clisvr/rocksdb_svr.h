@@ -19,6 +19,7 @@ void scan_handler(erpc::ReqHandle *req_handle, void *context);
 class ServerContext {
  public:
   erpc::Rpc<erpc::CTransport> *rpc_;
+  erpc::MsgBuffer resp_buf_;
   static rocksdb::DB *db_;
   int session_num_;
   int thread_id_;
