@@ -23,7 +23,7 @@ namespace {
 
 namespace ycsbc {
 
-BasicMeasurements::BasicMeasurements() : count_{}, latency_sum_{}, latency_max_{} {
+BasicMeasurements::BasicMeasurements() : count_{}, last_count_{}, latency_sum_{}, last_latency_sum_{}, latency_max_{} {
   std::fill(std::begin(latency_min_), std::end(latency_min_), std::numeric_limits<uint64_t>::max());
 }
 
@@ -50,7 +50,7 @@ std::string BasicMeasurements::GetStatusMsg() {
     uint64_t latency_sum = latency_sum_[op].load(std::memory_order_relaxed);
     if (cnt == 0)
       continue;
-    msg_stream << " [" << kOperationString[op] << ":"
+    msg_stream << "\n[" << kOperationString[op] << ":"
                << " Count=" << cnt
                << " Max=" << latency_max_[op].load(std::memory_order_relaxed) / 1000.0
                << " Min=" << latency_min_[op].load(std::memory_order_relaxed) / 1000.0
