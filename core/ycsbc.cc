@@ -131,6 +131,21 @@ int main(const int argc, const char *argv[]) {
     std::cout << "Load runtime(sec): " << runtime << std::endl;
     std::cout << "Load operations(ops): " << sum << std::endl;
     std::cout << "Load throughput(ops/sec): " << sum / runtime << std::endl;
+
+    YAML::Node load_summary;
+    std::time_t now_c = system_clock::to_time_t(system_clock::now());
+    std::stringstream tstmp_s;
+    tstmp_s << std::put_time(std::localtime(&now_c), "%F %T");
+    load_summary["timestamp"] = tstmp_s.str();
+    load_summary["recordcount"] = props.GetProperty(ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY);
+    load_summary["operationcount"] = props.GetProperty(ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY);
+    load_summary["runtime"] = runtime;
+    load_summary["operations"] = sum;
+    load_summary["throughput"] = sum / runtime;
+    load_summary["workload"] = props.GetProperty(ycsbc::WorkloadFactory::WORKLOAD_NAME_PROPERTY,
+                                                ycsbc::WorkloadFactory::WORKLOAD_NAME_DEFAULT);
+    measurements->Emit(load_summary);
+    SaveRunSummary(load_summary, props, now_c);
   }
 
   measurements->Reset();
