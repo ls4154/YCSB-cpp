@@ -21,19 +21,27 @@
 
 typedef unsigned int uint;
 
+const std::string SKIP_SECOND_PROPERTY = "secskip";
+
 namespace ycsbc {
 
 class Measurements {
  public:
+  Measurements(int64_t sec_skip) : sec_skip_(sec_skip), report_on_(sec_skip == 0) {}
   virtual void Report(Operation op, uint64_t latency) = 0;
   virtual std::string GetStatusMsg() = 0;
   virtual void Reset() = 0;
   virtual void Emit(YAML::Node &node) = 0;
+  void Start() { start_ = std::chrono::system_clock::now(); }
+ protected:
+  std::chrono::time_point<std::chrono::system_clock> start_;
+  int sec_skip_;
+  bool report_on_;
 };
 
 class BasicMeasurements : public Measurements {
  public:
-  BasicMeasurements();
+  BasicMeasurements(int64_t sec_skip = 0);
   void Report(Operation op, uint64_t latency) override;
   std::string GetStatusMsg() override;
   void Reset() override;
@@ -50,7 +58,7 @@ class BasicMeasurements : public Measurements {
 #ifdef HDRMEASUREMENT
 class HdrHistogramMeasurements : public Measurements {
  public:
-  HdrHistogramMeasurements();
+  HdrHistogramMeasurements(int64_t sec_skip = 0);
   void Report(Operation op, uint64_t latency) override;
   std::string GetStatusMsg() override;
   void Reset() override;

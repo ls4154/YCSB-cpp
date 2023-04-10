@@ -23,11 +23,21 @@ namespace {
 
 namespace ycsbc {
 
-BasicMeasurements::BasicMeasurements() : count_{}, last_count_{}, latency_sum_{}, last_latency_sum_{}, latency_max_{} {
+BasicMeasurements::BasicMeasurements(int64_t sec_skip) : Measurements(sec_skip), count_{}, last_count_{}, latency_sum_{}, last_latency_sum_{}, latency_max_{} {
   std::fill(std::begin(latency_min_), std::end(latency_min_), std::numeric_limits<uint64_t>::max());
 }
 
 void BasicMeasurements::Report(Operation op, uint64_t latency) {
+  if (!report_on_) {
+    auto elapse = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start_).count();
+    /* Due to concurrency, start_ may be set after client threads begin to run. If that happens, elapse would be very big, then report_on_
+     * is set to true, and latency will be reported after that. So we set an upper bound for elapse to be sec_skip_ plus 10s, since we believe
+     * that the interval between report is very small, so when elapse first exceeds after sec_skip_, their values must be very close.
+     * In this way, we prevent report_on_ from being setting to true in the beginning.
+     */
+    report_on_ = (elapse > sec_skip_ && elapse < sec_skip_ + 10);
+    return;
+  }
   count_[op].fetch_add(1, std::memory_order_relaxed);
   latency_sum_[op].fetch_add(latency, std::memory_order_relaxed);
   uint64_t prev_min = latency_min_[op].load(std::memory_order_relaxed);
@@ -90,7 +100,7 @@ void BasicMeasurements::Emit(YAML::Node &node) {
 }
 
 #ifdef HDRMEASUREMENT
-HdrHistogramMeasurements::HdrHistogramMeasurements() {
+HdrHistogramMeasurements::HdrHistogramMeasurements(int64_t sec_skip) : Measurements(sec_skip) {
   for (int op = 0; op < MAXOPTYPE; op++) {
     if (hdr_init(10, 100LL * 1000 * 1000 * 1000, 3, &histogram_[op]) != 0) {
       utils::Exception("hdr init failed");
@@ -99,6 +109,11 @@ HdrHistogramMeasurements::HdrHistogramMeasurements() {
 }
 
 void HdrHistogramMeasurements::Report(Operation op, uint64_t latency) {
+  if (!report_on_) {
+    auto elapse = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start_).count();
+    report_on_ = (elapse > sec_skip_ && elapse < sec_skip_ + 10);
+    return;
+  }
   hdr_record_value_atomic(histogram_[op], latency);
 }
 
@@ -156,13 +171,14 @@ void HdrHistogramMeasurements::Emit(YAML::Node &node) {
 
 Measurements *CreateMeasurements(utils::Properties *props) {
   std::string name = props->GetProperty(MEASUREMENT_TYPE, MEASUREMENT_TYPE_DEFAULT);
+  int64_t sec_skip = std::stol(props->GetProperty(SKIP_SECOND_PROPERTY, "0"));
 
   Measurements *measurements;
   if (name == "basic") {
-    measurements = new BasicMeasurements();
+    measurements = new BasicMeasurements(sec_skip);
 #ifdef HDRMEASUREMENT
   } else if (name == "hdrhistogram") {
-    measurements = new HdrHistogramMeasurements();
+    measurements = new HdrHistogramMeasurements(sec_skip);
 #endif
   } else {
     measurements = nullptr;

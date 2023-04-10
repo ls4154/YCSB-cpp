@@ -39,6 +39,7 @@ void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, Coun
   init_latch->Await(); // wait for all client threads to finish initializing before start printing status
   time_point<system_clock> start = system_clock::now();
   bool done = false;
+  measurements->Start();
   while (1) {
     time_point<system_clock> now = system_clock::now();
     std::time_t now_c = system_clock::to_time_t(now);
@@ -111,7 +112,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, true, true, !do_transaction || dbs[i]->ReInitBeforeTransaction(), &latch, &init_latch));
+                                             num_threads, true, true, !do_transaction || dbs[i]->ReInitBeforeTransaction(), &latch, &init_latch, 0));
     }
     assert((int)client_threads.size() == num_threads);
     init_latch.Await();
@@ -154,6 +155,7 @@ int main(const int argc, const char *argv[]) {
   // transaction phase
   if (do_transaction) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
+    const int64_t sec_skip = stol(props.GetProperty(SKIP_SECOND_PROPERTY, "0"));
 
     CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
@@ -170,7 +172,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, false, !do_load || dbs[i]->ReInitBeforeTransaction(), true, &latch, &init_latch));
+                                             num_threads, false, !do_load || dbs[i]->ReInitBeforeTransaction(), true, &latch, &init_latch, sec_skip));
     }
     assert((int)client_threads.size() == num_threads);
     init_latch.Await();
@@ -181,7 +183,7 @@ int main(const int argc, const char *argv[]) {
       assert(n.valid());
       sum += n.get();
     }
-    double runtime = timer.End();
+    double runtime = timer.End() - sec_skip;
 
     if (show_status) {
       status_future.wait();

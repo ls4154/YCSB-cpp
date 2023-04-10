@@ -19,7 +19,7 @@ namespace ycsbc {
 
 inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Properties &p, const int num_ops,
                         const int thread_id, const int thread_count, bool is_loading, bool init_db, bool cleanup_db,
-                        CountDownLatch *latch, CountDownLatch *init_latch) {
+                        CountDownLatch *latch, CountDownLatch *init_latch, int64_t sec_skip) {
   if (init_db) {
     db->Init();
   }
@@ -27,8 +27,17 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Pro
   ThreadState *thread_state = wl->InitThread(p, thread_id, thread_count, num_ops);
   init_latch->CountDown();
 
+  bool count_on = (sec_skip == 0);
+  auto start = std::chrono::system_clock::now();
+  int skipped_ok = 0;
+
   int oks = 0;
   for (int i = 0; i < num_ops; ++i) {
+    if (!count_on) {
+      auto elapse = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start).count();
+      count_on = (elapse > sec_skip);
+      skipped_ok = oks;
+    }
     if (is_loading) {
       oks += wl->DoInsert(*db, thread_state);
     } else {
@@ -43,7 +52,7 @@ inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const utils::Pro
   }
 
   latch->CountDown();
-  return oks;
+  return oks - skipped_ok;
 }
 
 } // ycsbc
