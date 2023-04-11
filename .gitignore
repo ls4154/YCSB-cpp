@@ -14,4 +14,6 @@ compile_commands.json
 .vscode/
 tmp/
 build/
+analyze/
+log/
 uftrace*
