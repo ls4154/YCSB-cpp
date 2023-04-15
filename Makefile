@@ -66,6 +66,11 @@ ifeq ($(BIND_ROCKSDBCLI), 1)
 	SOURCES += rocksdb-clisvr/rocksdb_cli.cc
 endif
 
+ifeq ($(BIND_POSTGRES), 1)
+	LDFLAGS += -lpq
+	SOURCES += $(wildcard postgres/*.cc)
+endif
+
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
