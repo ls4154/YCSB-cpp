@@ -137,6 +137,7 @@ int main(const int argc, const char *argv[]) {
     std::time_t now_c = system_clock::to_time_t(system_clock::now());
     std::stringstream tstmp_s;
     tstmp_s << std::put_time(std::localtime(&now_c), "%F %T");
+    load_summary["dbname"] = props["dbname"];
     load_summary["timestamp"] = tstmp_s.str();
     load_summary["recordcount"] = props.GetProperty(ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY);
     load_summary["operationcount"] = props.GetProperty(ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY);
@@ -197,6 +198,7 @@ int main(const int argc, const char *argv[]) {
     std::time_t now_c = system_clock::to_time_t(system_clock::now());
     std::stringstream tstmp_s;
     tstmp_s << std::put_time(std::localtime(&now_c), "%F %T");
+    run_summary["dbname"] = props["dbname"];
     run_summary["timestamp"] = tstmp_s.str();
     run_summary["recordcount"] = props.GetProperty(ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY);
     run_summary["operationcount"] = props.GetProperty(ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY);

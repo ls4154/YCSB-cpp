@@ -5,6 +5,7 @@
 
 ycsb
 rocksdb_svr
+sqlite_svr
 
 .vimrc
 tags

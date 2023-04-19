@@ -64,11 +64,23 @@ ifeq ($(BIND_ROCKSDBCLI), 1)
 	CXXFLAGS += -Wno-address-of-packed-member -DERPC_INFINIBAND=true
 	LDFLAGS += -lerpc -libverbs -lnuma
 	SOURCES += rocksdb-clisvr/rocksdb_cli.cc
+	SVR = rocksdb_svr
+	SVR_SOURCE = rocksdb-clisvr/rocksdb_svr.cc
+	SVRFLAGS = -lrocksdb
 endif
 
 ifeq ($(BIND_POSTGRES), 1)
 	LDFLAGS += -lpq
 	SOURCES += $(wildcard postgres/*.cc)
+endif
+
+ifeq ($(BIND_SQLITE), 1)
+	CXXFLAGS += -Wno-address-of-packed-member -DERPC_INFINIBAND=true
+	LDFLAGS += -lerpc -libverbs -lnuma
+	SOURCES += sqlite/sqlite_cli.cc
+	SVR = sqlite_svr
+	SVR_SOURCE = sqlite/sqlite_svr.cc
+	SVRFLAGS = -lsqlite3
 endif
 
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
@@ -77,7 +89,6 @@ SOURCES += $(wildcard core/*.cc)
 OBJECTS += $(SOURCES:.cc=.o) $(YAMLCPP_LIB)
 DEPS += $(SOURCES:.cc=.d)
 EXEC = ycsb
-SVR = rocksdb_svr
 
 HDRHISTOGRAM_DIR = HdrHistogram_c
 HDRHISTOGRAM_LIB = $(HDRHISTOGRAM_DIR)/build/src/libhdr_histogram_static.a
@@ -100,8 +111,8 @@ $(EXEC): $(OBJECTS)
 	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 	@echo "  LD      " $@
 
-$(SVR): rocksdb-clisvr/rocksdb_svr.cc
-	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -lrocksdb -o $@
+$(SVR): $(SVR_SOURCE)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(SVRFLAGS) -o $@
 	@echo "  LD      " $@
 
 .cc.o:
