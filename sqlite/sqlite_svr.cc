@@ -364,7 +364,8 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
         throw utils::Exception(std::string("SQLite Open: ") + sqlite3_errmsg(c.db_));
       }
 
-      ret = sqlite3_exec(c.db_, "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;", nullptr, nullptr, &err_msg);
+      ret = sqlite3_exec(c.db_, "PRAGMA locking_mode=EXCLUSIVE; PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+                         nullptr, nullptr, &err_msg);
       if (ret != SQLITE_OK) {
         sqlite3_close(c.db_);
         throw utils::Exception(std::string("Can't set journal mode to WAL, error: ") + err_msg);
