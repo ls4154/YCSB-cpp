@@ -268,16 +268,16 @@ void update_handler(erpc::ReqHandle *req_handle, void *context) {
     }
   }
   stmt = ctx->prepared_stmts_[SQL_UPDATE_REQ];
-  ret = sqlite3_bind_text(stmt, 1, key.data(), key.size(), SQLITE_STATIC);
+  ret = sqlite3_bind_text(stmt, 1, value.data(), value.size(), SQLITE_STATIC);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to bind key to update query, error: " << sqlite3_errstr(ret) << std::endl;
+    std::cerr << "Failed to bind value to update query, error: " << sqlite3_errstr(ret) << std::endl;
     rpc->resize_msg_buffer(&resp, sizeof(DB::Status));
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
     goto update_resp;
   }
-  ret = sqlite3_bind_text(stmt, 2, value.data(), value.size(), SQLITE_STATIC);
+  ret = sqlite3_bind_text(stmt, 2, key.data(), key.size(), SQLITE_STATIC);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to bind value to update query, error: " << sqlite3_errstr(ret) << std::endl;
+    std::cerr << "Failed to bind key to update query, error: " << sqlite3_errstr(ret) << std::endl;
     rpc->resize_msg_buffer(&resp, sizeof(DB::Status));
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
     goto update_resp;

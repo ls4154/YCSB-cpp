@@ -18,8 +18,8 @@ const std::string PROP_MSG_SIZE_DEFAULT = "1024";
 const std::string PROP_NAME = "sqlite.dbname";
 const std::string PROP_NAME_DEFAULT = "";
 
-#define SQL_READ_REQ    0
-#define SQL_UPDATE_REQ  1
-#define SQL_INSERT_REQ  2
-#define SQL_DELETE_REQ  3
-#define SQL_SCAN_REQ    4
+const uint8_t SQL_READ_REQ    = 0;
+const uint8_t SQL_UPDATE_REQ  = 1;
+const uint8_t SQL_INSERT_REQ  = 2;
+const uint8_t SQL_DELETE_REQ  = 3;
+const uint8_t SQL_SCAN_REQ    = 4;

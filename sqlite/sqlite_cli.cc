@@ -79,7 +79,7 @@ DB::Status SQLiteDB::Read(const std::string &table, const std::string &key, cons
 #if DEBUG
   std::ostringstream vstream;
   for (auto &v : result) vstream << "f: " << v.first << " v: " << v.second << std::endl;
-  std::cout << "[READ] value: " << vstream.str();
+  std::cout << "[READ] key: " << key << " value: " << vstream.str();
 #endif
   return DB::kOK;
 }
