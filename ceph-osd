@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp /rootfs/data/libeatmydata.so /lib64
+/rootfs/data/eatmydata -- /usr/bin/ceph-osd "$@"

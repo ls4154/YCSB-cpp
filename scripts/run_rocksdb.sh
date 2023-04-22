@@ -22,7 +22,7 @@ dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
 zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
 rocksdb_dir=/data/rocksdb  # rocksdb library directory
-db_dir=/data/ycsb-rocksdb  # rocksdb database directory
+db_dir=/mnt/cephfs/ycsb-rocksdb  # rocksdb database directory
 db_base=/data/db_base_stable  # rocksdb base snapshot directory
 output_dir=/data/result/rocksdb  # experiemnt results directory
 local_output_dir=~/result/rocksdb  # local experiemnt results directory
@@ -43,8 +43,8 @@ function prepare_run() {
 
 function prepare_load() {
     memlim=$1
-    echo "mem limit ${memlim}B"
-    ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/rocksdb/memory.limit_in_bytes"
+    # echo "mem limit ${memlim}B"
+    # ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/rocksdb/memory.limit_in_bytes"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
 }
 
@@ -68,7 +68,7 @@ function run_rocksdb_server() {
         nohup cgexec -g memory:rocksdb \
         $dir/rocksdb_svr \
         -P $dir/rocksdb-clisvr/rocksdb-clisvr.properties \
-        -p rocksdb.dbname=$path \
+        -p rocksdb.dbname=$db_dir \
         $extra_flag \
         -threads $th >$dir/rocksdb_svr.log 2>&1" &
     rocksdb_svr_pid=$!
@@ -165,7 +165,7 @@ function run_once() {
 
     run_rocksdb_server $mode $thread
 
-    sleep 15
+    sleep 30
 
     run_rocksdb_cli $mode $workload $thread $recordcount $operationcount $path $yaml
 
@@ -180,14 +180,14 @@ function run_once() {
 function run_ycsb() {
     iter=3
     workloads=(workloada workloadb workloadc workloadd workloadf)
-    operation_M=(20 12 12 12 12)
+    operation_M=(20 80 80 80 20)
 
-    for idx in ${!workloads[@]}
+    for (( i=3; i<=$iter; i++ ))
     do
-        for (( i=1; i<=$iter; i++ ))
+        for idx in ${!workloads[@]}
         do
             wl=${workloads[$idx]}
-            operationcnt=$((${operation_M[$idx]} * 1000000))
+            operationcnt=$((${operation_M[$idx]} * 100000))
 
             expname=rocksdb_"$wl"_"$backend"_trail"$i"
             echo "Running experiment $expname"
@@ -200,18 +200,18 @@ function run_ycsb() {
 function run_load() {
     iter=3
 
-    n_threads=(1 2 4 8 12 16 20)
-    record_M=(20 40 60 80 70 70 50)
+    # n_threads=(1 2 4 8 12 16 20)
+    # record_M=(12 12 20 40 60 80 80)
 
-    # n_threads=(16 20)
-    # record_M=(70 50)
+    n_threads=(24 32)
+    record_M=(100 120)
 
-    for idx in ${!n_threads[@]}
+    for (( i=1; i<=$iter; i++ ))
     do
-        for (( i=1; i<=$iter; i++ ))
+        for idx in ${!n_threads[@]}
         do
             thread=${n_threads[$idx]}
-            recordcnt=$((${record_M[$idx]} * 1000000))
+            recordcnt=$((${record_M[$idx]} * 10000))
 
             expname=rocksdb_load_"$backend"_th"$thread"_trail"$i"
             echo "Running experiment $expname"
@@ -220,7 +220,7 @@ function run_load() {
     done
 }
 
-run_load
-# run_ycsb
+# run_load
+run_ycsb
 
 echo "end at $(date '+%B %d %Y %T')"
