@@ -79,8 +79,13 @@ ifeq ($(BIND_SQLITE), 1)
 	LDFLAGS += -lerpc -libverbs -lnuma
 	SOURCES += sqlite/sqlite_cli.cc
 	SVR = sqlite_svr
-	SVR_SOURCE = sqlite/sqlite_svr.cc
-	SVRFLAGS = -lsqlite3
+	SVR_SOURCE = sqlite/sqlite_svr.cc ../sqlite/build/sqlite3.o
+	SVRFLAGS = 
+endif
+
+ifeq ($(BIND_SQLOCAL), 1)
+	SOURCES += $(wildcard sqlocal/*.cc)
+	OBJECTS += ../sqlite/build/sqlite3.o
 endif
 
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include

@@ -61,6 +61,7 @@ int main(const int argc, const char *argv[]) {
     t.join();
   }
 
+  // comment this to avoid checkpoint WAL to database upon close
   int ret = sqlite3_close(ServerContext::db_);
   if (ret != SQLITE_OK) {
     throw utils::Exception(std::string("Failed to close SQLite: ") + sqlite3_errmsg(ServerContext::db_));
@@ -344,6 +345,10 @@ void delete_handler(erpc::ReqHandle *req_handle, void *context) {
   }
 
 delete_resp:
+  ret = sqlite3_reset(stmt);
+  if (ret != SQLITE_OK) {
+    std::cerr << "Can't reset delete query, error: " << sqlite3_errstr(ret) << std::endl;
+  }
   rpc->enqueue_response(req_handle, &resp);
 }
 
