@@ -25,6 +25,7 @@ class ServerContext {
   static sqlite3 *db_;
   std::unordered_map<uint8_t, sqlite3_stmt *> prepared_stmts_;
   int session_num_;
+  static bool setup_;
   int thread_id_;
 };
 

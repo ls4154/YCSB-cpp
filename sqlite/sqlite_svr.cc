@@ -11,6 +11,7 @@
 #include "core/properties.h"
 
 #define DEBUG 0
+#define ERR_DEBUG 1
 
 namespace {
 const std::string TABLE_NAME = "usertable";
@@ -21,6 +22,7 @@ const std::string COLUMN_NAME = "YCSB_VALUE";
 static bool run = true;
 std::mutex mu_;
 sqlite3 *ServerContext::db_ = nullptr;
+bool ServerContext::setup_ = false;
 
 using namespace ycsbc;
 
@@ -76,9 +78,9 @@ std::string DeserializeKey(const char *p) {
 bool prepareReadQuery(ServerContext *ctx) {
   sqlite3_stmt *stmt;
   const std::string query("SELECT " + COLUMN_NAME + " FROM " + TABLE_NAME + " WHERE " + PRIMARY_KEY + " = ?;");
-  int ret = sqlite3_prepare_v2(ServerContext::db_, query.c_str(), query.size() + 1, &stmt, NULL);
+  int ret = sqlite3_prepare_v2(ctx->db_, query.c_str(), query.size() + 1, &stmt, NULL);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to prepare read query: " << query << ". error: " << sqlite3_errmsg(ServerContext::db_)
+    std::cerr << "Failed to prepare read query: " << query << ". error: " << sqlite3_errmsg(ctx->db_)
               << std::endl;
     sqlite3_finalize(stmt);
     return false;
@@ -90,9 +92,9 @@ bool prepareReadQuery(ServerContext *ctx) {
 bool prepareInsertQuery(ServerContext *ctx) {
   sqlite3_stmt *stmt;
   const std::string query("INSERT INTO " + TABLE_NAME + " (" + PRIMARY_KEY + "," + COLUMN_NAME + ") VALUES (?, ?);");
-  int ret = sqlite3_prepare_v2(ServerContext::db_, query.c_str(), query.size() + 1, &stmt, NULL);
+  int ret = sqlite3_prepare_v2(ctx->db_, query.c_str(), query.size() + 1, &stmt, NULL);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to prepare insert query: " << query << ". error: " << sqlite3_errmsg(ServerContext::db_)
+    std::cerr << "Failed to prepare insert query: " << query << ". error: " << sqlite3_errmsg(ctx->db_)
               << std::endl;
     sqlite3_finalize(stmt);
     return false;
@@ -104,9 +106,9 @@ bool prepareInsertQuery(ServerContext *ctx) {
 bool prepareUpdateQuery(ServerContext *ctx) {
   sqlite3_stmt *stmt;
   const std::string query("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME + " = ? WHERE " + PRIMARY_KEY + " = ?;");
-  int ret = sqlite3_prepare_v2(ServerContext::db_, query.c_str(), query.size() + 1, &stmt, NULL);
+  int ret = sqlite3_prepare_v2(ctx->db_, query.c_str(), query.size() + 1, &stmt, NULL);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to prepare update query: " << query << ". error: " << sqlite3_errmsg(ServerContext::db_)
+    std::cerr << "Failed to prepare update query: " << query << ". error: " << sqlite3_errmsg(ctx->db_)
               << std::endl;
     sqlite3_finalize(stmt);
     return false;
@@ -118,9 +120,9 @@ bool prepareUpdateQuery(ServerContext *ctx) {
 bool prepareDeleteQuery(ServerContext *ctx) {
   sqlite3_stmt *stmt;
   const std::string query("DELETE FROM " + TABLE_NAME + " WHERE " + PRIMARY_KEY + " = ?;");
-  int ret = sqlite3_prepare_v2(ServerContext::db_, query.c_str(), query.size() + 1, &stmt, NULL);
+  int ret = sqlite3_prepare_v2(ctx->db_, query.c_str(), query.size() + 1, &stmt, NULL);
   if (ret != SQLITE_OK) {
-    std::cerr << "Failed to prepare delete query: " << query << ". error: " << sqlite3_errmsg(ServerContext::db_)
+    std::cerr << "Failed to prepare delete query: " << query << ". error: " << sqlite3_errmsg(ctx->db_)
               << std::endl;
     sqlite3_finalize(stmt);
     return false;
@@ -170,7 +172,7 @@ void read_handler(erpc::ReqHandle *req_handle, void *context) {
   } else if (ret == SQLITE_DONE) {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kNotFound;
   } else {
-#if DEBUG
+#if ERR_DEBUG
     std::cerr << "Failed to get column text, error: " << sqlite3_errstr(ret) << std::endl;
 #endif
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
@@ -230,7 +232,7 @@ void insert_handler(erpc::ReqHandle *req_handle, void *context) {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kOK;
   } else {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
-#if DEBUG
+#if ERR_DEBUG
     std::cerr << "Failed to insert, error: " << sqlite3_errstr(ret) << std::endl;
 #endif
   }
@@ -289,7 +291,7 @@ void update_handler(erpc::ReqHandle *req_handle, void *context) {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kOK;
   } else {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
-#if DEBUG
+#if ERR_DEBUG
     std::cerr << "Failed to update, error: " << sqlite3_errstr(ret) << std::endl;
 #endif
   }
@@ -336,7 +338,7 @@ void delete_handler(erpc::ReqHandle *req_handle, void *context) {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kOK;
   } else {
     *reinterpret_cast<DB::Status *>(resp.buf_) = DB::Status::kError;
-#if DEBUG
+#if ERR_DEBUG
     std::cerr << "Failed to delete, error: " << sqlite3_errstr(ret) << std::endl;
 #endif
   }
@@ -364,7 +366,14 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
         throw utils::Exception(std::string("SQLite Open: ") + sqlite3_errmsg(c.db_));
       }
 
-      ret = sqlite3_exec(c.db_, "PRAGMA wal_autocheckpoint=20000; PRAGMA locking_mode=EXCLUSIVE; PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+      int persist = 1;
+      ret = sqlite3_file_control(c.db_, "main", SQLITE_FCNTL_PERSIST_WAL, &persist);
+      if (ret != SQLITE_OK) {
+        sqlite3_close(c.db_);
+        throw utils::Exception(std::string("SQLite File Control: ") + sqlite3_errmsg(c.db_));
+      }
+
+      ret = sqlite3_exec(c.db_, "PRAGMA wal_autocheckpoint=20000; PRAGMA locking_mode=NORMAL; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
                          nullptr, nullptr, &err_msg);
       if (ret != SQLITE_OK) {
         sqlite3_close(c.db_);
@@ -380,6 +389,8 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
         throw utils::Exception(std::string("Can't create table, error: ") + err_msg);
       }
     }
+
+    ServerContext::setup_ = true;
   }
 
   std::cout << "thread " << thread_id << " start running" << std::endl;
