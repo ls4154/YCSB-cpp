@@ -378,8 +378,21 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
         throw utils::Exception(std::string("SQLite File Control: ") + sqlite3_errmsg(c.db_));
       }
 
-      ret = sqlite3_exec(c.db_, "PRAGMA wal_autocheckpoint=20000; PRAGMA locking_mode=NORMAL; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
-                         nullptr, nullptr, &err_msg);
+      std::string pragmas;
+      pragmas.append("PRAGMA wal_autocheckpoint=")
+          .append(props->GetProperty(PROP_WAL_AUTOCHECKPOINT, PROP_WAL_AUTOCHECKPOINT_DEFAULT))
+          .append(";");
+      pragmas.append("PRAGMA locking_mode=")
+          .append(props->GetProperty(PROP_LOCKING_MODE, PROP_LOCKING_MODE_DEFAULT))
+          .append(";");
+      pragmas.append("PRAGMA journal_mode=")
+          .append(props->GetProperty(PROP_JOURNAL_MODE, PROP_JOURNAL_MODE_DEFAULT))
+          .append(";");
+      pragmas.append("PRAGMA synchronous=")
+          .append(props->GetProperty(PROP_SYNCHRONOUS, PROP_SYNCHRONOUS_DEFAULT))
+          .append(";");
+      std::cout << "pragma: " << pragmas << std::endl;
+      ret = sqlite3_exec(c.db_, pragmas.c_str(), nullptr, nullptr, &err_msg);
       if (ret != SQLITE_OK) {
         sqlite3_close(c.db_);
         throw utils::Exception(std::string("Can't set journal mode to WAL, error: ") + err_msg);
