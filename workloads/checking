@@ -1,0 +1,14 @@
+recordcount=100000
+checkingcount=100000
+operationcount=100000
+workload=com.yahoo.ycsb.workloads.CheckingWorkload
+
+readallfields=true
+writeallfields=false
+
+readproportion=1
+updateproportion=0
+scanproportion=0
+insertproportion=0
+
+requestdistribution=uniform
