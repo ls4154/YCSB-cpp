@@ -34,27 +34,38 @@ bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
 void SaveRunSummary(YAML::Node &node, ycsbc::utils::Properties &props, std::time_t &now);
 
-void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, CountDownLatch *init_latch, int interval) {
+void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, CountDownLatch *init_latch, int interval, int interval_us, const std::string &tracefilename) {
   using namespace std::chrono;
   init_latch->Await(); // wait for all client threads to finish initializing before start printing status
   time_point<system_clock> start = system_clock::now();
   bool done = false;
+
+  std::ostream *os = tracefilename.empty() ? &std::cout : new std::ofstream(tracefilename);
+
   measurements->Start();
   while (1) {
     time_point<system_clock> now = system_clock::now();
     std::time_t now_c = system_clock::to_time_t(now);
     duration<double> elapsed_time = now - start;
 
-    std::cout << std::put_time(std::localtime(&now_c), "%F %T") << ' '
+    *os << std::put_time(std::localtime(&now_c), "%F %T") << ' '
               << static_cast<long long>(elapsed_time.count()) << " sec: ";
 
-    std::cout << measurements->GetStatusMsg() << std::endl;
+    *os << measurements->GetStatusMsg() << std::endl;
 
     if (done) {
       break;
     }
-    done = latch->AwaitFor(interval);
+    if (interval > 0)
+      done = latch->AwaitFor(interval);
+    else if (interval_us > 0)
+      done = latch->AwaitForUs(interval_us);
   };
+
+  if (!tracefilename.empty()) {
+    dynamic_cast<std::ofstream *>(os)->close();
+    delete os;
+  }
 }
 
 int main(const int argc, const char *argv[]) {
@@ -92,6 +103,8 @@ int main(const int argc, const char *argv[]) {
 
   const bool show_status = (props.GetProperty("status", "false") == "true");
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
+  const int status_interval_us = std::stoi(props.GetProperty("status.intervalus", "1000"));
+  const std::string status_trace = props.GetProperty("status.trace", "");
 
   // load phase
   if (do_load) {
@@ -103,7 +116,7 @@ int main(const int argc, const char *argv[]) {
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 measurements, &latch, &init_latch, status_interval);
+                                 measurements, &latch, &init_latch, status_interval, status_interval_us, status_trace);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
@@ -164,7 +177,7 @@ int main(const int argc, const char *argv[]) {
     std::future<void> status_future;
     if (show_status) {
       status_future = std::async(std::launch::async, StatusThread,
-                                 measurements, &latch, &init_latch, status_interval);
+                                 measurements, &latch, &init_latch, status_interval, status_interval_us, status_trace);
     }
     std::vector<std::future<int>> client_threads;
     for (int i = 0; i < num_threads; ++i) {
