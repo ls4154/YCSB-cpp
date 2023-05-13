@@ -4,14 +4,14 @@ Yahoo! Cloud Serving Benchmark([YCSB](https://github.com/brianfrankcooper/YCSB/w
 This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some additions
 
  * Tail latency report using [HdrHistogram_c](https://github.com/HdrHistogram/HdrHistogram_c)
- * Small changes to make it behave more like the original YCSB
- * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
+ * Modified the workload more similar to the original YCSB
+ * Supported databases: LevelDB, RocksDB, LMDB, WiredTiger, SQLite
 
 # Build YCSB-cpp
 
 ## Build with Makefile on POSIX
 
-Simply use `make` to build.
+Initialize submodule and use `make` to build.
 
 ```
 git clone https://github.com/ls4154/YCSB-cpp.git
