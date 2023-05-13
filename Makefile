@@ -15,9 +15,10 @@ BIND_WIREDTIGER ?= 0
 BIND_LEVELDB ?= 0
 BIND_ROCKSDB ?= 0
 BIND_LMDB ?= 0
+BIND_SQLITE ?= 0
 
 # Extra options
-DEBUG_BUILD ?= 0
+DEBUG_BUILD ?=
 EXTRA_CXXFLAGS ?=
 EXTRA_LDFLAGS ?=
 
@@ -53,6 +54,11 @@ endif
 ifeq ($(BIND_LMDB), 1)
 	LDFLAGS += -llmdb
 	SOURCES += $(wildcard lmdb/*.cc)
+endif
+
+ifeq ($(BIND_SQLITE), 1)
+	LDFLAGS += -lsqlite3
+	SOURCES += $(wildcard sqlite/*.cc)
 endif
 
 CXXFLAGS += -std=c++17 -Wall -pthread $(EXTRA_CXXFLAGS) -I./
