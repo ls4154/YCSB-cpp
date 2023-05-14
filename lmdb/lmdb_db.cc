@@ -25,9 +25,6 @@ namespace {
   const std::string PROP_DBPATH = "lmdb.dbpath";
   const std::string PROP_DBPATH_DEFAULT = "";
 
-  const std::string PROP_FORMAT = "lmdb.format";
-  const std::string PROP_FORMAT_DEFAULT = "single";
-
   const std::string PROP_MAPSIZE = "lmdb.mapsize";
   const std::string PROP_MAPSIZE_DEFAULT = "-1";
 
@@ -42,9 +39,15 @@ namespace {
 
   const std::string PROP_WRITEMAP = "lmdb.writemap";
   const std::string PROP_WRITEMAP_DEFAULT = "false";
+
+  const std::string PROP_MAPASYNC = "lmdb.mapasync";
+  const std::string PROP_MAPASYNC_DEFAULT = "false";
 } // anonymous
 
 namespace ycsbc {
+
+size_t LmdbDB::field_count_;
+std::string LmdbDB::field_prefix_;
 
 MDB_env *LmdbDB::env_;
 MDB_dbi LmdbDB::dbi_;
@@ -55,25 +58,15 @@ void LmdbDB::Init() {
   const std::lock_guard<std::mutex> lock(mutex_);
 
   const utils::Properties &props = *props_;
-  const std::string &format = props.GetProperty(PROP_FORMAT, PROP_FORMAT_DEFAULT);
-  if (format == "single") {
-    format_ = kSingleEntry;
-    method_read_ = &LmdbDB::ReadSingleEntry;
-    method_scan_ = &LmdbDB::ScanSingleEntry;
-    method_update_ = &LmdbDB::UpdateSingleEntry;
-    method_insert_ = &LmdbDB::InsertSingleEntry;
-    method_delete_ = &LmdbDB::DeleteSingleEntry;
-  } else {
-    throw utils::Exception("unknown format");
-  }
-  fieldcount_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
-                                            CoreWorkload::FIELD_COUNT_DEFAULT));
-  field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
-                                    CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
 
   if (ref_cnt_++) {
     return;
   }
+
+  field_count_ = std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY,
+                                            CoreWorkload::FIELD_COUNT_DEFAULT));
+  field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
+                                    CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
 
   int ret;
   int env_opt = 0;
@@ -88,6 +81,9 @@ void LmdbDB::Init() {
   }
   if (props.GetProperty(PROP_WRITEMAP, PROP_WRITEMAP_DEFAULT) == "true") {
     env_opt |= MDB_WRITEMAP;
+  }
+  if (props.GetProperty(PROP_MAPASYNC, PROP_MAPASYNC_DEFAULT) == "true") {
+    env_opt |= MDB_MAPASYNC;
   }
   ret = mdb_env_create(&env_);
   if  (ret) {
@@ -186,12 +182,12 @@ void LmdbDB::DeserializeRow(std::vector<Field> *values, const char *data_ptr, si
     p += len;
     values->push_back({field, value});
   }
-  assert(values->size() == fieldcount_);
+  assert(values->size() == field_count_);
 }
 
-DB::Status LmdbDB::ReadSingleEntry(const std::string &table, const std::string &key,
-                                   const std::vector<std::string> *fields,
-                                   std::vector<Field> &result) {
+DB::Status LmdbDB::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
+                        std::vector<Field> &result) {
+  DB::Status s = kOK;
   MDB_txn *txn;
   MDB_val key_slice, val_slice;
 
@@ -204,22 +200,25 @@ DB::Status LmdbDB::ReadSingleEntry(const std::string &table, const std::string &
     throw utils::Exception(std::string("Read mdb_txn_begin: ") + mdb_strerror(ret));
   }
   ret = mdb_get(txn, dbi_, &key_slice, &val_slice);
-  if (ret) {
+  if (ret == MDB_NOTFOUND) {
+    s = kNotFound;
+    goto cleanup;
+  } else if (ret) {
     throw utils::Exception(std::string("Read mdb_get: ") + mdb_strerror(ret));
   }
   if (fields != nullptr) {
-    DeserializeRowFilter(&result, static_cast<char *>(val_slice.mv_data), val_slice.mv_size,
-                         *fields);
+    DeserializeRowFilter(&result, static_cast<char *>(val_slice.mv_data), val_slice.mv_size, *fields);
   } else {
     DeserializeRow(&result, static_cast<char *>(val_slice.mv_data), val_slice.mv_size);
   }
+cleanup:
   mdb_txn_abort(txn);
-  return kOK;
+  return s;
 }
 
-DB::Status LmdbDB::ScanSingleEntry(const std::string &table, const std::string &key, int len,
-                                   const std::vector<std::string> *fields,
-                                   std::vector<std::vector<Field>> &result) {
+DB::Status LmdbDB::Scan(const std::string &table, const std::string &key, int len,
+                        const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
+  DB::Status s = kOK;
   MDB_txn *txn;
   MDB_cursor *cursor;
   MDB_val key_slice, val_slice;
@@ -237,28 +236,29 @@ DB::Status LmdbDB::ScanSingleEntry(const std::string &table, const std::string &
     throw utils::Exception(std::string("Scan mdb_cursor_open: ") + mdb_strerror(ret));
   }
   ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_SET);
-  assert(ret != MDB_NOTFOUND);
-  if (ret) {
+  if (ret == MDB_NOTFOUND) {
+    s = kNotFound;
+    goto cleanup;
+  } else if (ret) {
     throw utils::Exception(std::string("Scan mdb_cursor_get: ") + mdb_strerror(ret));
   }
   for (int i = 0; !ret && i < len; i++) {
     result.push_back(std::vector<Field>());
     std::vector<Field> &values = result.back();
     if (fields != nullptr) {
-      DeserializeRowFilter(&values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size,
-                           *fields);
+      DeserializeRowFilter(&values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size, *fields);
     } else {
       DeserializeRow(&values, static_cast<char *>(val_slice.mv_data), val_slice.mv_size);
     }
     ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_NEXT);
   }
+cleanup:
   mdb_cursor_close(cursor);
   mdb_txn_abort(txn);
-  return kOK;
+  return s;
 }
 
-DB::Status LmdbDB::UpdateSingleEntry(const std::string &table, const std::string &key,
-                                     std::vector<Field> &values) {
+DB::Status LmdbDB::Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
   MDB_txn *txn;
   MDB_val key_slice, val_slice;
 
@@ -304,8 +304,7 @@ DB::Status LmdbDB::UpdateSingleEntry(const std::string &table, const std::string
   return kOK;
 }
 
-DB::Status LmdbDB::InsertSingleEntry(const std::string &table, const std::string &key,
-                                     std::vector<Field> &values) {
+DB::Status LmdbDB::Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
   MDB_txn *txn;
   MDB_val key_slice, val_slice;
 
@@ -333,7 +332,7 @@ DB::Status LmdbDB::InsertSingleEntry(const std::string &table, const std::string
   return kOK;
 }
 
-DB::Status LmdbDB::DeleteSingleEntry(const std::string &table, const std::string &key) {
+DB::Status LmdbDB::Delete(const std::string &table, const std::string &key) {
   MDB_txn *txn;
   MDB_val key_slice;
 
