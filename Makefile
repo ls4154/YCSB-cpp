@@ -88,6 +88,11 @@ ifeq ($(BIND_SQLOCAL), 1)
 	OBJECTS += ../sqlite/build/sqlite3.o
 endif
 
+ifeq ($(BIND_MONGODB), 1)
+	SOURCES += $(wildcard mongodb/*.cc)
+	LDFLAGS += -lmongocxx -lbsoncxx
+endif
+
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
