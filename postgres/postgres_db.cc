@@ -63,6 +63,13 @@ void PostgresDB::Init() {
   }
   PQclear(res);
 
+  // query = "SET synchronous_commit=OFF";
+  // res = PQexec(conn_, query.c_str());
+  // if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+  //   cerr << "Failed to set synchronous commit to off, status: " << PQresStatus(PQresultStatus(res)) << ", error: " << PQresultErrorMessage(res) << endl;
+  //   PQclear(res);
+  // }
+
   cout << "Connected." << endl;
 }
 

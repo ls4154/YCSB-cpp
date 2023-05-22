@@ -42,7 +42,7 @@ void RocksdbCli::Init() {
   session_num_ = rpc_->create_session(server_uri, rpc_id);
 
   while (!rpc_->is_connected(session_num_)) {
-    sleep(1);
+    // sleep(1);
     rpc_->run_event_loop_once();
   }
   std::cout << "eRPC client " << (int)rpc_id << " connected to " << server_uri << std::endl;

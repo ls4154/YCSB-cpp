@@ -93,6 +93,11 @@ ifeq ($(BIND_MONGODB), 1)
 	LDFLAGS += -lmongocxx -lbsoncxx
 endif
 
+ifeq ($(BIND_MARIADB), 1)
+	SOURCES += $(wildcard mariadb/*.cc)
+	LDFLAGS += -lmariadbcpp
+endif
+
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)

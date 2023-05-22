@@ -325,6 +325,7 @@ DB::Status LeveldbDB::InsertSingleEntry(const std::string &table, const std::str
   std::string data;
   SerializeRow(values, &data);
   leveldb::WriteOptions wopt;
+  wopt.sync = true;
   leveldb::Status s = db_->Put(wopt, key, data);
   if (!s.ok()) {
     throw utils::Exception(std::string("LevelDB Put: ") + s.ToString());
@@ -443,6 +444,7 @@ DB::Status LeveldbDB::InsertCompKey(const std::string &table, const std::string 
                                     std::vector<Field> &values) {
   leveldb::WriteOptions wopt;
   leveldb::WriteBatch batch;
+  wopt.sync = true;
 
   std::string comp_key;
   for (Field &field : values) {
