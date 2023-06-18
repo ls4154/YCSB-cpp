@@ -14,24 +14,26 @@ else
 fi
 
 user=luoxh
-server=hp140.utah.cloudlab.us
-client=hp155.utah.cloudlab.us
-replica=(hp101.utah.cloudlab.us hp099.utah.cloudlab.us hp129.utah.cloudlab.us)
+server=hp182.utah.cloudlab.us
+client=hp126.utah.cloudlab.us
+replica=(hp158.utah.cloudlab.us hp169.utah.cloudlab.us hp160.utah.cloudlab.us)
 
 dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
 zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
 redis_dir=/data/redis  # redis binary directory
-db_dir=/mnt/cephfs/ycsb-redis  # redis database directory
+db_dir=/data/ycsb-redis  # redis database directory
 db_base=/data/redis_base  # redis base snapshot directory
 output_dir=/data/result/redis  # experiemnt results directory
 local_output_dir=~/result/redis  # local experiemnt results directory
 
-redis_svr_pid=0
+declare -A redis_svr_pid
 declare -A ncl_server_pid
+redis_svr_pid[$server]=0
 for r in ${replica[@]}
 do
     ncl_server_pid[$r]=0
+    redis_svr_pid[$r]=0
     echo ${ncl_server_pid[$r]}
 done
 
@@ -44,36 +46,74 @@ function prepare_run() {
     #     cp $db_dir/dump.rdb \$base ; \
     #     aof=\$(find $db_dir/appendonlydir/ -name 'appendonly.aof.*.incr.aof'); \
     #     truncate -s 0 \$aof"
-    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $db_dir ; cp -r $db_base $db_dir"
-    ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
+    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $db_dir ; cp -r $db_base $db_dir" &
+    cp1=$!
+
+    if [ $backend = app ] then
+        ssh -o StrictHostKeyChecking=no $user@${replica[0]} "rm -rf $db_dir ; cp -r $db_base $db_dir" &
+        cp2=$!
+        ssh -o StrictHostKeyChecking=no $user@${replica[1]} "rm -rf $db_dir ; cp -r $db_base $db_dir" &
+        cp3=$!
+    fi
+
+    wait $cp1
+    if [ $backend = app ] then
+        wait $cp2
+        wait $cp3
+    fi
 }
 
 function prepare_load() {
     ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $db_dir/*"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
+
+    if [ $backend = app ] then
+        ssh -o StrictHostKeyChecking=no $user@${replica[0]} "rm -rf $db_dir/*"
+        ssh -o StrictHostKeyChecking=no $user@${replica[0]} "echo 3 | sudo tee /proc/sys/vm/drop_caches"
+        ssh -o StrictHostKeyChecking=no $user@${replica[1]} "rm -rf $db_dir/*"
+        ssh -o StrictHostKeyChecking=no $user@${replica[1]} "echo 3 | sudo tee /proc/sys/vm/drop_caches"
+    fi
 }
 
 function run_redis_server() {
-    if [ $backend = ncl ]; then
-        extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
+        extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so IBV_FORK_SAFE=1"
     fi
 
-    kill_redis_server || true
+    kill_redis_server $server || true
+    if [ $backend = app ] then
+        kill_redis_server ${replica[0]} || true
+        kill_redis_server ${replica[1]} || true
+    fi
 
     ssh -o StrictHostKeyChecking=no $user@$server "$extra_lib \
         nohup $redis_dir/src/redis-server $dir/redis/redis.conf \
         >$redis_dir/redis_svr.log 2>&1" &
-    redis_svr_pid=$!
-    echo "waiting for loading rdb"
-    sleep 180
-    echo "should have finished loading"
+    redis_svr_pid[$server]=$!
+
+    ssh -o StrictHostKeyChecking=no $user@${replica[0]} " \
+        nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
+        >$redis_dir/redis_svr.log 2>&1" &
+    redis_svr_pid[${replica[0]}]=$!
+    ssh -o StrictHostKeyChecking=no $user@${replica[1]} " \
+        nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
+        >$redis_dir/redis_svr.log 2>&1" &
+    redis_svr_pid[${replica[1]}]=$!
+
+    if [ $mode = run ]
+    then
+        echo "waiting for loading rdb"
+        sleep 1000
+        echo "should have finished loading"
+    fi
 }
 
 function kill_redis_server() {
-    ssh -o StrictHostKeyChecking=no $user@$server "pid=\$(sudo lsof -i :6379 | awk 'NR==2 {print \$2}') ; \
+    ip=$1
+    ssh -o StrictHostKeyChecking=no $user@$ip "pid=\$(sudo lsof -i :6379 | awk 'NR==2 {print \$2}') ; \
         sudo kill -2 \$pid 2> /dev/null || true "
-    wait $redis_svr_pid
-    ssh -o StrictHostKeyChecking=no $user@$server "ps aux | grep $redis_dir/src/redis-server"
+    wait ${redis_svr_pid[$ip]}
+    ssh -o StrictHostKeyChecking=no $user@$ip "ps aux | grep $redis_dir/src/redis-server"
 }
 
 function run_zk() {
@@ -131,6 +171,7 @@ function run_redis_cli() {
         -p operationcount=$opcnt \
         -p measurementtype=basic \
         -p yamlname=$output_dir/$yaml \
+        -p requestdistribution=uniform \
         $extra_flag"
 
     mkdir -p $local_output_dir/$mode
@@ -146,7 +187,7 @@ function run_once() {
     path=$6
     yaml=$7
 
-    if [ $backend = ncl ]; then
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         run_zk
         run_ncl_server
     fi
@@ -164,18 +205,25 @@ function run_once() {
 
     run_redis_cli $mode $workload $thread $recordcount $operationcount $path $yaml
 
-    kill_redis_server
+    kill_redis_server $server
+    if [ $backend = app ] then
+        kill_redis_server ${replica[0]}
+        kill_redis_server ${replica[1]}
+    fi
 
-    if [ $backend = ncl ]; then
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         kill_ncl_server
         stop_zk
     fi
 }
 
 function run_ycsb() {
-    iter=3
+    iter=1
     workloads=(workloada workloadb workloadc workloadd workloadf)
-    operation_M=(10 20 120 20 60)
+    operation_M=(200 200 200 200 200)
+
+    workloads=(workloadf)
+    operation_M=(200)
 
     for (( i=1; i<=$iter; i++ ))
         do
@@ -195,18 +243,18 @@ function run_ycsb() {
 function run_load() {
     iter=3
 
-    n_threads=(1 2 4 8 12 16 20 24)
-    record_M=(12 12 20 40 60 80 80 80)
+    n_threads=(1 2 4 8 12 16 20)
+    record_M=(30 70 120 200 200 200 200)
 
-    # n_threads=(48)
-    # record_M=(100)
+    # n_threads=(8 12 16 20)
+    # record_M=(200 200 200 200)
 
     for (( i=1; i<=$iter; i++ ))
     do
         for idx in ${!n_threads[@]}
         do
             thread=${n_threads[$idx]}
-            recordcnt=$((${record_M[$idx]} * 10000))
+            recordcnt=$((${record_M[$idx]} * 100000))
 
             expname=redis_load_"$backend"_th"$thread"_trail"$i"
             echo "Running experiment $expname"
