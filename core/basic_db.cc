@@ -9,8 +9,10 @@
 #include "basic_db.h"
 #include "core/db_factory.h"
 
-using std::cout;
-using std::endl;
+namespace {
+  const std::string PROP_SILENT = "basic.silent";
+  const std::string PROP_SILENT_DEFAULT = "false";
+}
 
 namespace ycsbc {
 
@@ -18,20 +20,26 @@ std::mutex BasicDB:: mutex_;
 
 void BasicDB::Init() {
   std::lock_guard<std::mutex> lock(mutex_);
+  if (props_->GetProperty(PROP_SILENT, PROP_SILENT_DEFAULT) == "true") {
+    out_ = new std::ofstream;
+    out_->setstate(std::ios_base::badbit);
+  } else {
+    out_ = &std::cout;
+  }
 }
 
 DB::Status BasicDB::Read(const std::string &table, const std::string &key,
                          const std::vector<std::string> *fields, std::vector<Field> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "READ " << table << ' ' << key;
+  *out_ << "READ " << table << ' ' << key;
   if (fields) {
-    cout << " [ ";
+    *out_ << " [ ";
     for (auto f : *fields) {
-      cout << f << ' ';
+      *out_ << f << ' ';
     }
-    cout << ']' << endl;
+    *out_ << ']' << std::endl;
   } else {
-    cout  << " < all fields >" << endl;
+    *out_  << " < all fields >" << std::endl;
   }
   return kOK;
 }
@@ -40,15 +48,15 @@ DB::Status BasicDB::Scan(const std::string &table, const std::string &key, int l
                          const std::vector<std::string> *fields,
                          std::vector<std::vector<Field>> &result) {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "SCAN " << table << ' ' << key << " " << len;
+  *out_ << "SCAN " << table << ' ' << key << " " << len;
   if (fields) {
-    cout << " [ ";
+    *out_ << " [ ";
     for (auto f : *fields) {
-      cout << f << ' ';
+      *out_ << f << ' ';
     }
-    cout << ']' << endl;
+    *out_ << ']' << std::endl;
   } else {
-    cout  << " < all fields >" << endl;
+    *out_  << " < all fields >" << std::endl;
   }
   return kOK;
 }
@@ -56,28 +64,28 @@ DB::Status BasicDB::Scan(const std::string &table, const std::string &key, int l
 DB::Status BasicDB::Update(const std::string &table, const std::string &key,
                            std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "UPDATE " << table << ' ' << key << " [ ";
+  *out_ << "UPDATE " << table << ' ' << key << " [ ";
   for (auto v : values) {
-    cout << v.name << '=' << v.value << ' ';
+    *out_ << v.name << '=' << v.value << ' ';
   }
-  cout << ']' << endl;
+  *out_ << ']' << std::endl;
   return kOK;
 }
 
 DB::Status BasicDB::Insert(const std::string &table, const std::string &key,
                            std::vector<Field> &values) {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "INSERT " << table << ' ' << key << " [ ";
+  *out_ << "INSERT " << table << ' ' << key << " [ ";
   for (auto v : values) {
-    cout << v.name << '=' << v.value << ' ';
+    *out_ << v.name << '=' << v.value << ' ';
   }
-  cout << ']' << endl;
+  *out_ << ']' << std::endl;
   return kOK;
 }
 
 DB::Status BasicDB::Delete(const std::string &table, const std::string &key) {
   std::lock_guard<std::mutex> lock(mutex_);
-  cout << "DELETE " << table << ' ' << key << endl;
+  *out_ << "DELETE " << table << ' ' << key << std::endl;
   return kOK;
 }
 

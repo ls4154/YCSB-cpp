@@ -13,8 +13,8 @@
 
 #include "db.h"
 #include "measurements.h"
-#include "timer.h"
-#include "utils.h"
+#include "utils/timer.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

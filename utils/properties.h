@@ -56,7 +56,7 @@ inline bool Properties::ContainsKey(const std::string &key) const {
 
 inline void Properties::Load(std::ifstream &input) {
   if (!input.is_open()) {
-    throw utils::Exception("File not open!");
+    throw Exception("File not open!");
   }
 
   while (!input.eof() && !input.bad()) {

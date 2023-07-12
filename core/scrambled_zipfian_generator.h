@@ -12,8 +12,9 @@
 #include "generator.h"
 
 #include <cstdint>
-#include "utils.h"
+
 #include "zipfian_generator.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

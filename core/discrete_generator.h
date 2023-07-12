@@ -14,7 +14,7 @@
 #include <atomic>
 #include <cassert>
 #include <vector>
-#include "utils.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

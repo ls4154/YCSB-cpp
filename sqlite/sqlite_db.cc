@@ -5,10 +5,10 @@
 //  Copyright (c) 2023 Youngjae Lee <ls4154.lee@gmail.com>.
 //
 
-#include "core/properties.h"
-#include "core/utils.h"
-#include "core/db_factory.h"
 #include "query_builder.h"
+#include "core/db_factory.h"
+#include "utils/properties.h"
+#include "utils/utils.h"
 
 #include "sqlite_db.h"
 

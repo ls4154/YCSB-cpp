@@ -9,11 +9,13 @@
 #ifndef YCSB_C_CLIENT_H_
 #define YCSB_C_CLIENT_H_
 
+#include <iostream>
 #include <string>
+
 #include "db.h"
 #include "core_workload.h"
-#include "utils.h"
-#include "countdown_latch.h"
+#include "utils/countdown_latch.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

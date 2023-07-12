@@ -6,7 +6,7 @@
 //
 
 #include "acknowledged_counter_generator.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 void AcknowledgedCounterGenerator::Acknowledge(uint64_t value) {

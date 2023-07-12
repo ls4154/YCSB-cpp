@@ -8,7 +8,7 @@
 #include <mutex>
 
 #include "core/db.h"
-#include "core/properties.h"
+#include "utils/properties.h"
 
 #include "wiredtiger.h"
 #include "wiredtiger_ext.h"

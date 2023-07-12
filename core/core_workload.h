@@ -13,12 +13,12 @@
 #include <vector>
 #include <string>
 #include "db.h"
-#include "properties.h"
 #include "generator.h"
 #include "discrete_generator.h"
 #include "counter_generator.h"
 #include "acknowledged_counter_generator.h"
-#include "utils.h"
+#include "utils/properties.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

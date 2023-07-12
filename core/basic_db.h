@@ -10,7 +10,7 @@
 #define YCSB_C_BASIC_DB_H_
 
 #include "db.h"
-#include "properties.h"
+#include "utils/properties.h"
 
 #include <iostream>
 #include <string>
@@ -20,6 +20,8 @@ namespace ycsbc {
 
 class BasicDB : public DB {
  public:
+  BasicDB() : out_(nullptr) {}
+
   void Init();
 
   Status Read(const std::string &table, const std::string &key,
@@ -36,6 +38,8 @@ class BasicDB : public DB {
 
  private:
   static std::mutex mutex_;
+
+  std::ostream *out_;
 };
 
 DB *NewBasicDB();

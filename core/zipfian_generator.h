@@ -15,7 +15,7 @@
 #include <mutex>
 
 #include "generator.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 namespace ycsbc {
 

@@ -7,10 +7,9 @@
 //
 
 #include "leveldb_db.h"
-#include "core/properties.h"
-#include "core/utils.h"
 #include "core/core_workload.h"
 #include "core/db_factory.h"
+#include "utils/utils.h"
 
 #include <leveldb/options.h>
 #include <leveldb/write_batch.h>

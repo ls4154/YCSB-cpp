@@ -7,7 +7,6 @@
 //  Modifications Copyright 2023 Chengye YU <yuchengye2013 AT outlook.com>.
 //
 
-#include "utils.h"
 #include "uniform_generator.h"
 #include "zipfian_generator.h"
 #include "scrambled_zipfian_generator.h"
@@ -15,6 +14,7 @@
 #include "const_generator.h"
 #include "core_workload.h"
 #include "random_byte_generator.h"
+#include "utils/utils.h"
 
 #include <algorithm>
 #include <random>

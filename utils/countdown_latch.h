@@ -11,6 +11,10 @@
 #include <mutex>
 #include <condition_variable>
 
+namespace ycsbc {
+
+namespace utils {
+
 class CountDownLatch {
  public:
   CountDownLatch(int count) : count_(count) {}
@@ -33,5 +37,9 @@ class CountDownLatch {
   std::mutex mu_;
   std::condition_variable cv_;
 };
+
+} // utils
+
+} // ycsbc
 
 #endif // YCSB_C_COUNTDOWN_LATCH_H_

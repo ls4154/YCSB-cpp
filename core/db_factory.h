@@ -11,7 +11,7 @@
 
 #include "db.h"
 #include "measurements.h"
-#include "properties.h"
+#include "utils/properties.h"
 
 #include <string>
 #include <map>

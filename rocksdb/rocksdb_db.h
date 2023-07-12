@@ -12,7 +12,7 @@
 #include <mutex>
 
 #include "core/db.h"
-#include "core/properties.h"
+#include "utils/properties.h"
 
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>

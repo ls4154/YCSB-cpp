@@ -17,19 +17,20 @@
 #include <chrono>
 #include <iomanip>
 
-#include "utils.h"
-#include "timer.h"
 #include "client.h"
-#include "measurements.h"
 #include "core_workload.h"
-#include "countdown_latch.h"
 #include "db_factory.h"
+#include "measurements.h"
+#include "utils/countdown_latch.h"
+#include "utils/timer.h"
+#include "utils/utils.h"
 
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
 
 void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
+void StatusThread(ycsbc::Measurements *measurements, ycsbc::utils::CountDownLatch *latch, int interval) {
   using namespace std::chrono;
   time_point<system_clock> start = system_clock::now();
   bool done = false;
@@ -89,7 +90,7 @@ int main(const int argc, const char *argv[]) {
   if (do_load) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
 
-    CountDownLatch latch(num_threads);
+    ycsbc::utils::CountDownLatch latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
     timer.Start();
@@ -132,7 +133,7 @@ int main(const int argc, const char *argv[]) {
   if (do_transaction) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
 
-    CountDownLatch latch(num_threads);
+    ycsbc::utils::CountDownLatch latch(num_threads);
     ycsbc::utils::Timer<double> timer;
 
     timer.Start();

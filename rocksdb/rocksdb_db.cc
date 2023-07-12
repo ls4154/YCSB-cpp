@@ -10,8 +10,7 @@
 
 #include "core/core_workload.h"
 #include "core/db_factory.h"
-#include "core/properties.h"
-#include "core/utils.h"
+#include "utils/utils.h"
 
 #include <rocksdb/cache.h>
 #include <rocksdb/filter_policy.h>

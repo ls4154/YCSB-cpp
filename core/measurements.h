@@ -9,7 +9,7 @@
 #define YCSB_C_MEASUREMENTS_H_
 
 #include "core_workload.h"
-#include "properties.h"
+#include "utils/properties.h"
 
 #include <atomic>
 

@@ -9,7 +9,7 @@
 #define YCSB_C_RANDOM_BYTE_GENERATOR_H_
 
 #include "generator.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 #include <random>
 
