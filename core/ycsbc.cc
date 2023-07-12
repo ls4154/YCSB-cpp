@@ -22,6 +22,7 @@
 #include "db_factory.h"
 #include "measurements.h"
 #include "utils/countdown_latch.h"
+#include "utils/rate_limit.h"
 #include "utils/timer.h"
 #include "utils/utils.h"
 
@@ -29,7 +30,6 @@ void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
 
-void StatusThread(ycsbc::Measurements *measurements, CountDownLatch *latch, int interval) {
 void StatusThread(ycsbc::Measurements *measurements, ycsbc::utils::CountDownLatch *latch, int interval) {
   using namespace std::chrono;
   time_point<system_clock> start = system_clock::now();
@@ -49,6 +49,39 @@ void StatusThread(ycsbc::Measurements *measurements, ycsbc::utils::CountDownLatc
     }
     done = latch->AwaitFor(interval);
   };
+}
+
+void RateLimitThread(std::string rate_file, std::vector<ycsbc::utils::RateLimiter *> rate_limiters,
+                     ycsbc::utils::CountDownLatch *latch) {
+  std::ifstream ifs;
+  ifs.open(rate_file);
+
+  if (!ifs.is_open()) {
+    ycsbc::utils::Exception("failed to open: " + rate_file);
+  }
+
+  int64_t num_threads = rate_limiters.size();
+
+  int64_t last_time = 0;
+  while (!ifs.eof()) {
+    int64_t next_time;
+    int64_t next_rate;
+    ifs >> next_time >> next_rate;
+
+    if (next_time <= last_time) {
+      ycsbc::utils::Exception("invalid rate file");
+    }
+
+    bool done = latch->AwaitFor(next_time - last_time);
+    if (done) {
+      break;
+    }
+    last_time = next_time;
+
+    for (auto x : rate_limiters) {
+      x->SetRate(next_rate / num_threads);
+    }
+  }
 }
 
 int main(const int argc, const char *argv[]) {
@@ -83,6 +116,7 @@ int main(const int argc, const char *argv[]) {
   ycsbc::CoreWorkload wl;
   wl.Init(props);
 
+  // print status periodically
   const bool show_status = (props.GetProperty("status", "false") == "true");
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
 
@@ -105,8 +139,9 @@ int main(const int argc, const char *argv[]) {
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
+
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
-                                             thread_ops, true, true, !do_transaction, &latch));
+                                             thread_ops, true, true, !do_transaction, &latch, nullptr));
     }
     assert((int)client_threads.size() == num_threads);
 
@@ -129,8 +164,14 @@ int main(const int argc, const char *argv[]) {
   measurements->Reset();
   std::this_thread::sleep_for(std::chrono::seconds(stoi(props.GetProperty("sleepafterload", "0"))));
 
+
   // transaction phase
   if (do_transaction) {
+    // initial ops per second, unlimited if <= 0
+    const int64_t ops_limit = std::stoi(props.GetProperty("limit.ops", "0"));
+    // rate file path for dynamic rate limiting, format "time_stamp_sec new_ops_per_second" per line
+    std::string rate_file = props.GetProperty("limit.file", "");
+
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
 
     ycsbc::utils::CountDownLatch latch(num_threads);
@@ -143,14 +184,27 @@ int main(const int argc, const char *argv[]) {
                                  measurements, &latch, status_interval);
     }
     std::vector<std::future<int>> client_threads;
+    std::vector<ycsbc::utils::RateLimiter *> rate_limiters;
     for (int i = 0; i < num_threads; ++i) {
       int thread_ops = total_ops / num_threads;
       if (i < total_ops % num_threads) {
         thread_ops++;
       }
+      ycsbc::utils::RateLimiter *rlim = nullptr;
+      if (ops_limit > 0 || rate_file != "") {
+        int64_t per_thread_ops = ops_limit / num_threads;
+        rlim = new ycsbc::utils::RateLimiter(per_thread_ops, per_thread_ops);
+      }
+      rate_limiters.push_back(rlim);
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], &wl,
-                                             thread_ops, false, !do_load, true,  &latch));
+                                             thread_ops, false, !do_load, true, &latch, rlim));
     }
+
+    std::future<void> rlim_future;
+    if (rate_file != "") {
+      rlim_future = std::async(std::launch::async, RateLimitThread, rate_file, rate_limiters, &latch);
+    }
+
     assert((int)client_threads.size() == num_threads);
 
     int sum = 0;

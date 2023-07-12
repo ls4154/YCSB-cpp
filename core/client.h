@@ -15,37 +15,43 @@
 #include "db.h"
 #include "core_workload.h"
 #include "utils/countdown_latch.h"
+#include "utils/rate_limit.h"
 #include "utils/utils.h"
 
 namespace ycsbc {
 
 inline int ClientThread(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops, bool is_loading,
-                        bool init_db, bool cleanup_db, CountDownLatch *latch) {
-    try {
-        if (init_db) {
-            db->Init();
-        }
+                        bool init_db, bool cleanup_db, utils::CountDownLatch *latch, utils::RateLimiter *rlim) {
 
-        int ops = 0;
-        for (int i = 0; i < num_ops; ++i) {
-            if (is_loading) {
-                wl->DoInsert(*db);
-            } else {
-                wl->DoTransaction(*db);
-            }
-            ops++;
-        }
-
-        if (cleanup_db) {
-            db->Cleanup();
-        }
-
-        latch->CountDown();
-        return ops;
-    } catch(const utils::Exception& e) {
-        std::cerr<<"Caught exception: "<<e.what()<<std::endl;
-        exit(1);
+  try {
+    if (init_db) {
+      db->Init();
     }
+
+    int ops = 0;
+    for (int i = 0; i < num_ops; ++i) {
+      if (rlim) {
+        rlim->Consume(1);
+      }
+
+      if (is_loading) {
+        wl->DoInsert(*db);
+      } else {
+        wl->DoTransaction(*db);
+      }
+      ops++;
+    }
+
+    if (cleanup_db) {
+      db->Cleanup();
+    }
+
+    latch->CountDown();
+    return ops;
+  } catch (const utils::Exception &e) {
+    std::cerr << "Caught exception: " << e.what() << std::endl;
+    exit(1);
+  }
 }
 
 } // ycsbc
