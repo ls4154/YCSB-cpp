@@ -105,6 +105,7 @@ int main(const int argc, const char *argv[]) {
   const int status_interval = std::stoi(props.GetProperty("status.interval", "10"));
   const int status_interval_us = std::stoi(props.GetProperty("status.intervalus", "1000"));
   const std::string status_trace = props.GetProperty("status.trace", "");
+  const int64_t sec_skip = stol(props.GetProperty(SKIP_SECOND_PROPERTY, "0"));
 
   // load phase
   if (do_load) {
@@ -125,7 +126,7 @@ int main(const int argc, const char *argv[]) {
         thread_ops++;
       }
       client_threads.emplace_back(std::async(std::launch::async, ycsbc::ClientThread, dbs[i], wl, props, thread_ops, i,
-                                             num_threads, true, true, !do_transaction || dbs[i]->ReInitBeforeTransaction(), &latch, &init_latch, 0));
+                                             num_threads, true, true, !do_transaction || dbs[i]->ReInitBeforeTransaction(), &latch, &init_latch, sec_skip));
     }
     assert((int)client_threads.size() == num_threads);
     init_latch.Await();
@@ -136,7 +137,7 @@ int main(const int argc, const char *argv[]) {
       assert(n.valid());
       sum += n.get();
     }
-    double runtime = timer.End();
+    double runtime = timer.End() - sec_skip;
 
     if (show_status) {
       status_future.wait();
@@ -169,7 +170,6 @@ int main(const int argc, const char *argv[]) {
   // transaction phase
   if (do_transaction) {
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
-    const int64_t sec_skip = stol(props.GetProperty(SKIP_SECOND_PROPERTY, "0"));
 
     CountDownLatch latch(num_threads), init_latch(num_threads);
     ycsbc::utils::Timer<double> timer;
