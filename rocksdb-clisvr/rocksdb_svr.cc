@@ -26,6 +26,7 @@ static std::shared_ptr<rocksdb::Env> env_guard;
 static std::shared_ptr<rocksdb::Cache> block_cache;
 static std::shared_ptr<rocksdb::Cache> block_cache_compressed;
 rocksdb::DB *ServerContext::db_ = nullptr;
+bool ServerContext::sync = false;
 
 void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *props);
 void GetOptions(const utils::Properties &props, rocksdb::Options *opt,
@@ -117,6 +118,7 @@ void put_handler(erpc::ReqHandle *req_handle, void *context) {
 #endif
 
   rocksdb::WriteOptions wopt;
+  wopt.sync = ServerContext::sync;
   rocksdb::Status s = db->Put(wopt, key, value);
 
   auto &resp = req_handle->pre_resp_msgbuf_;
@@ -207,6 +209,11 @@ void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *pro
       }
       if (!s.ok()) {
         throw utils::Exception(std::string("RocksDB Open: ") + s.ToString());
+      }
+      if (props->GetProperty(PROP_WAL_SYNC, PROP_WAL_SYNC_DEFAULT) == "true") {
+        ServerContext::sync = true;
+      } else {
+        ServerContext::sync = false;
       }
       std::cout << "RocksDB opened" << std::endl;
     }

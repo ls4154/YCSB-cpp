@@ -21,6 +21,7 @@ class ServerContext {
   erpc::Rpc<erpc::CTransport> *rpc_;
   erpc::MsgBuffer resp_buf_;
   static rocksdb::DB *db_;
+  static bool sync;
   int session_num_;
   int thread_id_;
 };

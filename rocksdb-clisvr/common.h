@@ -103,6 +103,9 @@ const std::string PROP_ENV_URI_DEFAULT = "";
 const std::string PROP_FS_URI = "rocksdb.fs_uri";
 const std::string PROP_FS_URI_DEFAULT = "";
 
+const std::string PROP_WAL_SYNC = "rocksdb.sync_wal";
+const std::string PROP_WAL_SYNC_DEFAULT = "false";
+
 #define READ_REQ    0
 #define PUT_REQ     1
 #define DELETE_REQ  2
