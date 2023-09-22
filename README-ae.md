@@ -135,9 +135,9 @@ On the **app server node** (node-0), run
 ```bash
 cd /data/YCSB-cpp
 ./scripts/run_raw_wr.sh
-python3 ./scripts/draw/raw_wr.py
+python3 ./scripts/draw/raw_wr.py /data/result
 ```
-Generated figure will be at `/data/result/figure/write_lat.pdf` on **app server node**
+Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server node**
 
 ### (C2) Insert-Only Workload (🔴 not ready)
 
