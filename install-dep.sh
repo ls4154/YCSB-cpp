@@ -10,7 +10,8 @@ sudo apt-get install -y \
     liblz4-dev \
     libzstd-dev \
     libhiredis-dev \
-    cmake
+    cmake \
+    cgroup-tools
 
 git clone https://github.com/sewenew/redis-plus-plus.git $dir/redis++
 cd $dir/redis++

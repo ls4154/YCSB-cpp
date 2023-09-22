@@ -22,7 +22,6 @@ The CephFS is mounted to the app server. Client use eRPC or TCP (depend on appli
                             │        └─────► NCL Peer 2 │
                             │              └────────────┘
                             │
-                            │
            ┌────────────────▼────────────────┐
            │  cephfs cluster                 │
            │                                 │
@@ -33,6 +32,18 @@ The CephFS is mounted to the app server. Client use eRPC or TCP (depend on appli
            └─────────────────────────────────┘
 ```
 
+## Download
+Download to app server machine
+```bash
+# On app server
+git clone https://github.com/dassl-uiuc/YCSB-cpp.git --recurse-submodules
+```
+Then, for convenience, mount the folder to client machine via NFS
+```bash
+# On client
+sudo mount.nfs4 ${server_ip}:/data/YCSB-cpp /data/YCSB-cpp
+```
+
 ## Install Dependency Packages
 
 ### Regular dependencies
@@ -40,8 +51,8 @@ Install on client machine
 ```bash
 sudo apt-get install -y libhiredis-dev cmake
 
-git clone https://github.com/sewenew/redis-plus-plus.git $dir/redis++
-cd $dir/redis++
+git clone https://github.com/sewenew/redis-plus-plus.git redis++
+cd redis++
 mkdir build
 cd build
 cmake ..
@@ -52,17 +63,12 @@ cd ..
 
 Install on app server machine
 ```bash
-sudo apt-get install -y \
-    libgflags-dev \
-    libsnappy-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    liblz4-dev \
-    libzstd-dev
+cd YCSB-cpp
+./install-dep.sh ${DIR_TO_INSTALL}
 ```
 
 ### eRPC
-Download and compile
+On both client and app server, download and compile
 ```bash
 git clone https://github.com/erpc-io/eRPC.git
 cd eRPC
@@ -109,3 +115,32 @@ cd build
 ../configure
 make -j
 ```
+
+## Run Experiments
+
+### Node list
+- app server (node-0): `ssh luoxh@hp089.utah.cloudlab.us`
+- memory replicas
+  - node-1: `ssh luoxh@hp009.utah.cloudlab.us`
+  - node-2: `ssh luoxh@hp019.utah.cloudlab.us`
+  - node-3: `ssh luoxh@hp100.utah.cloudlab.us`
+- client (node-4): `ssh luoxh@hp097.utah.cloudlab.us`
+- Ceph nodes
+  - node-5: `ssh luoxh@hp082.utah.cloudlab.us`
+  - node-6: `ssh luoxh@hp007.utah.cloudlab.us`
+  - node-7: `ssh luoxh@hp93.utah.cloudlab.us`
+
+### (C1) Write Microbenchmark (🟢 ready)
+On the **app server node** (node-0), run
+```bash
+cd /data/YCSB-cpp
+./scripts/run_raw_wr.sh
+python3 ./scripts/draw/raw_wr.py
+```
+Generated figure will be at `/data/result/figure/write_lat.pdf` on **app server node**
+
+### (C2) Insert-Only Workload (🔴 not ready)
+
+### (C3) YCSB Workload (🔴 not ready)
+
+### (C4) Recovery Benchmark (🔴 not ready)
