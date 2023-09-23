@@ -1,9 +1,8 @@
 #!/bin/bash
 
-set -ex
+set -x
 
 msg_size=(128 256 512 1024 2048 4096 8192)
-ttl_size=(10 10 10 50 100 100 100)
 
 ncl_dir=/data/compute-side-log/build/src  # NCL binary and library directory
 res_dir=/data/result/raw  # result directory
@@ -81,6 +80,6 @@ function run_ncl() {
     stop_zk
 }
 
-# run_cephfs
-# run_sync
+run_cephfs
+run_sync
 run_ncl

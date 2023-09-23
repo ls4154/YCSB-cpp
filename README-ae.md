@@ -140,7 +140,57 @@ python3 ./scripts/draw/raw_wr.py /data/result
 Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server node**
 
 ### (C2) Insert-Only Workload (🔴 not ready)
+You may use one script to run all 3 applications on the **client node** (node-4)
+```bash
+```
+Or you can run each application separately in the following steps:
 
+#### RocksDB
+Build on **server node** (node-0)
+```bash
+cd /data/YCSB-cpp
+rm ycsb rocksdb_svr
+make BIND_ROCKSDBCLI=1 EXTRA_CXXFLAGS="-I/data/eRPC/src -I/data/eRPC/third_party/asio/include -I/data/rocksdb/include -L/data/eRPC/build -L/data/rocksdb" -j
+```
+Run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_rocksdb.sh cephfs load
+./scripts/run_rocksdb.sh sync load
+./scripts/run_rocksdb.sh ncl load
+
+python3 ./scripts/draw/insert_only.py /data/result
+```
+Generated figure will be at `/data/result/fig/rocksdb_lattput.pdf` on **client node**
+
+#### Redis
+Build on **server node** (node-0)
+```bash
+cd /data/YCSB-cpp
+rm ycsb
+make BIND_REDIS=1 -j
+```
+Run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_redis.sh cephfs load
+./scripts/run_redis.sh sync load
+./scripts/run_redis.sh ncl load
+
+python3 ./scripts/draw/insert_only.py /data/result
+```
+Generated figure will be at `/data/result/fig/redis_lattput.pdf` on **client node**
 ### (C3) YCSB Workload (🔴 not ready)
 
-### (C4) Recovery Benchmark (🔴 not ready)
+### (C4) Recovery Benchmark (🟡 partial ready)
+
+#### Read Microbenchmark (🟢 ready)
+On the **app server node** (node-0), run
+```bash
+cd /data/YCSB-cpp
+./scripts/run_raw_rd.sh
+python3 ./scripts/draw/raw_rd.py /data/result
+```
+Generated figure will be at `/data/result/fig/read_lat.pdf` on **app server node**
+
+#### Application Recovery (🔴 not ready)
