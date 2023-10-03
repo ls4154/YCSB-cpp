@@ -1,7 +1,7 @@
 # YCSB-cpp for Artifact Evaluation
 
 ## ❗️For AE Reviewers
-Currently the 8 nodes listed here are reclaimed by Cloudlab thus not accessible. I'm reserving for new nodes and will inform you as soon as I get them prepared. You may use your own machine to [test the basic functionalities](https://github.com/dassl-uiuc/compute-side-log/tree/main#readme) for now. Sorry for the inconvenience.
+Currently, the 8 nodes listed here will be reclaimed by Cloudlab on **Oct 4, 9am CDT** thus will soon be unaccessible. I'm reserving for new nodes and will inform you as soon as I get them prepared. You may use your own machine to [test the basic functionalities](https://github.com/dassl-uiuc/compute-side-log/tree/main#readme) for now. Sorry for the inconvenience.
 
 ## Architecture
 The evaluation cluster consists of 8 machines:
