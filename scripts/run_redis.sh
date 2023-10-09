@@ -9,8 +9,10 @@ set -ex
 
 if [ $# -ge 1 ]; then
     backend=$1
+    mode=$2
 else
     backend=cephfs
+    mode=$1
 fi
 
 user=luoxh
@@ -22,10 +24,12 @@ dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
 zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
 redis_dir=/data/redis  # redis binary directory
-db_dir=/data/ycsb-redis  # redis database directory
+db_dir=/mnt/cephfs/ycsb-redis  # redis database directory
 db_base=/data/redis_base  # redis base snapshot directory
 output_dir=/data/result/redis  # experiemnt results directory
 local_output_dir=~/result/redis  # local experiemnt results directory
+
+iter=1
 
 declare -A redis_svr_pid
 declare -A ncl_server_pid
@@ -80,6 +84,12 @@ function run_redis_server() {
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so IBV_FORK_SAFE=1"
     fi
 
+    if [ $backend = sync ] || [ $backend = sync_ncl ]; then
+        conf="redis_sync.conf"
+    else
+        conf="redis.conf"
+    fi
+
     kill_redis_server $server || true
     if [ $backend = app ] then
         kill_redis_server ${replica[0]} || true
@@ -87,18 +97,20 @@ function run_redis_server() {
     fi
 
     ssh -o StrictHostKeyChecking=no $user@$server "$extra_lib \
-        nohup $redis_dir/src/redis-server $dir/redis/redis.conf \
+        nohup $redis_dir/src/redis-server $dir/redis/$conf \
         >$redis_dir/redis_svr.log 2>&1" &
     redis_svr_pid[$server]=$!
 
-    ssh -o StrictHostKeyChecking=no $user@${replica[0]} " \
-        nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
-        >$redis_dir/redis_svr.log 2>&1" &
-    redis_svr_pid[${replica[0]}]=$!
-    ssh -o StrictHostKeyChecking=no $user@${replica[1]} " \
-        nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
-        >$redis_dir/redis_svr.log 2>&1" &
-    redis_svr_pid[${replica[1]}]=$!
+    if [ $backend = app ]; then
+        ssh -o StrictHostKeyChecking=no $user@${replica[0]} " \
+            nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
+            >$redis_dir/redis_svr.log 2>&1" &
+        redis_svr_pid[${replica[0]}]=$!
+        ssh -o StrictHostKeyChecking=no $user@${replica[1]} " \
+            nohup $redis_dir/src/redis-server $redis_dir/redis.conf \
+            >$redis_dir/redis_svr.log 2>&1" &
+        redis_svr_pid[${replica[1]}]=$!
+    fi
 
     if [ $mode = run ]
     then
@@ -171,7 +183,6 @@ function run_redis_cli() {
         -p operationcount=$opcnt \
         -p measurementtype=basic \
         -p yamlname=$output_dir/$yaml \
-        -p requestdistribution=uniform \
         $extra_flag"
 
     mkdir -p $local_output_dir/$mode
@@ -218,12 +229,13 @@ function run_once() {
 }
 
 function run_ycsb() {
-    iter=1
     workloads=(workloada workloadb workloadc workloadd workloadf)
-    operation_M=(200 200 200 200 200)
-
-    workloads=(workloadf)
-    operation_M=(200)
+    if [ $backend = sync ]
+    then
+        operation_M=(10 40 120 40 10)
+    else
+        operation_M=(200 200 200 200 200)
+    fi
 
     for (( i=1; i<=$iter; i++ ))
         do
@@ -241,13 +253,13 @@ function run_ycsb() {
 }
 
 function run_load() {
-    iter=3
-
     n_threads=(1 2 4 8 12 16 20)
-    record_M=(30 70 120 200 200 200 200)
-
-    # n_threads=(8 12 16 20)
-    # record_M=(200 200 200 200)
+    if [ $backend = sync ]
+    then
+        record_M=(1 1 2 4 6 8 8)
+    else
+        record_M=(30 70 120 200 200 200 200)
+    fi
 
     for (( i=1; i<=$iter; i++ ))
     do
@@ -263,7 +275,12 @@ function run_load() {
     done
 }
 
-# run_load
-run_ycsb
+if [ $mode = load ]; then
+    run_load
+elif [ $mode = run ]
+    run_ycsb
+else
+    echo "Unknown mode"
+fi
 
 echo "end at $(date '+%B %d %Y %T')"

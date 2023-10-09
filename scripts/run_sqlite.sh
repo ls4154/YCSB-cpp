@@ -9,14 +9,16 @@ set -ex
 
 if [ $# -ge 1 ]; then
     backend=$1
+    mode=$2
 else
     backend=cephfs
+    mode=$1
 fi
 
 user=luoxh
-server=hp140.utah.cloudlab.us
-client=hp155.utah.cloudlab.us
-replica=(hp101.utah.cloudlab.us hp099.utah.cloudlab.us hp129.utah.cloudlab.us)
+server=hp182.utah.cloudlab.us
+client=hp126.utah.cloudlab.us
+replica=(hp158.utah.cloudlab.us hp169.utah.cloudlab.us hp160.utah.cloudlab.us)
 
 dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
@@ -25,6 +27,8 @@ db_dir=/mnt/cephfs/ycsb-sqlite/ycsb.db  # sqlite database directory
 db_base=/data/sqlite_base/ycsb.db  # sqlite base snapshot directory
 output_dir=/data/result/sqlite  # experiemnt results directory
 local_output_dir=~/result/sqlite  # local experiemnt results directory
+
+iter=1
 
 sqlite_svr_pid=0
 declare -A ncl_server_pid
@@ -43,16 +47,20 @@ function prepare_run() {
 function prepare_load() {
     memlim=$1
     echo "mem limit ${memlim}B"
-    # ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
-    # ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
+    # ssh -o StrictHostKeyChecking=no $user@$server "echo 200M | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
+    ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
     ssh -o StrictHostKeyChecking=no $user@$server "sudo rm -f $db_dir"
 }
 
 function run_sqlite_server() {
     mode=$1
     th=$2
-    if [ $backend = ncl ]; then
+    if [ $backend = sync_ncl ] || [ $backend = ncl ]; then
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
+    fi
+
+    if [ $backend = sync ] || [ $backend = sync_ncl ]; then
+        extra_flag="-p sqlite.synchronous=FULL"
     fi
 
     kill_sqlite_server || true
@@ -62,6 +70,7 @@ function run_sqlite_server() {
         $dir/sqlite_svr \
         -P $dir/sqlite/sqlite.properties \
         -p sqlite.dbname=$db_dir \
+        $extra_flag \
         -threads $th >$dir/sqlite_svr.log 2>&1" &
     sqlite_svr_pid=$!
 }
@@ -113,7 +122,7 @@ function run_sqlite_cli() {
 
     if [ $mode = load ]
     then
-        extra_flag="-p workloadpath=/data/runw"
+        extra_flag="-p workloadpath=/data/runw -p secskip=60"
     else
         extra_flag="-p secskip=60"
     fi
@@ -143,7 +152,7 @@ function run_once() {
     path=$6
     yaml=$7
 
-    if [ $backend = ncl ]; then
+    if [ $backend = sync_ncl ] || [ $backend = ncl ]; then
         run_zk
         run_ncl_server
     fi
@@ -163,23 +172,27 @@ function run_once() {
 
     kill_sqlite_server
 
-    if [ $backend = ncl ]; then
+    if [ $backend = sync_ncl ] || [ $backend = ncl ]; then
         kill_ncl_server
         stop_zk
     fi
 }
 
 function run_ycsb() {
-    iter=3
     workloads=(workloada workloadb workloadc workloadd workloadf)
-    operation_M=(5 6 6 10 6)
+
+    if [ $backend = sync ]; then
+        operation_M=(10 25 40 25 10)
+    else
+        operation_M=(40 30 30 80 30)
+    fi
 
     for (( i=1; i<=$iter; i++ ))
     do
         for idx in ${!workloads[@]}
         do
             wl=${workloads[$idx]}
-            operationcnt=$((${operation_M[$idx]} * 100000))
+            operationcnt=$((${operation_M[$idx]} * 10000))
 
             expname=sqlite_"$wl"_"$backend"_trail"$i"
             echo "Running experiment $expname"
@@ -190,17 +203,17 @@ function run_ycsb() {
 }
 
 function run_load() {
-    iter=3
-
     n_threads=(1)
-    record_M=(20)
 
-    # n_threads=(16 20)
-    # record_M=(70 50)
+    if [ $backend = sync ]; then
+        record_M=(2)
+    else
+        record_M=(300)
+    fi
 
-    for idx in ${!n_threads[@]}
+    for (( i=1; i<=$iter; i++ ))
     do
-        for (( i=1; i<=$iter; i++ ))
+        for idx in ${!n_threads[@]}
         do
             thread=${n_threads[$idx]}
             recordcnt=$((${record_M[$idx]} * 1000000))
@@ -212,7 +225,12 @@ function run_load() {
     done
 }
 
-# run_load
-run_ycsb
+if [ $mode = load ]; then
+    run_load
+elif [ $mode = run ]
+    run_ycsb
+else
+    echo "Unknown mode"
+fi
 
 echo "end at $(date '+%B %d %Y %T')"

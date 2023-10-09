@@ -9,14 +9,16 @@ set -ex
 
 if [ $# -ge 1 ]; then
     backend=$1
+    mode=$2
 else
     backend=cephfs
+    mode=$1
 fi
 
 user=luoxh
-server=hp140.utah.cloudlab.us
-client=hp155.utah.cloudlab.us
-replica=(hp101.utah.cloudlab.us hp099.utah.cloudlab.us hp129.utah.cloudlab.us)
+server=hp182.utah.cloudlab.us
+client=hp126.utah.cloudlab.us
+replica=(hp158.utah.cloudlab.us hp169.utah.cloudlab.us hp160.utah.cloudlab.us)
 
 dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
@@ -26,6 +28,8 @@ db_dir=/mnt/cephfs/ycsb-rocksdb  # rocksdb database directory
 db_base=/data/db_base_stable  # rocksdb base snapshot directory
 output_dir=/data/result/rocksdb  # experiemnt results directory
 local_output_dir=~/result/rocksdb  # local experiemnt results directory
+
+iter=1
 
 rocksdb_svr_pid=0
 declare -A ncl_server_pid
@@ -43,7 +47,7 @@ function prepare_run() {
 
 function prepare_load() {
     memlim=$1
-    # echo "mem limit ${memlim}B"
+    echo "mem limit ${memlim}B"
     # ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/rocksdb/memory.limit_in_bytes"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
 }
@@ -51,21 +55,25 @@ function prepare_load() {
 function run_rocksdb_server() {
     mode=$1
     th=$2
-    if [ $backend = ncl ]; then
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
+    fi
+
+    if [ $backend = sync ] || [ $backend = sync_ncl ]; then
+        extra_flag="-p rocksdb.sync_wal=true "
     fi
 
     kill_rocksdb_server || true
 
     if [ $mode = load ]
     then
-        extra_flag="-p rocksdb.destroy=true"
+        extra_flag+="-p rocksdb.destroy=true"
     else
-        extra_flag="-p rocksdb.destroy=false"
+        extra_flag+="-p rocksdb.destroy=false"
     fi
 
     ssh -o StrictHostKeyChecking=no $user@$server "sudo LD_LIBRARY_PATH=$rocksdb_dir $extra_lib \
-        nohup cgexec -g memory:rocksdb \
+        nohup \
         $dir/rocksdb_svr \
         -P $dir/rocksdb-clisvr/rocksdb-clisvr.properties \
         -p rocksdb.dbname=$db_dir \
@@ -83,7 +91,7 @@ function kill_rocksdb_server() {
 
 function run_zk() {
     stop_zk || true
-    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $zkdir/data; $zkdir/bin/zkServer.sh start"
+    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $zkdir/zookeeper; $zkdir/bin/zkServer.sh start"
 }
 
 function stop_zk() {
@@ -151,7 +159,7 @@ function run_once() {
     path=$6
     yaml=$7
 
-    if [ $backend = ncl ]; then
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         run_zk
         run_ncl_server
     fi
@@ -171,23 +179,28 @@ function run_once() {
 
     kill_rocksdb_server
 
-    if [ $backend = ncl ]; then
+    if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         kill_ncl_server
         stop_zk
     fi
 }
 
 function run_ycsb() {
-    iter=3
     workloads=(workloada workloadb workloadc workloadd workloadf)
-    operation_M=(20 80 80 80 20)
 
-    for (( i=3; i<=$iter; i++ ))
+    if [ $backend = sync ]
+    then
+        operation_M=(20 12 12 20 12)
+    else
+        operation_M=(2 8 8 8 2)
+    fi
+
+    for (( i=1; i<=$iter; i++ ))
     do
         for idx in ${!workloads[@]}
         do
             wl=${workloads[$idx]}
-            operationcnt=$((${operation_M[$idx]} * 100000))
+            operationcnt=$((${operation_M[$idx]} * 1000000))
 
             expname=rocksdb_"$wl"_"$backend"_trail"$i"
             echo "Running experiment $expname"
@@ -198,13 +211,13 @@ function run_ycsb() {
 }
 
 function run_load() {
-    iter=3
-
-    # n_threads=(1 2 4 8 12 16 20)
-    # record_M=(12 12 20 40 60 80 80)
-
-    n_threads=(24 32)
-    record_M=(100 120)
+    n_threads=(1 2 4 8 12 16 20)
+    if [ $backend = sync ]
+    then
+        record_M=(2000 3000 5000 8000 7000 7000 5000)
+    else
+        record_M=(12 12 20 40 60 80 80)
+    fi
 
     for (( i=1; i<=$iter; i++ ))
     do
@@ -220,7 +233,12 @@ function run_load() {
     done
 }
 
-# run_load
-run_ycsb
+if [ $mode = load ]; then
+    run_load
+elif [ $mode = run ]
+    run_ycsb
+else
+    echo "Unknown mode"
+fi
 
 echo "end at $(date '+%B %d %Y %T')"
