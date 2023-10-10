@@ -16,9 +16,9 @@ else
 fi
 
 user=luoxh
-server=hp182.utah.cloudlab.us
-client=hp126.utah.cloudlab.us
-replica=(hp158.utah.cloudlab.us hp169.utah.cloudlab.us hp160.utah.cloudlab.us)
+server=hp174.utah.cloudlab.us
+client=hp123.utah.cloudlab.us
+replica=(hp176.utah.cloudlab.us hp132.utah.cloudlab.us hp095.utah.cloudlab.us)
 
 dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
@@ -45,9 +45,7 @@ function prepare_run() {
 }
 
 function prepare_load() {
-    memlim=$1
-    echo "mem limit ${memlim}B"
-    # ssh -o StrictHostKeyChecking=no $user@$server "echo 200M | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
+    ssh -o StrictHostKeyChecking=no $user@$server "echo -1 | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
     ssh -o StrictHostKeyChecking=no $user@$server "sudo rm -f $db_dir"
 }
@@ -84,7 +82,7 @@ function kill_sqlite_server() {
 
 function run_zk() {
     stop_zk || true
-    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $zkdir/data; $zkdir/bin/zkServer.sh start"
+    ssh -o StrictHostKeyChecking=no $user@$server "rm -rf $zkdir/zookeeper; $zkdir/bin/zkServer.sh start"
 }
 
 function stop_zk() {
@@ -93,9 +91,10 @@ function stop_zk() {
 
 function run_ncl_server() {
     kill_ncl_server || true
-    for r in ${replica[@]}
+    for i in ${!replica[@]}
     do
-        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server.log 2>&1 &"
+        r=${replica[$i]}
+        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server$i.log 2>&1 &"
         ncl_server_pid[$r]=$!
     done
 }
@@ -127,7 +126,7 @@ function run_sqlite_cli() {
         extra_flag="-p secskip=60"
     fi
 
-    ssh -o StrictHostKeyChecking=no $user@$client "mkdir -p $output_dir"
+    ssh -o StrictHostKeyChecking=no $user@$client "mkdir -p $output_dir/$mode/$backend"
     
     ssh -o StrictHostKeyChecking=no $user@$client "sudo $dir/ycsb -$mode -db sqlite \
         -P $dir/workloads/$wl \
@@ -136,11 +135,11 @@ function run_sqlite_cli() {
         -p recordcount=$rccnt \
         -p operationcount=$opcnt \
         -p measurementtype=basic \
-        -p yamlname=$output_dir/$yaml \
+        -p yamlname=$output_dir/$mode/$backend/$yaml \
         $extra_flag"
 
-    mkdir -p $local_output_dir/$mode
-    scp $user@$client:$output_dir/$yaml.yml $local_output_dir/$mode/
+    mkdir -p $local_output_dir/$mode/$backend
+    scp $user@$client:$output_dir/$mode/$backend/$yaml.yml $local_output_dir/$mode/
 }
 
 function run_once() {
@@ -216,7 +215,7 @@ function run_load() {
         for idx in ${!n_threads[@]}
         do
             thread=${n_threads[$idx]}
-            recordcnt=$((${record_M[$idx]} * 1000000))
+            recordcnt=$((${record_M[$idx]} * 10000))
 
             expname=sqlite_load_"$backend"_th"$thread"_trail"$i"
             echo "Running experiment $expname"
@@ -227,7 +226,7 @@ function run_load() {
 
 if [ $mode = load ]; then
     run_load
-elif [ $mode = run ]
+elif [ $mode = run ]; then
     run_ycsb
 else
     echo "Unknown mode"

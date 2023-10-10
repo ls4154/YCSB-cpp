@@ -142,31 +142,31 @@ python3 ./scripts/draw/raw_wr.py /data/result
 ```
 Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server node**
 
-### (C2) Insert-Only Workload (🔴 not ready)
+### (C2) Insert-Only Workload (🟢 ready)
 You may use one script to run all 3 applications on the **client node** (node-4)
 ```bash
 ```
 Or you can run each application separately in the following steps:
 
-#### RocksDB
+#### RocksDB (Estimated runtime within 2.5h)
 Build on **server node** (node-0)
 ```bash
 cd /data/YCSB-cpp
 rm ycsb rocksdb_svr
 make BIND_ROCKSDBCLI=1 EXTRA_CXXFLAGS="-I/data/eRPC/src -I/data/eRPC/third_party/asio/include -I/data/rocksdb/include -L/data/eRPC/build -L/data/rocksdb" -j
 ```
-Run on **client node** (node-4)
+Run on **client node** (node-4).
 ```bash
 cd /data/YCSB-cpp
 ./scripts/run_rocksdb.sh cephfs load
 ./scripts/run_rocksdb.sh sync load
-./scripts/run_rocksdb.sh ncl load
-
+./scripts/run_rocksdb.sh sync_ncl load
+# Each of the script runs for 50min
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/rocksdb_lattput.pdf` on **client node**
 
-#### Redis
+#### Redis (Estimated runtime within 1.5h)
 Build on **server node** (node-0)
 ```bash
 cd /data/YCSB-cpp
@@ -178,11 +178,27 @@ Run on **client node** (node-4)
 cd /data/YCSB-cpp
 ./scripts/run_redis.sh cephfs load
 ./scripts/run_redis.sh sync load
-./scripts/run_redis.sh ncl load
+./scripts/run_redis.sh sync_ncl load
 
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/redis_lattput.pdf` on **client node**
+
+#### SQLite (Estimated runtime within 20min)
+Build on **server node** (node-0)
+```bash
+make BIND_SQLITE=1 EXTRA_CXXFLAGS="-I/data/eRPC/src -I/data/eRPC/third_party/asio/include -I/data/sqlite/build -L/data/eRPC/build" -j
+```
+Run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_sqlite.sh cephfs load
+./scripts/run_sqlite.sh sync load
+./scripts/run_sqlite.sh sync_ncl load
+
+python3 ./scripts/draw/insert_only.py /data/result
+```
+Generated figure will be at `/data/result/fig/sqlite_lattput.pdf` on **client node**
 ### (C3) YCSB Workload (🔴 not ready)
 
 ### (C4) Recovery Benchmark (🟡 partial ready)
