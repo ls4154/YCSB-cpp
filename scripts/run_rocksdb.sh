@@ -16,9 +16,9 @@ else
 fi
 
 user=luoxh
-server=hp182.utah.cloudlab.us
-client=hp126.utah.cloudlab.us
-replica=(hp158.utah.cloudlab.us hp169.utah.cloudlab.us hp160.utah.cloudlab.us)
+server=hp174.utah.cloudlab.us
+client=hp123.utah.cloudlab.us
+replica=(hp176.utah.cloudlab.us hp132.utah.cloudlab.us hp095.utah.cloudlab.us)
 
 dir=/data/YCSB-cpp  # YCSB binary directory
 ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
@@ -40,21 +40,27 @@ do
 done
 
 function prepare_run() {
-    ssh -o StrictHostKeyChecking=no $user@$server "echo 3G | sudo tee /sys/fs/cgroup/memory/rocksdb/memory.limit_in_bytes"
+    ssh -o StrictHostKeyChecking=no $user@$server "echo 3G | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
-    ssh -o StrictHostKeyChecking=no $user@$server "sudo rm -rf $db_dir/ ; cgexec -g memory:rocksdb cp -r $db_base $db_dir"
+    ssh -o StrictHostKeyChecking=no $user@$server "sudo rm -rf $db_dir/ ; cgexec -g memory:ycsb cp -r $db_base $db_dir"
 }
 
 function prepare_load() {
-    memlim=$1
+    if [ $backend = sync ]; then
+        memlim=-1
+    else
+        memlim=$1
+    fi
     echo "mem limit ${memlim}B"
-    # ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/rocksdb/memory.limit_in_bytes"
+    ssh -o StrictHostKeyChecking=no $user@$server "echo $memlim | sudo tee /sys/fs/cgroup/memory/ycsb/memory.limit_in_bytes"
     ssh -o StrictHostKeyChecking=no $user@$server "echo 3 | sudo tee /proc/sys/vm/drop_caches"
 }
 
 function run_rocksdb_server() {
     mode=$1
     th=$2
+    extra_flag=""
+
     if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
     fi
@@ -73,7 +79,7 @@ function run_rocksdb_server() {
     fi
 
     ssh -o StrictHostKeyChecking=no $user@$server "sudo LD_LIBRARY_PATH=$rocksdb_dir $extra_lib \
-        nohup \
+        nohup cgexec -g memory:ycsb \
         $dir/rocksdb_svr \
         -P $dir/rocksdb-clisvr/rocksdb-clisvr.properties \
         -p rocksdb.dbname=$db_dir \
@@ -100,9 +106,10 @@ function stop_zk() {
 
 function run_ncl_server() {
     kill_ncl_server || true
-    for r in ${replica[@]}
+    for i in ${!replica[@]}
     do
-        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server.log 2>&1 &"
+        r=${replica[$i]}
+        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server$i.log 2>&1 &"
         ncl_server_pid[$r]=$!
     done
 }
@@ -134,7 +141,7 @@ function run_rocksdb_cli() {
         extra_flag="-p secskip=30"
     fi
 
-    ssh -o StrictHostKeyChecking=no $user@$client "mkdir -p $output_dir"
+    ssh -o StrictHostKeyChecking=no $user@$client "mkdir -p $output_dir/$mode/$backend"
     
     ssh -o StrictHostKeyChecking=no $user@$client "sudo $dir/ycsb -$mode -db rocksdbcli \
         -P $dir/workloads/$wl \
@@ -143,11 +150,11 @@ function run_rocksdb_cli() {
         -p recordcount=$rccnt \
         -p operationcount=$opcnt \
         -p measurementtype=basic \
-        -p yamlname=$output_dir/$yaml \
+        -p yamlname=$output_dir/$mode/$backend/$yaml \
         $extra_flag"
 
-    mkdir -p $local_output_dir/$mode
-    scp $user@$client:$output_dir/$yaml.yml $local_output_dir/$mode/
+    mkdir -p $local_output_dir/$mode/$backend
+    scp $user@$client:$output_dir/$mode/$backend/$yaml.yml $local_output_dir/$mode/$backend
 }
 
 function run_once() {
@@ -214,9 +221,9 @@ function run_load() {
     n_threads=(1 2 4 8 12 16 20)
     if [ $backend = sync ]
     then
-        record_M=(2000 3000 5000 8000 7000 7000 5000)
-    else
         record_M=(12 12 20 40 60 80 80)
+    else
+        record_M=(2000 3000 5000 8000 7000 7000 5000)
     fi
 
     for (( i=1; i<=$iter; i++ ))
@@ -235,7 +242,7 @@ function run_load() {
 
 if [ $mode = load ]; then
     run_load
-elif [ $mode = run ]
+elif [ $mode = run ]; then
     run_ycsb
 else
     echo "Unknown mode"
