@@ -15,14 +15,7 @@ else
     mode=$1
 fi
 
-user=luoxh
-server=hp174.utah.cloudlab.us
-client=hp123.utah.cloudlab.us
-replica=(hp176.utah.cloudlab.us hp132.utah.cloudlab.us hp095.utah.cloudlab.us)
-
-dir=/data/YCSB-cpp  # YCSB binary directory
-ncl_dir=/data/compute-side-log/build/src  # NCL server binary and library directory
-zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
+source $(dirname "$0")/config.sh
 rocksdb_dir=/data/rocksdb  # rocksdb library directory
 db_dir=/mnt/cephfs/ycsb-rocksdb  # rocksdb database directory
 db_base=/data/db_base_stable  # rocksdb base snapshot directory

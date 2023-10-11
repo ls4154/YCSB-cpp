@@ -2,9 +2,7 @@
 
 set -x
 
-user=luoxh
-server=hp174.utah.cloudlab.us
-dir=/data/YCSB-cpp  # YCSB binary directory
+source $(dirname "$0")/config.sh
 
 if [ $# -ge 1 ]; then
     mode=$1

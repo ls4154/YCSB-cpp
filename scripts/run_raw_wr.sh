@@ -4,14 +4,9 @@ set -x
 
 msg_size=(128 256 512 1024 2048 4096 8192)
 
-ncl_dir=/data/compute-side-log/build/src  # NCL binary and library directory
 res_dir=/data/result/raw  # result directory
-zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
 
-user=luoxh
-server=hp174.utah.cloudlab.us
-client=hp123.utah.cloudlab.us
-replica=(hp176.utah.cloudlab.us hp132.utah.cloudlab.us hp095.utah.cloudlab.us)
+source $(dirname "$0")/config.sh
 
 mkdir -p $res_dir
 
