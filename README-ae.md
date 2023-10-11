@@ -1,7 +1,7 @@
 # YCSB-cpp for Artifact Evaluation
 
 ## ❗️For AE Reviewers
-Currently, the 8 nodes listed here will be reclaimed by Cloudlab on **Oct 4, 9am CDT** thus will soon be unaccessible. I'm reserving for new nodes and will inform you as soon as I get them prepared. You may use your own machine to [test the basic functionalities](https://github.com/dassl-uiuc/compute-side-log/tree/main#readme) for now. Sorry for the inconvenience.
+The cluster is now ready. However, Cloudlab only permits me to use it till Oct 20. Please try to finish the experiments before that day. Thanks!
 
 ## Architecture
 The evaluation cluster consists of 8 machines:
@@ -122,16 +122,16 @@ make -j
 ## Run Experiments
 
 ### Node list (temporarily unavailable)
-- ~~app server (node-0): `ssh luoxh@hp089.utah.cloudlab.us`~~
+- app server (node-0): `ssh luoxh@hp174.utah.cloudlab.us`
 - memory replicas
-  - ~~node-1: `ssh luoxh@hp009.utah.cloudlab.us`~~
-  - ~~node-2: `ssh luoxh@hp019.utah.cloudlab.us`~~
-  - ~~node-3: `ssh luoxh@hp100.utah.cloudlab.us`~~
-- ~~client (node-4): `ssh luoxh@hp097.utah.cloudlab.us`~~
+  - node-1: `ssh luoxh@hp176.utah.cloudlab.us`
+  - node-2: `ssh luoxh@hp132.utah.cloudlab.us`
+  - node-3: `ssh luoxh@hp095.utah.cloudlab.us`
+- client (node-4): `ssh luoxh@hp123.utah.cloudlab.us`~~
 - Ceph nodes
-  - ~~node-5: `ssh luoxh@hp082.utah.cloudlab.us`~~
-  - ~~node-6: `ssh luoxh@hp007.utah.cloudlab.us`~~
-  - ~~node-7: `ssh luoxh@hp93.utah.cloudlab.us`~~
+  - node-5: `ssh luoxh@hp074.utah.cloudlab.us`
+  - node-6: `ssh luoxh@hp124.utah.cloudlab.us`
+  - node-7: `ssh luoxh@hp170.utah.cloudlab.us`
 
 ### (C1) Write Microbenchmark (🟢 ready)
 On the **app server node** (node-0), run

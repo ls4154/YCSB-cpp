@@ -9,8 +9,9 @@ res_dir=/data/result/raw  # result directory
 zkdir=/data/apache-zookeeper-3.6.3-bin  # zookeeper binary directory
 
 user=luoxh
-server=hp089.utah.cloudlab.us
-replica=(hp009.utah.cloudlab.us)
+server=hp174.utah.cloudlab.us
+client=hp123.utah.cloudlab.us
+replica=(hp176.utah.cloudlab.us hp132.utah.cloudlab.us hp095.utah.cloudlab.us)
 
 mkdir -p $res_dir
 
