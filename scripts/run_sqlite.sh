@@ -181,7 +181,7 @@ function run_ycsb() {
     workloads=(workloada workloadb workloadc workloadd workloadf)
 
     if [ $backend = sync ]; then
-        operation_M=(10 25 40 25 10)
+        operation_M=(10 25 30 25 10)
     else
         operation_M=(40 30 30 80 30)
     fi
@@ -205,7 +205,7 @@ function run_load() {
     n_threads=(1)
 
     if [ $backend = sync ]; then
-        record_M=(2)
+        record_M=(6)
     else
         record_M=(300)
     fi

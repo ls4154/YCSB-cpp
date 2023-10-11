@@ -221,7 +221,7 @@ function run_load() {
     n_threads=(1 2 4 8 12 16 20)
     if [ $backend = sync ]
     then
-        record_M=(12 12 20 40 60 80 80)
+        record_M=(10 10 18 36 54 72 80)
     else
         record_M=(2000 3000 5000 8000 7000 7000 5000)
     fi

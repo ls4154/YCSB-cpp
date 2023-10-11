@@ -127,7 +127,7 @@ make -j
   - node-1: `ssh luoxh@hp176.utah.cloudlab.us`
   - node-2: `ssh luoxh@hp132.utah.cloudlab.us`
   - node-3: `ssh luoxh@hp095.utah.cloudlab.us`
-- client (node-4): `ssh luoxh@hp123.utah.cloudlab.us`~~
+- client (node-4): `ssh luoxh@hp123.utah.cloudlab.us`
 - Ceph nodes
   - node-5: `ssh luoxh@hp074.utah.cloudlab.us`
   - node-6: `ssh luoxh@hp124.utah.cloudlab.us`
