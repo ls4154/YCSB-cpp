@@ -70,6 +70,9 @@ cd YCSB-cpp
 ./install-dep.sh ${DIR_TO_INSTALL}
 ```
 
+### NCL Library
+Build it on the app server node and mount the NCL folder to each replication peer. See https://github.com/dassl-uiuc/compute-side-log for instructions.
+
 ### eRPC
 On both client and app server, download and compile
 ```bash
@@ -121,7 +124,7 @@ make -j
 
 ## Run Experiments
 
-### Node list (temporarily unavailable)
+### Node list
 - app server (node-0): `ssh luoxh@hp174.utah.cloudlab.us`
 - memory replicas
   - node-1: `ssh luoxh@hp176.utah.cloudlab.us`
