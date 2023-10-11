@@ -185,7 +185,7 @@ function run_once() {
     run_rocksdb_cli $mode $workload $thread $recordcount $operationcount $path $yaml
 
     kill_rocksdb_server
-
+ 
     if [ $backend = ncl ] || [ $backend = sync_ncl ]; then
         kill_ncl_server
         stop_zk
@@ -197,9 +197,9 @@ function run_ycsb() {
 
     if [ $backend = sync ]
     then
-        operation_M=(20 12 12 20 12)
-    else
         operation_M=(2 8 8 8 2)
+    else
+        operation_M=(20 12 12 20 12)
     fi
 
     for (( i=1; i<=$iter; i++ ))

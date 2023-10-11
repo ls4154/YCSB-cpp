@@ -145,6 +145,7 @@ Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server nod
 ### (C2) Insert-Only Workload (🟢 ready)
 You may use one script to run all 3 applications on the **client node** (node-4)
 ```bash
+./scripts/run_all.sh load
 ```
 Or you can run each application separately in the following steps:
 
@@ -179,7 +180,7 @@ cd /data/YCSB-cpp
 ./scripts/run_redis.sh cephfs load
 ./scripts/run_redis.sh sync load
 ./scripts/run_redis.sh sync_ncl load
-
+# Each of the script runs for 30min
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/redis_lattput.pdf` on **client node**
@@ -199,7 +200,48 @@ cd /data/YCSB-cpp
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/sqlite_lattput.pdf` on **client node**
-### (C3) YCSB Workload (🔴 not ready)
+### (C3) YCSB Workload (🟢 ready)
+You may use one script to run all 3 applications on the **client node** (node-4)
+```bash
+./scripts/run_all.sh run
+```
+Or you can run each application separately in the following steps:
+
+#### RocksDB (Estimated runtime within 2h)
+Build on **server node** (node-0), then run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_rocksdb.sh cephfs run
+./scripts/run_rocksdb.sh sync run
+./scripts/run_rocksdb.sh sync_ncl run
+# Each of the script runs for 40min
+python3 ./scripts/draw/ycsb.py /data/result
+```
+Generated figure will be at `/data/result/fig/rocksdb_ycsb.pdf` on **client node**
+
+#### Redis (Estimated runtime within 2h)
+Build on **server node** (node-0), then run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_redis.sh cephfs run
+./scripts/run_redis.sh sync run
+./scripts/run_redis.sh sync_ncl run
+# Each of the script runs for 40min
+python3 ./scripts/draw/ycsb.py /data/result
+```
+Generated figure will be at `/data/result/fig/redis_ycsb.pdf` on **client node**
+
+#### SQLite (Estimated runtime within 1.5h)
+Build on **server node** (node-0), then run on **client node** (node-4)
+```bash
+cd /data/YCSB-cpp
+./scripts/run_sqlite.sh cephfs run
+./scripts/run_sqlite.sh sync run
+./scripts/run_sqlite.sh sync_ncl run
+# Each of the script runs for 30min
+python3 ./scripts/draw/ycsb.py /data/result
+```
+Generated figure will be at `/data/result/fig/sqlite_ycsb.pdf` on **client node**
 
 ### (C4) Recovery Benchmark (🟡 partial ready)
 

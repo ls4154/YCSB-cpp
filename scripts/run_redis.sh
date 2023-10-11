@@ -114,8 +114,8 @@ function run_redis_server() {
 
     if [ $mode = run ]
     then
-        echo "waiting for loading rdb"
-        sleep 1000
+        echo "waiting for loading"
+        sleep 180
         echo "should have finished loading"
     fi
 }

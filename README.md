@@ -7,6 +7,8 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
  * Small changes to make it behave more like the original YCSB
  * Supported Databases: LevelDB, RocksDB, LMDB, WiredTiger
 
+For detailed instructions to run artifact evaluation, see `README-ae.md`.
+
 # Build YCSB-cpp
 
 ## Build with Makefile on POSIX
@@ -14,7 +16,7 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
 Simply use `make` to build.
 
 ```
-git clone https://github.com/ls4154/YCSB-cpp.git
+git clone https://github.com/dassl-uiuc/YCSB-cpp.git
 cd YCSB-cpp
 git submodule update --init
 make

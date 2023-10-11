@@ -22,7 +22,7 @@ def draw_ycsb(folder: str, db: str, figname: str, pos: int):
             for i in range(1, iter+1):
                 try:
                     sample_name = '{}_workload{}_{}_trail{}.yml'.format(db, w, b, i)
-                    with open(os.path.join(folder, db, 'run', b, sample_name)) as f:
+                    with open(os.path.join(folder, db, 'run', b, sample_name), 'r') as f:
                         data = yaml.load(f)
                         tputs.append(data['throughput'])
                 except:
