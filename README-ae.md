@@ -146,6 +146,24 @@ python3 ./scripts/draw/raw_wr.py /data/result
 Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server node**
 
 ### (C2) Insert-Only Workload (🟢 ready)
+Configure before running
+- RocksDB
+```
+# configure client and server address in rocksdb-clisvr/rocksdb-clisvr.properties
+rocksdb-clisvr.client_hostname=localhost
+rocksdb-clisvr.server_hostname=localhost
+```
+- Redis
+```
+# configure server address in redis/redis.properties
+redis.host=localhost
+```
+- SQLite
+```
+# configure client and server address in sqlite/sqlite.properties
+sqlite.client_hostname=localhost
+sqlite.server_hostname=localhost
+```
 You may use one script to run all 3 applications on the **client node** (node-4)
 ```bash
 ./scripts/run_all.sh load
