@@ -15,6 +15,9 @@ const std::string PROP_SVR_HOSTNAME_DEFAULT = "localhost";
 const std::string PROP_MSG_SIZE = "sqlite.msg_size";
 const std::string PROP_MSG_SIZE_DEFAULT = "1024";
 
+const std::string PROP_PHY_PORT = "sqlite.phy_port";
+const std::string PROP_PHY_PORT_DEFAULT = "0";
+
 const std::string PROP_NAME = "sqlite.dbname";
 const std::string PROP_NAME_DEFAULT = "";
 

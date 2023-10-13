@@ -31,13 +31,15 @@ void RocksdbCli::Init() {
   const std::string &server_udpport = props.GetProperty(PROP_UDP_PORT_SVR, PROP_UDP_PORT_SVR_DEFAULT);
   const std::string server_uri = server_hostname + ":" + server_udpport;
 
+  const uint8_t phy_port = std::stoi(props.GetProperty(PROP_PHY_PORT, PROP_PHY_PORT_DEFAULT));
+
   uint8_t rpc_id = global_rpc_id_.fetch_add(1);
 
   if (!nexus_) {
     nexus_ = new erpc::Nexus(client_uri);
   }
 
-  rpc_ = new erpc::Rpc<erpc::CTransport>(nexus_, this, rpc_id, cli_sm_handler, 0x00);
+  rpc_ = new erpc::Rpc<erpc::CTransport>(nexus_, this, rpc_id, cli_sm_handler, phy_port);
 
   session_num_ = rpc_->create_session(server_uri, rpc_id);
 

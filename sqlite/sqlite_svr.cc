@@ -354,7 +354,9 @@ delete_resp:
 
 void server_func(erpc::Nexus *nexus, int thread_id, const utils::Properties *props) {
   ServerContext c;
-  erpc::Rpc<erpc::CTransport> rpc(nexus, static_cast<void *>(&c), thread_id, svr_sm_handler, 0x00);
+
+  const uint8_t phy_port = std::stoi(props->GetProperty(PROP_PHY_PORT, PROP_PHY_PORT_DEFAULT));
+  erpc::Rpc<erpc::CTransport> rpc(nexus, static_cast<void *>(&c), thread_id, svr_sm_handler, phy_port);
   c.rpc_ = &rpc;
   c.thread_id_ = thread_id;
   char *err_msg;

@@ -19,6 +19,9 @@ const std::string PROP_SVR_HOSTNAME_DEFAULT = "localhost";
 const std::string PROP_MSG_SIZE = "rocksdb-clisvr.msg_size";
 const std::string PROP_MSG_SIZE_DEFAULT = "1024";
 
+const std::string PROP_PHY_PORT = "rocksdb-clisvr.phy_port";
+const std::string PROP_PHY_PORT_DEFAULT = "0";
+
 const std::string PROP_NAME = "rocksdb.dbname";
 const std::string PROP_NAME_DEFAULT = "";
 
