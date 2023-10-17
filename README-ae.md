@@ -226,6 +226,14 @@ python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/sqlite_lattput.pdf` on **client node**
 ### (C3) YCSB Workload (🟢 ready)
+#### Generating Base DB
+We need a base DB to run the YCSB workloads. For RocksDB and Redis, it's a DB that contains 100M records, for SQLite, it contains 10M records.
+
+Run this script to generate base DBs (estimated time within 1h).
+```bash
+./scripts/gen_base_db.sh
+```
+
 You may use one script to run all 3 applications on the **client node** (node-4)
 ```bash
 ./scripts/run_all.sh run
@@ -271,7 +279,7 @@ python3 ./scripts/draw/ycsb.py /data/result
 ```
 Generated figure will be at `/data/result/fig/sqlite_ycsb.pdf` on **client node**
 
-### (C4) Recovery Benchmark (🟡 partial ready)
+### (C4) Recovery Benchmark (🟢 ready)
 
 #### Read Microbenchmark (🟢 ready)
 On the **app server node** (node-0), run
