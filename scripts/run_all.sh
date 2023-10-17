@@ -45,8 +45,10 @@ function run_all() {
     run_one sqlite $mode
 
     if [ $mode = load ]; then
+        mkdir -p /data/result/fig
         python3 $dir/scripts/draw/insert_only.py /data/result
     else
+        mkdir -p /data/result/fig
         python3 $dir/scripts/draw/ycsb.py /data/result
     fi
 }

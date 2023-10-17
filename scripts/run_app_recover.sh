@@ -59,11 +59,13 @@ function run_rocksdb() {
 
     if [ $backend = cephfs ]; then
         db_dir="/mnt/cephfs/ycsb-rocksdb"
+        extra_lib=""
     elif [ $backend = ncl ]; then
         db_dir="/mnt/cephfs/ycsb-rocksdb"
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
     else
         db_dir="/data/ycsb-rocksdb"
+        extra_lib=""
     fi
 
     mkdir -p $db_dir
@@ -114,6 +116,7 @@ function run_redis() {
 
     if [ $backend = cephfs ]; then
         db_dir="/mnt/cephfs/ycsb-redis"
+        extra_lib=""
         conf="$dir/redis/redis.conf"
     elif [ $backend = ncl ]; then
         db_dir="/mnt/cephfs/ycsb-redis"
@@ -121,6 +124,7 @@ function run_redis() {
         conf="$dir/redis/redis.conf"
     else
         db_dir="/data/ycsb-redis"
+        extra_lib=""
         conf="$dir/redis/redis_local.conf"
     fi
 
@@ -146,6 +150,8 @@ function run_redis() {
     
     kill_redis 2
 
+    sleep 5
+
     ssh -o StrictHostKeyChecking=no $user@localhost "$extra_lib nohup /data/redis/src/redis-server $conf | tee $output" &
 
     sleep 5
@@ -167,11 +173,13 @@ run_sqlite() {
 
     if [ $backend = cephfs ]; then
         db_dir="/mnt/cephfs/ycsb-sqlite"
+        extra_lib=""
     elif [ $backend = ncl ]; then
         db_dir="/mnt/cephfs/ycsb-sqlite"
         extra_lib="LD_PRELOAD=$ncl_dir/libcsl.so"
     else
         db_dir="/data/ycsb-sqlite"
+        extra_lib=""
     fi
 
     mkdir -p $db_dir
@@ -222,14 +230,14 @@ function run_ncl() {
     stop_zk
 }
 
-# run_ncl rocksdb
+run_ncl rocksdb
 run_ncl redis
-# run_ncl sqlite
+run_ncl sqlite
 
-# run_rocksdb cephfs
-# run_sqlite cephfs
-# run_redis cephfs
+run_rocksdb cephfs
+run_redis cephfs
+run_sqlite cephfs
 
-# run_rocksdb ext4
-# run_redis ext4
-# run_sqlite ext4
+run_rocksdb ext4
+run_redis ext4
+run_sqlite ext4

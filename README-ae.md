@@ -141,6 +141,7 @@ On the **app server node** (node-0), run
 ```bash
 cd /data/YCSB-cpp
 ./scripts/run_raw_wr.sh
+mkdir -p /data/result/fig
 python3 ./scripts/draw/raw_wr.py /data/result
 ```
 Generated figure will be at `/data/result/fig/write_lat.pdf` on **app server node**
@@ -184,6 +185,7 @@ cd /data/YCSB-cpp
 ./scripts/run_rocksdb.sh sync load
 ./scripts/run_rocksdb.sh sync_ncl load
 # Each of the script runs for 50min
+mkdir -p /data/result/fig
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/rocksdb_lattput.pdf` on **client node**
@@ -202,6 +204,7 @@ cd /data/YCSB-cpp
 ./scripts/run_redis.sh sync load
 ./scripts/run_redis.sh sync_ncl load
 # Each of the script runs for 30min
+mkdir -p /data/result/fig
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/redis_lattput.pdf` on **client node**
@@ -218,6 +221,7 @@ cd /data/YCSB-cpp
 ./scripts/run_sqlite.sh sync load
 ./scripts/run_sqlite.sh sync_ncl load
 
+mkdir -p /data/result/fig
 python3 ./scripts/draw/insert_only.py /data/result
 ```
 Generated figure will be at `/data/result/fig/sqlite_lattput.pdf` on **client node**
@@ -236,6 +240,7 @@ cd /data/YCSB-cpp
 ./scripts/run_rocksdb.sh sync run
 ./scripts/run_rocksdb.sh sync_ncl run
 # Each of the script runs for 40min
+mkdir -p /data/result/fig
 python3 ./scripts/draw/ycsb.py /data/result
 ```
 Generated figure will be at `/data/result/fig/rocksdb_ycsb.pdf` on **client node**
@@ -248,6 +253,7 @@ cd /data/YCSB-cpp
 ./scripts/run_redis.sh sync run
 ./scripts/run_redis.sh sync_ncl run
 # Each of the script runs for 40min
+mkdir -p /data/result/fig
 python3 ./scripts/draw/ycsb.py /data/result
 ```
 Generated figure will be at `/data/result/fig/redis_ycsb.pdf` on **client node**
@@ -260,6 +266,7 @@ cd /data/YCSB-cpp
 ./scripts/run_sqlite.sh sync run
 ./scripts/run_sqlite.sh sync_ncl run
 # Each of the script runs for 30min
+mkdir -p /data/result/fig
 python3 ./scripts/draw/ycsb.py /data/result
 ```
 Generated figure will be at `/data/result/fig/sqlite_ycsb.pdf` on **client node**
@@ -271,8 +278,17 @@ On the **app server node** (node-0), run
 ```bash
 cd /data/YCSB-cpp
 ./scripts/run_raw_rd.sh
+mkdir -p /data/result/fig
 python3 ./scripts/draw/raw_rd.py /data/result
 ```
 Generated figure will be at `/data/result/fig/read_lat.pdf` on **app server node**
 
-#### Application Recovery (🔴 not ready)
+#### Application Recovery (🟢 ready)
+On the **app server node** (node-0), run
+```bash
+cd /data/YCSB-cpp
+./scripts/run_app_recover.sh
+mkdir -p /data/result/fig
+python3 ./scripts/draw/recovery.py /data/result
+```
+Generated figure will be at `/data/result/fig/recovery-time.pdf` on **app server node**
