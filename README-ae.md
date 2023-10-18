@@ -52,7 +52,7 @@ sudo mount.nfs4 ${server_ip}:/data/YCSB-cpp /data/YCSB-cpp
 ### Regular dependencies
 Install on client machine
 ```bash
-sudo apt-get install -y libhiredis-dev cmake
+sudo apt-get install -y libhiredis-dev cmake python3-pip
 
 git clone https://github.com/sewenew/redis-plus-plus.git redis++
 cd redis++
@@ -62,6 +62,8 @@ cmake ..
 make -j
 sudo make install
 cd ..
+
+sudo pip3 install matplotlib
 ```
 
 Install on app server machine

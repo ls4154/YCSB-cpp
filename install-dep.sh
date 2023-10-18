@@ -11,7 +11,8 @@ sudo apt-get install -y \
     libzstd-dev \
     libhiredis-dev \
     cmake \
-    cgroup-tools
+    cgroup-tools \
+    python3-pip
 
 git clone https://github.com/sewenew/redis-plus-plus.git $dir/redis++
 cd $dir/redis++
@@ -21,3 +22,5 @@ cmake ..
 make -j
 sudo make install
 cd ..
+
+sudo pip3 install matplotlib
