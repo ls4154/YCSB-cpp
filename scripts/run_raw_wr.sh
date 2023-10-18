@@ -22,11 +22,11 @@ function stop_zk() {
 
 function run_ncl_server() {
     kill_ncl_server || true
-    for r in ${replica[@]}
+    for i in ${!replica[@]}
     do
-        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server.log 2>&1 &"
+        r=${replica[$i]}
+        ssh -o StrictHostKeyChecking=no $user@$r "nohup $ncl_dir/server > $ncl_dir/server$i.log 2>&1 &"
     done
-    sleep 1
 }
 
 function kill_ncl_server() {
