@@ -28,6 +28,7 @@ class Properties {
   void SetProperty(const std::string &key, const std::string &value);
   bool ContainsKey(const std::string &key) const;
   void Load(std::ifstream &input);
+  const std::map<std::string, std::string> &ToMap();
  private:
   std::map<std::string, std::string> properties_;
 };
@@ -67,6 +68,10 @@ inline void Properties::Load(std::ifstream &input) {
     if (pos == std::string::npos) continue;
     SetProperty(Trim(line.substr(0, pos)), Trim(line.substr(pos + 1)));
   }
+}
+
+inline const std::map<std::string, std::string> &Properties::ToMap() {
+  return properties_;
 }
 
 } // utils

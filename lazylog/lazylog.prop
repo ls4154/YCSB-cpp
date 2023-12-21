@@ -1,0 +1,8 @@
+cons_log.server_hostname=localhost
+cons_log.udp_port_svr=31852
+cons_log.client_hostname=localhost
+cons_log.udp_port_cli=31853
+dur_log.server_hostname=localhost
+dur_log.udp_port_svr=31850
+dur_log.client_hostname=localhost
+dur_log.udp_port_cli=31851

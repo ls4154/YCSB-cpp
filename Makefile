@@ -98,6 +98,12 @@ ifeq ($(BIND_MARIADB), 1)
 	LDFLAGS += -lmariadbcpp
 endif
 
+ifeq ($(BIND_LAZYLOG), 1)
+	SOURCES += $(wildcard lazylog/*.cc)
+	CXXFLAGS += -DERPC_INFINIBAND=true
+	LDFLAGS += -llazylogcli -lerpc -libverbs -lnuma -lglog
+endif
+
 CXXFLAGS += -std=c++17 -pthread $(EXTRA_CXXFLAGS) -I./ -I$(YAMLCPP_DIR)/include
 LDFLAGS += $(EXTRA_LDFLAGS) -lpthread
 SOURCES += $(wildcard core/*.cc)
