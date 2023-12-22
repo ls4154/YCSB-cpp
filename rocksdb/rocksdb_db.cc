@@ -195,7 +195,6 @@ void RocksdbDB::Init() {
   rocksdb::Options opt;
   opt.create_if_missing = true;
   std::vector<rocksdb::ColumnFamilyDescriptor> cf_descs;
-  std::vector<rocksdb::ColumnFamilyHandle *> cf_handles;
   GetOptions(props, &opt, &cf_descs);
 #ifdef USE_MERGEUPDATE
   opt.merge_operator.reset(new YCSBUpdateMerge);
@@ -211,14 +210,20 @@ void RocksdbDB::Init() {
   if (cf_descs.empty()) {
     s = rocksdb::DB::Open(opt, db_path, &db_);
   } else {
-    s = rocksdb::DB::Open(opt, db_path, cf_descs, &cf_handles, &db_);
+    s = rocksdb::DB::Open(opt, db_path, cf_descs, &cf_handles_, &db_);
   }
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Open: ") + s.ToString());
   }
 }
 
-void RocksdbDB::Cleanup() {
+void RocksdbDB::Cleanup() { 
+  for (size_t i = 0; i < cf_handles_.size(); i++) {
+    if (cf_handles_[i] != nullptr) {
+      delete cf_handles_[i];
+      cf_handles_[i] = nullptr;
+    }
+  }
   const std::lock_guard<std::mutex> lock(mu_);
   if (--ref_cnt_) {
     return;
