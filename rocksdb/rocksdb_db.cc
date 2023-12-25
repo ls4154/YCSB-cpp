@@ -218,15 +218,15 @@ void RocksdbDB::Init() {
 }
 
 void RocksdbDB::Cleanup() { 
+  const std::lock_guard<std::mutex> lock(mu_);
+  if (--ref_cnt_) {
+    return;
+  }
   for (size_t i = 0; i < cf_handles_.size(); i++) {
     if (cf_handles_[i] != nullptr) {
       delete cf_handles_[i];
       cf_handles_[i] = nullptr;
     }
-  }
-  const std::lock_guard<std::mutex> lock(mu_);
-  if (--ref_cnt_) {
-    return;
   }
   delete db_;
 }
