@@ -92,6 +92,7 @@ class RocksdbDB : public DB {
 
   int fieldcount_;
 
+  static std::vector<rocksdb::ColumnFamilyHandle *> cf_handles_;
   static rocksdb::DB *db_;
   static int ref_cnt_;
   static std::mutex mu_;
