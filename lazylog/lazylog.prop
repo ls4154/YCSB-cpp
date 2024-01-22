@@ -6,3 +6,4 @@ dur_log.server_hostname=localhost
 dur_log.udp_port_svr=31850
 dur_log.client_hostname=localhost
 dur_log.udp_port_cli=31851
+phy_port=1

@@ -20,7 +20,7 @@ DB::Status LazylogDB::Insert(const std::string& table, const std::string& key, s
     data.append(reinterpret_cast<char *>(&key_len), sizeof(key_len));
     SerializeRow(values, data);
 
-    auto reqid = lzlog_->AppendEntry(data);
+    auto reqid = lzlog_->AppendEntryQuorum(data);
     if (reqid.first == 0)
         return Status::kError;
     else
