@@ -225,7 +225,7 @@ void RocksdbDB::Cleanup() {
   }
   for (size_t i = 0; i < cf_handles_.size(); i++) {
     if (cf_handles_[i] != nullptr) {
-      delete cf_handles_[i];
+      db_->DestroyColumnFamilyHandle(cf_handles_[i]);
       cf_handles_[i] = nullptr;
     }
   }
