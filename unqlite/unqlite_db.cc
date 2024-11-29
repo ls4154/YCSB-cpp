@@ -144,13 +144,6 @@ DB::Status UnqliteDB::Scan(const std::string &table, const std::string &key,
 
 DB::Status UnqliteDB::Update(const std::string &table, const std::string &key,
                              std::vector<Field> &values) {
-  // begin transaction
-  rc = unqlite_begin(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction BEGIN failed, code " +
-                           std::to_string(rc));
-  }
-
   // search for the existing record
   char prev_data[MAX_BUFFER_LEN];
   unqlite_int64 pBufLen = MAX_BUFFER_LEN;
@@ -185,24 +178,11 @@ DB::Status UnqliteDB::Update(const std::string &table, const std::string &key,
     throw utils::Exception("Unqlite store failed, code " + std::to_string(rc));
   }
 
-  // commit transaction
-  rc = unqlite_commit(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction COMMIT failed, code " +
-                           std::to_string(rc));
-  }
   return kOK;
 }
 
 DB::Status UnqliteDB::Insert(const std::string &table, const std::string &key,
                              std::vector<Field> &values) {
-  // begin transaction
-  rc = unqlite_begin(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction BEGIN failed, code " +
-                           std::to_string(rc));
-  }
-
   // perform the store operation
   std::string data;
   SerializeRow(values, &data);
@@ -212,31 +192,13 @@ DB::Status UnqliteDB::Insert(const std::string &table, const std::string &key,
     throw utils::Exception("Unqlite store failed, code " + std::to_string(rc));
   }
 
-  // commit transaction
-  rc = unqlite_commit(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction COMMIT failed, code " +
-                           std::to_string(rc));
-  }
   return kOK;
 }
 
 DB::Status UnqliteDB::Delete(const std::string &table, const std::string &key) {
-  rc = unqlite_begin(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction BEGIN failed, code " +
-                           std::to_string(rc));
-  }
-
   rc = unqlite_kv_delete(pDb, key.c_str(), key.length());
   if (rc != UNQLITE_OK) {
     throw utils::Exception("Unqlite delete failed, code " + std::to_string(rc));
-  }
-
-  rc = unqlite_commit(pDb);
-  if (rc != UNQLITE_OK) {
-    throw utils::Exception("Unqlite transaction COMMIT failed, code " +
-                           std::to_string(rc));
   }
   return kOK;
 }
