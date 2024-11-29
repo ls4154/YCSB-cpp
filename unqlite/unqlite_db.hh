@@ -48,8 +48,16 @@ private:
   unqlite *pDb = NULL;
 
   int rc;
-  unqlite_kv_cursor *pCur = NULL;
 
+  size_t field_count_;
+  std::string field_prefix_;
+
+  void SerializeRow(const std::vector<Field> &values, std::string *data);
+  void DeserializeRowFilter(std::vector<Field> *values, const char *data_ptr,
+                            size_t data_len,
+                            const std::vector<std::string> &fields);
+  void DeserializeRow(std::vector<Field> *values, const char *data_ptr,
+                      size_t data_len);
 };
 
 DB *NewUnqliteDB();
