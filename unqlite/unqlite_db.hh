@@ -49,8 +49,8 @@ private:
 
   int rc;
 
-  size_t field_count_;
-  std::string field_prefix_;
+  static size_t field_count_;
+  static std::string field_prefix_;
 
   void SerializeRow(const std::vector<Field> &values, std::string *data);
   void DeserializeRowFilter(std::vector<Field> *values, const char *data_ptr,

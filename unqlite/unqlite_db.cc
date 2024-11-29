@@ -9,8 +9,7 @@
 #include "core/core_workload.h"
 #include "core/db.h"
 #include "core/db_factory.h"
-#include "unqlite/unqlite/src/unqlite.h"
-#include "unqlite/unqlite/unqlite.h"
+#include "unqlite/unqlite.h"
 #include "utils/properties.h"
 #include "utils/utils.h"
 #include <cstddef>
@@ -28,6 +27,11 @@ const std::string PROP_USEMEM_DEFAULT = "false";
 
 namespace ycsbc {
 
+std::mutex UnqliteDB::mu_;
+
+size_t UnqliteDB::field_count_;
+std::string UnqliteDB::field_prefix_;
+
 void UnqliteDB::Init() {
   const std::lock_guard<std::mutex> lock(mu_);
 
@@ -35,9 +39,8 @@ void UnqliteDB::Init() {
 
   field_count_ = std::stoi(props.GetProperty(
       CoreWorkload::FIELD_COUNT_PROPERTY, CoreWorkload::FIELD_COUNT_DEFAULT));
-  field_prefix_ =
-      std::stoi(props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
-                                  CoreWorkload::FIELD_NAME_PREFIX_DEFAULT));
+  field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
+                                    CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
 
   // in-memory store toggle
   const bool use_mem =
@@ -142,6 +145,7 @@ DB::Status UnqliteDB::Scan(const std::string &table, const std::string &key,
 DB::Status UnqliteDB::Update(const std::string &table, const std::string &key,
                              std::vector<Field> &values) {
   // begin transaction
+  rc = unqlite_begin(pDb);
   if (rc != UNQLITE_OK) {
     throw utils::Exception("Unqlite transaction BEGIN failed, code " +
                            std::to_string(rc));
