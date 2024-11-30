@@ -4,3 +4,6 @@
 [submodule "unqlite/unqlite"]
 	path = unqlite/unqlite
 	url = https://github.com/symisc/unqlite
+[submodule "terarkdb/terarkdb"]
+	path = terarkdb/terarkdb
+	url = https://github.com/bytedance/terarkdb.git
