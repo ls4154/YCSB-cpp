@@ -1,3 +1,6 @@
 [submodule "HdrHistogram_c"]
 	path = HdrHistogram_c
 	url = https://github.com/HdrHistogram/HdrHistogram_c.git
+[submodule "unqlite/unqlite"]
+	path = unqlite/unqlite
+	url = https://github.com/symisc/unqlite

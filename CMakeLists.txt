@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(ycsb-cpp LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_BUILD_TYPE Release)
 set(CompilerFlags
@@ -25,6 +26,7 @@ option(BIND_ROCKSDB "build with rocksdb" OFF)
 option(BIND_LMDB "build with lmdb" OFF)
 option(BIND_LEVELDB "build with leveldb" OFF)
 option(BIND_WIREDTIGER "build with wiredtiger" OFF)
+option(BIND_UNQLITE "build with unqlite" OFF)
 
 option(WITH_ZLIB "linking YCSB with zlib; needed by HdrHISTOGRAM, DO NOT TURN OFF" ON)
 option(WITH_LZ4 "linking YCSB with lz4" OFF)
@@ -192,6 +194,16 @@ if(WITH_BZ2)
     message(STATUS "Found BZip2 library")
 else()
     message(STATUS "WITH_BZ2 - OFF")
+endif()
+
+if (BIND_UNQLITE)
+    message(STATUS "BIND_UNQLITE - ON")
+    file(GLOB_RECURSE YCSB_UNQLITE_SRC "unqlite/*.cc")
+    target_sources(ycsb PRIVATE ${YCSB_UNQLITE_SRC})
+    file(GLOB_RECURSE YCSB_UNQLITE_LIB "unqlite/unqlite/unqlite.c")
+    target_sources(ycsb PRIVATE ${YCSB_UNQLITE_LIB})
+else()
+    message(STATUS "BIND_UNQLITE - OFF")
 endif()
 
 add_subdirectory(HdrHistogram_c)
