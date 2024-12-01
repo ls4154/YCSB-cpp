@@ -7,7 +7,50 @@ This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some add
  * Modified the workload more similar to the original YCSB
  * Supported databases: LevelDB, RocksDB, LMDB, WiredTiger, SQLite
 
+> **Additionally, this repository is an extension of the original
+[YCSB-cpp](https://github.com/ls4154/YCSB-cpp) project, now supporting a few
+more databases (e.g. Speedb, TerarkDB, UnQLite, etc.) and including instructions
+to build and install DBs from source (locally, without root).**
+>
+> _**This specific fork serves as a portion of an end-of-semester project for
+Georgia Tech's CS 6400 Databases course**_
+
 # Build YCSB-cpp
+
+## Prerequisites
+
+  * Clone this repository, recursing to all submodules
+  ```
+  git clone --recurse-submodules git@github.com:richardso21/YCSB-cpp.git
+  ```
+
+  * Ensure you have `gcc` and `cmake` installed
+
+### Installing LevelDB
+
+  * LevelDB is included as a submodule in this repository. To build it, run the following commands:
+  ```
+  cd YCSB-cpp/third-party/leveldb
+  mkdir build && cd build
+
+  # to install globally...
+  cmake -DCMAKE_BUILD_TYPE=Release ..
+
+  # or, to install locally (e.g. if you are on PACE)
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.local ..
+
+  make install
+  ```
+
+  * **If you installed locally**, you will need to add the following to your
+  `.bashrc` or `.bash_profile` (or `zsh` equivalents):
+  ```
+  export PATH=$PATH:~/.local/bin
+  export CPATH=$CPATH:~/.local/include
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.local/lib
+  ```
+> _LevelDB is included in order to provide a reference point for the original
+`YCSB` implementation in Java._
 
 ## Build with Makefile on POSIX
 
