@@ -49,6 +49,8 @@ private:
 
   int rc;
 
+  int MAX_BUFFER_LEN = 4096;
+
   static size_t field_count_;
   static std::string field_prefix_;
 

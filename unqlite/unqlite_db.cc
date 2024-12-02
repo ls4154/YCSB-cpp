@@ -15,8 +15,6 @@
 #include <cstddef>
 #include <string>
 
-#define MAX_BUFFER_LEN 8192
-
 namespace {
 const std::string PROP_DB_PATH = "unqlite.dbname";
 const std::string PROP_DB_PATH_DEFAULT = "/tmp/ycsb-unqlitedb";
@@ -41,6 +39,11 @@ void UnqliteDB::Init() {
       CoreWorkload::FIELD_COUNT_PROPERTY, CoreWorkload::FIELD_COUNT_DEFAULT));
   field_prefix_ = props.GetProperty(CoreWorkload::FIELD_NAME_PREFIX,
                                     CoreWorkload::FIELD_NAME_PREFIX_DEFAULT);
+
+  size_t field_len_ = std::stoi(props.GetProperty(
+      CoreWorkload::FIELD_LENGTH_PROPERTY, CoreWorkload::FIELD_LENGTH_DEFAULT));
+
+  MAX_BUFFER_LEN = field_count_ * field_len_ + 256;
 
   // in-memory store toggle
   const bool use_mem =
