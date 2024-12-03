@@ -51,7 +51,7 @@ if (BIND_ROCKSDB)
 
     find_package(RocksDB CONFIG)
     if(RocksDB_FOUND)
-        target_link_libraries(ycsb PRIVATE RocksDB::rocksdb rpcrt4.lib)
+        target_link_libraries(ycsb PRIVATE RocksDB::rocksdb)
     else()
         message(STATUS "Try to find rocksdb library using find_library")
         find_library(ROCKSDB_LIB rocksdb REQUIRED)
