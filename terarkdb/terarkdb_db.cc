@@ -12,13 +12,13 @@
 #include "core/db_factory.h"
 #include "utils/utils.h"
 
-#include <rocksdb/cache.h>
-#include <rocksdb/filter_policy.h>
-#include <rocksdb/merge_operator.h>
-#include <rocksdb/status.h>
-#include <rocksdb/table.h>
-#include <rocksdb/utilities/options_util.h>
-#include <rocksdb/write_batch.h>
+#include "terarkdb/build/build/include/rocksdb/cache.h"
+#include "terarkdb/build/build/include/rocksdb/filter_policy.h"
+#include "terarkdb/build/build/include/rocksdb/merge_operator.h"
+#include "terarkdb/build/build/include/rocksdb/status.h"
+#include "terarkdb/build/build/include/rocksdb/table.h"
+#include "terarkdb/build/build/include/rocksdb/utilities/options_util.h"
+#include "terarkdb/build/build/include/rocksdb/write_batch.h"
 
 namespace {
   const std::string PROP_NAME = "terarkdb.dbname";

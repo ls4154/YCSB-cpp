@@ -8,19 +8,19 @@
 #ifndef YCSB_C_TERARKDB_DB_H_
 #define YCSB_C_TERARKDB_DB_H_
 
-#include <string>
 #include <mutex>
+#include <string>
 
 #include "core/db.h"
 #include "utils/properties.h"
 
-#include <rocksdb/db.h>
-#include <rocksdb/options.h>
+#include "terarkdb/build/build/include/rocksdb/db.h"
+#include "terarkdb/build/build/include/rocksdb/options.h"
 
 namespace ycsbc {
 
 class TerarkdbDB : public DB {
- public:
+public:
   TerarkdbDB() {}
   ~TerarkdbDB() {}
 
@@ -29,20 +29,24 @@ class TerarkdbDB : public DB {
   void Cleanup();
 
   Status Read(const std::string &table, const std::string &key,
-              const std::vector<std::string> *fields, std::vector<Field> &result) {
+              const std::vector<std::string> *fields,
+              std::vector<Field> &result) {
     return (this->*(method_read_))(table, key, fields, result);
   }
 
   Status Scan(const std::string &table, const std::string &key, int len,
-              const std::vector<std::string> *fields, std::vector<std::vector<Field>> &result) {
+              const std::vector<std::string> *fields,
+              std::vector<std::vector<Field>> &result) {
     return (this->*(method_scan_))(table, key, len, fields, result);
   }
 
-  Status Update(const std::string &table, const std::string &key, std::vector<Field> &values) {
+  Status Update(const std::string &table, const std::string &key,
+                std::vector<Field> &values) {
     return (this->*(method_update_))(table, key, values);
   }
 
-  Status Insert(const std::string &table, const std::string &key, std::vector<Field> &values) {
+  Status Insert(const std::string &table, const std::string &key,
+                std::vector<Field> &values) {
     return (this->*(method_insert_))(table, key, values);
   }
 
@@ -50,7 +54,7 @@ class TerarkdbDB : public DB {
     return (this->*(method_delete_))(table, key);
   }
 
- private:
+private:
   enum RocksFormat {
     kSingleRow,
   };
@@ -59,15 +63,20 @@ class TerarkdbDB : public DB {
   void GetOptions(const utils::Properties &props, terarkdb::Options *opt,
                   std::vector<terarkdb::ColumnFamilyDescriptor> *cf_descs);
   static void SerializeRow(const std::vector<Field> &values, std::string &data);
-  static void DeserializeRowFilter(std::vector<Field> &values, const char *p, const char *lim,
+  static void DeserializeRowFilter(std::vector<Field> &values, const char *p,
+                                   const char *lim,
                                    const std::vector<std::string> &fields);
-  static void DeserializeRowFilter(std::vector<Field> &values, const std::string &data,
+  static void DeserializeRowFilter(std::vector<Field> &values,
+                                   const std::string &data,
                                    const std::vector<std::string> &fields);
-  static void DeserializeRow(std::vector<Field> &values, const char *p, const char *lim);
-  static void DeserializeRow(std::vector<Field> &values, const std::string &data);
+  static void DeserializeRow(std::vector<Field> &values, const char *p,
+                             const char *lim);
+  static void DeserializeRow(std::vector<Field> &values,
+                             const std::string &data);
 
   Status ReadSingle(const std::string &table, const std::string &key,
-                    const std::vector<std::string> *fields, std::vector<Field> &result);
+                    const std::vector<std::string> *fields,
+                    std::vector<Field> &result);
   Status ScanSingle(const std::string &table, const std::string &key, int len,
                     const std::vector<std::string> *fields,
                     std::vector<std::vector<Field>> &result);
@@ -79,16 +88,18 @@ class TerarkdbDB : public DB {
                       std::vector<Field> &values);
   Status DeleteSingle(const std::string &table, const std::string &key);
 
-  Status (TerarkdbDB::*method_read_)(const std::string &, const std:: string &,
-                                    const std::vector<std::string> *, std::vector<Field> &);
+  Status (TerarkdbDB::*method_read_)(const std::string &, const std::string &,
+                                     const std::vector<std::string> *,
+                                     std::vector<Field> &);
   Status (TerarkdbDB::*method_scan_)(const std::string &, const std::string &,
-                                    int, const std::vector<std::string> *,
-                                    std::vector<std::vector<Field>> &);
+                                     int, const std::vector<std::string> *,
+                                     std::vector<std::vector<Field>> &);
   Status (TerarkdbDB::*method_update_)(const std::string &, const std::string &,
-                                      std::vector<Field> &);
+                                       std::vector<Field> &);
   Status (TerarkdbDB::*method_insert_)(const std::string &, const std::string &,
-                                      std::vector<Field> &);
-  Status (TerarkdbDB::*method_delete_)(const std::string &, const std::string &);
+                                       std::vector<Field> &);
+  Status (TerarkdbDB::*method_delete_)(const std::string &,
+                                       const std::string &);
 
   int fieldcount_;
 
@@ -100,6 +111,6 @@ class TerarkdbDB : public DB {
 
 DB *NewRocksdbDB();
 
-} // ycsbc
+} // namespace ycsbc
 
 #endif // YCSB_C_TERARKDB_DB_H_

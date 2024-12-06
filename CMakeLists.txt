@@ -213,8 +213,7 @@ if (BIND_TERARKDB)
     file(GLOB YCSB_TERARKDB_SRC "terarkdb/*.cc")
     target_sources(ycsb PRIVATE ${YCSB_TERARKDB_SRC})
 
-    find_library(TERARKDB_LIB rocksdb HINTS "${CMAKE_CURRENT_SOURCE_DIR}/terarkdb/terarkdb/build/build/lib" REQUIRED)
-    target_link_libraries(ycsb PRIVATE ${TERARKDB_LIB})
+    target_link_libraries(ycsb PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/terarkdb/terarkdb/build/build/lib/libterarkdb.a")
     target_include_directories(ycsb PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/terarkdb/terarkdb/build/build/include")
 
     # link all of terarkdb's dependencies
