@@ -7,3 +7,6 @@
 [submodule "terarkdb/terarkdb"]
 	path = terarkdb/terarkdb
 	url = https://github.com/bytedance/terarkdb.git
+[submodule "speedb/speedb"]
+	path = speedb/speedb
+	url = https://github.com/speedb-io/speedb
