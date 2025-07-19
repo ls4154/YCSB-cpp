@@ -1,17 +1,17 @@
 # YCSB-cpp
 
-Yahoo! Cloud Serving Benchmark([YCSB](https://github.com/brianfrankcooper/YCSB/wiki)) written in C++.
-This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with some additions
+Yahoo! Cloud Serving Benchmark ([YCSB](https://github.com/brianfrankcooper/YCSB/wiki)) written in C++.
+This is a fork of [YCSB-C](https://github.com/basicthinker/YCSB-C) with the following additions:
 
- * Tail latency report using [HdrHistogram_c](https://github.com/HdrHistogram/HdrHistogram_c)
- * Modified the workload more similar to the original YCSB
+ * Tail latency reporting using [HdrHistogram_c](https://github.com/HdrHistogram/HdrHistogram_c)
+ * Modified workloads to be more similar to the original YCSB
  * Supported databases: LevelDB, RocksDB, LMDB, WiredTiger, SQLite
 
 # Build YCSB-cpp
 
 ## Build with Makefile on POSIX
 
-Initialize submodule and use `make` to build.
+Initialize the submodule and use `make` to build.
 
 ```
 git clone https://github.com/ls4154/YCSB-cpp.git
@@ -55,7 +55,7 @@ make
 
 ## Build with CMake+vcpkg on Windows
 
-see [BUILD_ON_WINDOWS](BUILD_ON_WINDOWS.md)
+See [BUILD_ON_WINDOWS](BUILD_ON_WINDOWS.md).
 
 ## Running
 
@@ -79,3 +79,7 @@ Pass additional properties:
 ./ycsb -load -db leveldb -P workloads/workloadb -P rocksdb/rocksdb.properties \
     -p threadcount=4 -p recordcount=10000000 -p leveldb.cache_size=134217728 -s
 ```
+
+## Configuration
+
+For detailed information about all available configuration properties, see [PROPERTIES.md](PROPERTIES.md).
