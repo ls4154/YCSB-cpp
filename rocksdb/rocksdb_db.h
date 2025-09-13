@@ -96,6 +96,7 @@ class RocksdbDB : public DB {
   static rocksdb::DB *db_;
   static int ref_cnt_;
   static std::mutex mu_;
+  static rocksdb::WriteOptions wopt_;
 };
 
 DB *NewRocksdbDB();

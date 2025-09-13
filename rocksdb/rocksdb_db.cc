@@ -104,6 +104,9 @@ namespace {
   const std::string PROP_FS_URI = "rocksdb.fs_uri";
   const std::string PROP_FS_URI_DEFAULT = "";
 
+  const std::string PROP_SYNC = "rocksdb.sync";
+  const std::string PROP_SYNC_DEFAULT = "false";
+
   static std::shared_ptr<rocksdb::Env> env_guard;
   static std::shared_ptr<rocksdb::Cache> block_cache;
 #if ROCKSDB_MAJOR < 8
@@ -117,6 +120,7 @@ std::vector<rocksdb::ColumnFamilyHandle *> RocksdbDB::cf_handles_;
 rocksdb::DB *RocksdbDB::db_ = nullptr;
 int RocksdbDB::ref_cnt_ = 0;
 std::mutex RocksdbDB::mu_;
+rocksdb::WriteOptions RocksdbDB::wopt_;
 
 void RocksdbDB::Init() {
 // merge operator disabled by default due to link error
@@ -364,6 +368,9 @@ void RocksdbDB::GetOptions(const utils::Properties &props, rocksdb::Options *opt
     if (props.GetProperty(PROP_OPTIMIZE_LEVELCOMP, PROP_OPTIMIZE_LEVELCOMP_DEFAULT) == "true") {
       opt->OptimizeLevelStyleCompaction();
     }
+    if (props.GetProperty(PROP_SYNC, PROP_SYNC_DEFAULT) == "true") {
+      wopt_.sync = true;
+    }
   }
 }
 
@@ -490,11 +497,10 @@ DB::Status RocksdbDB::UpdateSingle(const std::string &table, const std::string &
     }
     assert(found);
   }
-  rocksdb::WriteOptions wopt;
 
   data.clear();
   SerializeRow(current_values, data);
-  s = db_->Put(wopt, key, data);
+  s = db_->Put(wopt_, key, data);
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Put: ") + s.ToString());
   }
@@ -505,8 +511,7 @@ DB::Status RocksdbDB::MergeSingle(const std::string &table, const std::string &k
                                   std::vector<Field> &values) {
   std::string data;
   SerializeRow(values, data);
-  rocksdb::WriteOptions wopt;
-  rocksdb::Status s = db_->Merge(wopt, key, data);
+  rocksdb::Status s = db_->Merge(wopt_, key, data);
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Merge: ") + s.ToString());
   }
@@ -517,8 +522,7 @@ DB::Status RocksdbDB::InsertSingle(const std::string &table, const std::string &
                                    std::vector<Field> &values) {
   std::string data;
   SerializeRow(values, data);
-  rocksdb::WriteOptions wopt;
-  rocksdb::Status s = db_->Put(wopt, key, data);
+  rocksdb::Status s = db_->Put(wopt_, key, data);
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Put: ") + s.ToString());
   }
@@ -526,8 +530,7 @@ DB::Status RocksdbDB::InsertSingle(const std::string &table, const std::string &
 }
 
 DB::Status RocksdbDB::DeleteSingle(const std::string &table, const std::string &key) {
-  rocksdb::WriteOptions wopt;
-  rocksdb::Status s = db_->Delete(wopt, key);
+  rocksdb::Status s = db_->Delete(wopt_, key);
   if (!s.ok()) {
     throw utils::Exception(std::string("RocksDB Delete: ") + s.ToString());
   }

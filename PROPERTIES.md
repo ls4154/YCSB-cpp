@@ -104,6 +104,7 @@ RocksDB properties are prefixed with `rocksdb.`. Example configuration file: `ro
 | `rocksdb.dbname` | - | Database path |
 | `rocksdb.destroy` | `false` | Destroy database on startup |
 | `rocksdb.mergeupdate` | `false` | Use merge operator for updates, ycsb should be compiled with `-DUSE_MERGEUPDATE` |
+| `rocksdb.sync` | `false` | Set [`WriteOptions.sync`](https://github.com/facebook/rocksdb/wiki/WAL-Performance#sync-mode) for every writes |
 | `rocksdb.optionsfile` | - | Path to RocksDB options file, if specified, properties below will be ignored |
 
 #### Performance Tuning
