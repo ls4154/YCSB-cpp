@@ -12,6 +12,7 @@
 #include "generator.h"
 
 #include <cstdint>
+#include <memory>
 
 #include "zipfian_generator.h"
 #include "utils/utils.h"
@@ -23,8 +24,8 @@ class ScrambledZipfianGenerator : public Generator<uint64_t> {
   ScrambledZipfianGenerator(uint64_t min, uint64_t max, double zipfian_const) :
       base_(min), num_items_(max - min + 1),
       generator_(zipfian_const == kUsedZipfianConstant ?
-                    ZipfianGenerator(0, kItemCount, zipfian_const, kZetan) :
-                    ZipfianGenerator(0, kItemCount, zipfian_const)) { }
+                    std::make_unique<ZipfianGenerator>(0, kItemCount, zipfian_const, kZetan) :
+                    std::make_unique<ZipfianGenerator>(0, kItemCount, zipfian_const)) { }
 
   ScrambledZipfianGenerator(uint64_t min, uint64_t max) :
       ScrambledZipfianGenerator(min, max, ZipfianGenerator::kZipfianConst) { }
@@ -41,7 +42,7 @@ class ScrambledZipfianGenerator : public Generator<uint64_t> {
   static constexpr uint64_t kItemCount = 10000000000LL;
   const uint64_t base_;
   const uint64_t num_items_;
-  ZipfianGenerator generator_;
+  std::unique_ptr<ZipfianGenerator> generator_;
 
   uint64_t Scramble(uint64_t value) const;
 };
@@ -51,11 +52,11 @@ inline uint64_t ScrambledZipfianGenerator::Scramble(uint64_t value) const {
 }
 
 inline uint64_t ScrambledZipfianGenerator::Next() {
-  return Scramble(generator_.Next());
+  return Scramble(generator_->Next());
 }
 
 inline uint64_t ScrambledZipfianGenerator::Last() {
-  return Scramble(generator_.Last());
+  return Scramble(generator_->Last());
 }
 
 }
