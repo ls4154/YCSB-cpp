@@ -16,6 +16,7 @@
 #include <future>
 #include <chrono>
 #include <iomanip>
+#include <sstream>
 
 #include "client.h"
 #include "core_workload.h"
@@ -29,6 +30,7 @@
 void UsageMessage(const char *command);
 bool StrStartWith(const char *str, const char *pre);
 void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &props);
+std::vector<std::pair<int64_t, int64_t>> LoadRateSchedule(const std::string &rate_file);
 
 void StatusThread(ycsbc::Measurements *measurements, ycsbc::utils::CountDownLatch *latch, int interval) {
   using namespace std::chrono;
@@ -51,27 +53,52 @@ void StatusThread(ycsbc::Measurements *measurements, ycsbc::utils::CountDownLatc
   };
 }
 
-void RateLimitThread(std::string rate_file, std::vector<ycsbc::utils::RateLimiter *> rate_limiters,
-                     ycsbc::utils::CountDownLatch *latch) {
-  std::ifstream ifs;
-  ifs.open(rate_file);
-
+std::vector<std::pair<int64_t, int64_t>> LoadRateSchedule(const std::string &rate_file) {
+  std::ifstream ifs(rate_file);
   if (!ifs.is_open()) {
-    ycsbc::utils::Exception("failed to open: " + rate_file);
+    throw ycsbc::utils::Exception("failed to open: " + rate_file);
   }
 
+  std::vector<std::pair<int64_t, int64_t>> rate_schedule;
+  int64_t last_time = 0;
+  std::string line;
+  while (std::getline(ifs, line)) {
+    std::string trimmed = ycsbc::utils::Trim(line);
+    if (trimmed.empty() || trimmed[0] == '#') {
+      continue;
+    }
+
+    std::istringstream iss(trimmed);
+    int64_t next_time;
+    int64_t next_rate;
+    std::string trailing;
+    if (!(iss >> next_time >> next_rate) || (iss >> trailing)) {
+      throw ycsbc::utils::Exception("invalid rate file");
+    }
+    if (next_time <= last_time) {
+      throw ycsbc::utils::Exception("invalid rate file");
+    }
+    rate_schedule.emplace_back(next_time, next_rate);
+    last_time = next_time;
+  }
+
+  if (!ifs.eof() && ifs.fail()) {
+    throw ycsbc::utils::Exception("invalid rate file");
+  }
+  if (rate_schedule.empty()) {
+    throw ycsbc::utils::Exception("invalid rate file");
+  }
+
+  return rate_schedule;
+}
+
+void RateLimitThread(std::vector<std::pair<int64_t, int64_t>> rate_schedule,
+                     std::vector<ycsbc::utils::RateLimiter *> rate_limiters,
+                     ycsbc::utils::CountDownLatch *latch) {
   int64_t num_threads = rate_limiters.size();
 
   int64_t last_time = 0;
-  while (!ifs.eof()) {
-    int64_t next_time;
-    int64_t next_rate;
-    ifs >> next_time >> next_rate;
-
-    if (next_time <= last_time) {
-      ycsbc::utils::Exception("invalid rate file");
-    }
-
+  for (const auto &[next_time, next_rate] : rate_schedule) {
     bool done = latch->AwaitFor(next_time - last_time);
     if (done) {
       break;
@@ -171,6 +198,16 @@ int main(const int argc, const char *argv[]) {
     const int64_t ops_limit = std::stoi(props.GetProperty("limit.ops", "0"));
     // rate file path for dynamic rate limiting, format "time_stamp_sec new_ops_per_second" per line
     std::string rate_file = props.GetProperty("limit.file", "");
+    std::vector<std::pair<int64_t, int64_t>> rate_schedule;
+    if (rate_file != "") {
+      try {
+        rate_schedule = LoadRateSchedule(rate_file);
+      } catch (const std::exception &e) {
+        std::cerr << "Failed to load rate schedule from " << rate_file << ": "
+                  << e.what() << std::endl;
+        exit(1);
+      }
+    }
 
     const int total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
 
@@ -202,7 +239,7 @@ int main(const int argc, const char *argv[]) {
 
     std::future<void> rlim_future;
     if (rate_file != "") {
-      rlim_future = std::async(std::launch::async, RateLimitThread, rate_file, rate_limiters, &latch);
+      rlim_future = std::async(std::launch::async, RateLimitThread, rate_schedule, rate_limiters, &latch);
     }
 
     assert((int)client_threads.size() == num_threads);
@@ -213,6 +250,10 @@ int main(const int argc, const char *argv[]) {
       sum += n.get();
     }
     double runtime = timer.End();
+
+    if (rate_file != "") {
+      rlim_future.get();
+    }
 
     if (show_status) {
       status_future.wait();
@@ -266,9 +307,10 @@ void ParseCommandLine(int argc, const char *argv[], ycsbc::utils::Properties &pr
       std::ifstream input(argv[argindex]);
       try {
         props.Load(input);
-      } catch (const std::string &message) {
-        std::cerr << message << std::endl;
-        exit(0);
+      } catch (const std::exception &e) {
+        std::cerr << "Failed to load properties from " << filename << ": "
+                  << e.what() << std::endl;
+        exit(1);
       }
       input.close();
       argindex++;
@@ -326,4 +368,3 @@ void UsageMessage(const char *command) {
 inline bool StrStartWith(const char *str, const char *pre) {
   return strncmp(str, pre, strlen(pre)) == 0;
 }
-
