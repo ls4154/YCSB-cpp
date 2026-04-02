@@ -54,10 +54,10 @@ inline uint32_t ThreadLocalRandomInt() {
   return rn();
 }
 
-inline double ThreadLocalRandomDouble(double min = 0.0, double max = 1.0) {
+inline double ThreadLocalRandomDouble() {
   static thread_local std::random_device rd;
   static thread_local std::minstd_rand rn(rd());
-  static thread_local std::uniform_real_distribution<double> uniform(min, max);
+  static thread_local std::uniform_real_distribution<double> uniform(0.0, 1.0);
   return uniform(rn);
 }
 

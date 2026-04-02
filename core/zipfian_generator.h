@@ -23,17 +23,33 @@ class ZipfianGenerator : public Generator<uint64_t> {
  public:
   static constexpr double kZipfianConst = 0.99;
   static constexpr uint64_t kMaxNumItems = (UINT64_MAX >> 24);
+  static constexpr uint64_t kPrecomputedZetaItems = 10000000000LL;
+  static constexpr double kPrecomputedZetaTheta = 0.99;
+  static constexpr double kPrecomputedZeta = 26.46902820178302;
 
   ZipfianGenerator(uint64_t num_items) :
       ZipfianGenerator(0, num_items - 1) {}
 
   ZipfianGenerator(uint64_t min, uint64_t max, double zipfian_const = kZipfianConst) :
-      ZipfianGenerator(min, max, zipfian_const, Zeta(max - min + 1, zipfian_const)) {}
+      items_(max - min + 1), base_(min), theta_(zipfian_const), allow_count_decrease_(false) {
+    assert(items_ >= 2 && items_ < kMaxNumItems);
+    Init(ZetaFor(items_, theta_));
+  }
 
   ZipfianGenerator(uint64_t min, uint64_t max, double zipfian_const, double zeta_n) :
       items_(max - min + 1), base_(min), theta_(zipfian_const), allow_count_decrease_(false) {
     assert(items_ >= 2 && items_ < kMaxNumItems);
+    Init(zeta_n);
+  }
 
+  uint64_t Next(uint64_t num_items);
+
+  uint64_t Next() { return Next(items_); }
+
+  uint64_t Last();
+
+ private:
+  void Init(double zeta_n) {
     zeta_2_ = Zeta(2, theta_);
 
     alpha_ = 1.0 / (1.0 - theta_);
@@ -44,13 +60,6 @@ class ZipfianGenerator : public Generator<uint64_t> {
     Next();
   }
 
-  uint64_t Next(uint64_t num_items);
-
-  uint64_t Next() { return Next(items_); }
-
-  uint64_t Last();
-
- private:
   double Eta() {
     return (1 - std::pow(2.0 / items_, 1 - theta_)) / (1 - zeta_2_ / zeta_n_);
   }
@@ -71,6 +80,13 @@ class ZipfianGenerator : public Generator<uint64_t> {
 
   static double Zeta(uint64_t num, double theta) {
     return Zeta(0, num, theta, 0);
+  }
+
+  static double ZetaFor(uint64_t num, double theta) {
+    if (num == kPrecomputedZetaItems && theta == kPrecomputedZetaTheta) {
+      return kPrecomputedZeta;
+    }
+    return Zeta(num, theta);
   }
 
   uint64_t items_;
