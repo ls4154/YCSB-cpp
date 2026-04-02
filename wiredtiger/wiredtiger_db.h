@@ -85,7 +85,7 @@ class WTDB : public DB {
 
 };
 
-DB *NewRocksdbDB();
+DB *NewWTDB();
 
 } // namespace ycsbc
 

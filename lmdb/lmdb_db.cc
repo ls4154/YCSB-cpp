@@ -235,9 +235,8 @@ DB::Status LmdbDB::Scan(const std::string &table, const std::string &key, int le
   if (ret) {
     throw utils::Exception(std::string("Scan mdb_cursor_open: ") + mdb_strerror(ret));
   }
-  ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_SET);
+  ret = mdb_cursor_get(cursor, &key_slice, &val_slice, MDB_SET_RANGE);
   if (ret == MDB_NOTFOUND) {
-    s = kNotFound;
     goto cleanup;
   } else if (ret) {
     throw utils::Exception(std::string("Scan mdb_cursor_get: ") + mdb_strerror(ret));

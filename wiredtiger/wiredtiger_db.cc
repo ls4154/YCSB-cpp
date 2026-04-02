@@ -234,9 +234,17 @@ DB::Status WTDB::ScanSingleEntry(const std::string &table, const std::string &ke
   int ret = 0, exact;
 
   cursor_->set_key(cursor_, &k);
-  error_check(cursor_->search_near(cursor_, &exact));
+  ret = cursor_->search_near(cursor_, &exact);
+  if (ret == WT_NOTFOUND) {
+    return kOK;
+  }
+  error_check(ret);
   if (exact < 0) {
     ret = cursor_->next(cursor_);
+    if (ret == WT_NOTFOUND) {
+      return kOK;
+    }
+    error_check(ret);
   }
   for(int i=0; !ret && i<len; ++i){
     error_check(cursor_->get_value(cursor_, &v));
@@ -245,6 +253,10 @@ DB::Status WTDB::ScanSingleEntry(const std::string &table, const std::string &ke
       DeserializeRowFilter(&result.back(), (const char*)v.data, v.size, *fields);
     } else {
       DeserializeRow(&result.back(), (const char*)v.data, v.size);
+    }
+    ret = cursor_->next(cursor_);
+    if (ret != 0 && ret != WT_NOTFOUND) {
+      error_check(ret);
     }
   }
   return kOK;

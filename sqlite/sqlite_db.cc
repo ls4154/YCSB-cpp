@@ -282,10 +282,6 @@ DB::Status SqliteDB::Scan(const std::string &table, const std::string &key, int 
     }
   }
 
-  if (result.size() == 0) {
-    s = kNotFound;
-  }
-
 cleanup:
   sqlite3_reset(stmt);
   sqlite3_clear_bindings(stmt);
