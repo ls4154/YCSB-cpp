@@ -25,7 +25,7 @@ class DiscreteGenerator : public Generator<Value> {
   void AddValue(Value value, double weight);
 
   Value Next();
-  Value Last() { return last_; }
+  Value Last() const override { return last_; }
 
  private:
   std::vector<std::pair<Value, double>> values_;

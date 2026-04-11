@@ -9,6 +9,7 @@
 #ifndef YCSB_C_ZIPFIAN_GENERATOR_H_
 #define YCSB_C_ZIPFIAN_GENERATOR_H_
 
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdint>
@@ -46,7 +47,7 @@ class ZipfianGenerator : public Generator<uint64_t> {
 
   uint64_t Next() { return Next(items_); }
 
-  uint64_t Last();
+  uint64_t Last() const override;
 
  private:
   void Init(double zeta_n) {
@@ -95,7 +96,7 @@ class ZipfianGenerator : public Generator<uint64_t> {
   // Computed parameters for generating the distribution
   double theta_, zeta_n_, eta_, alpha_, zeta_2_;
   uint64_t count_for_zeta_; /// Number of items used to compute zeta_n
-  uint64_t last_value_;
+  std::atomic<uint64_t> last_value_;
   std::mutex mutex_;
   bool allow_count_decrease_;
 };
@@ -117,19 +118,20 @@ inline uint64_t ZipfianGenerator::Next(uint64_t num) {
   double u = utils::ThreadLocalRandomDouble();
   double uz = u * zeta_n_;
 
+  uint64_t ret;
   if (uz < 1.0) {
-    return last_value_ = base_;
+    ret = base_;
+  } else if (uz < 1.0 + std::pow(0.5, theta_)) {
+    ret = base_ + 1;
+  } else {
+    ret = base_ + num * std::pow(eta_ * u - eta_ + 1, alpha_);
   }
-
-  if (uz < 1.0 + std::pow(0.5, theta_)) {
-    return last_value_ = base_ + 1;
-  }
-
-  return last_value_ = base_ + num * std::pow(eta_ * u - eta_ + 1, alpha_);
+  last_value_.store(ret, std::memory_order_relaxed);
+  return ret;
 }
 
-inline uint64_t ZipfianGenerator::Last() {
-  return last_value_;
+inline uint64_t ZipfianGenerator::Last() const {
+  return last_value_.load(std::memory_order_relaxed);
 }
 
 }

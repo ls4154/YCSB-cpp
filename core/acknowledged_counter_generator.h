@@ -20,7 +20,7 @@ class AcknowledgedCounterGenerator : public CounterGenerator {
  public:
   AcknowledgedCounterGenerator(uint64_t start)
       : CounterGenerator(start), limit_(start - 1), ack_window_(kWindowSize, false) {}
-  uint64_t Last() { return limit_.load(); }
+  uint64_t Last() const override { return limit_.load(); }
   void Acknowledge(uint64_t value);
  private:
   static const size_t kWindowSize = (1 << 16);

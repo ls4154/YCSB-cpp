@@ -4,6 +4,7 @@
 //
 //  Created by Jinglei Ren on 12/9/14.
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
+//  Copyright (c) 2020 Youngjae Lee <ls4154.lee@gmail.com>.
 //
 
 #ifndef YCSB_C_SKEWED_LATEST_GENERATOR_H_
@@ -13,6 +14,7 @@
 
 #include <atomic>
 #include <cstdint>
+
 #include "counter_generator.h"
 #include "zipfian_generator.h"
 
@@ -26,7 +28,7 @@ class SkewedLatestGenerator : public Generator<uint64_t> {
   }
   
   uint64_t Next();
-  uint64_t Last() { return last_; }
+  uint64_t Last() const override { return last_; }
  private:
   CounterGenerator &basis_;
   ZipfianGenerator zipfian_;

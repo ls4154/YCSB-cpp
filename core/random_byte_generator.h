@@ -20,7 +20,7 @@ class RandomByteGenerator : public Generator<char> {
   RandomByteGenerator() : off_(6) {}
 
   char Next();
-  char Last();
+  char Last() const override;
 
  private:
   char buf_[6];
@@ -41,7 +41,7 @@ inline char RandomByteGenerator::Next() {
   return buf_[off_++];
 }
 
-inline char RandomByteGenerator::Last() {
+inline char RandomByteGenerator::Last() const {
   return buf_[(off_ - 1 + 6) % 6];
 }
 

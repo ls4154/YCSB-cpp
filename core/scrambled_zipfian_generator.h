@@ -31,7 +31,7 @@ class ScrambledZipfianGenerator : public Generator<uint64_t> {
       ScrambledZipfianGenerator(0, num_items - 1) { }
 
   uint64_t Next();
-  uint64_t Last();
+  uint64_t Last() const override;
 
  private:
   static constexpr uint64_t kItemCount = 10000000000LL;
@@ -50,7 +50,7 @@ inline uint64_t ScrambledZipfianGenerator::Next() {
   return Scramble(generator_.Next());
 }
 
-inline uint64_t ScrambledZipfianGenerator::Last() {
+inline uint64_t ScrambledZipfianGenerator::Last() const {
   return Scramble(generator_.Last());
 }
 
